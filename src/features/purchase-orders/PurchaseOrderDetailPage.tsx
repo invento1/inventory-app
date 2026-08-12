@@ -12,11 +12,12 @@ import { Badge } from '../../components/ui/Badge'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
 import { useLocations } from '../../lib/useLocations'
+import { formatMoney } from '../../lib/currency'
 import { usePurchaseOrder, useReceivePurchaseOrderLine } from './api'
 
 export function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { orgId } = useOrg()
+  const { orgId, currencySymbol } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isLoading } = usePurchaseOrder(orgId, id!)
@@ -104,7 +105,7 @@ export function PurchaseOrderDetailPage() {
                     <Td className="text-right">{line.quantity_ordered}</Td>
                     <Td className="text-right">{line.quantity_received}</Td>
                     <Td className="text-right">
-                      {line.unit_cost != null ? `$${line.unit_cost.toFixed(2)}` : '—'}
+                      {line.unit_cost != null ? formatMoney(line.unit_cost, currencySymbol) : '—'}
                     </Td>
                     <Td>
                       {remaining <= 0 ? (

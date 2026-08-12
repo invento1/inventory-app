@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -8,14 +9,16 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Badge } from '../../components/ui/Badge'
 import { PageSpinner } from '../../components/ui/Spinner'
+import { formatMoney } from '../../lib/currency'
 import { useItems, type ItemListRow } from './api'
 import { ItemForm } from './ItemForm'
 
 export function ItemsListPage() {
-  const { orgId } = useOrg()
+  const { orgId, currencySymbol } = useOrg()
+  const navigate = useNavigate()
   const { data: items, isLoading } = useItems(orgId)
   const [search, setSearch] = useState('')
-  const [editing, setEditing] = useState<ItemListRow | null | undefined>(undefined)
+  const [editing, setEditing] = useState<ItemListRow | undefined>(undefined)
 
   const filtered = useMemo(() => {
     if (!items) return []
@@ -35,7 +38,7 @@ export function ItemsListPage() {
         title="Items"
         subtitle="Your product catalog"
         action={
-          <Button onClick={() => setEditing(null)}>
+          <Button onClick={() => navigate('/items/new')}>
             <Plus size={16} />
             New item
           </Button>
@@ -80,7 +83,7 @@ export function ItemsListPage() {
                     <Td className={`text-right ${low ? 'text-danger-600 font-medium' : ''}`}>
                       {item.on_hand}
                     </Td>
-                    <Td className="text-right">${item.unit_price.toFixed(2)}</Td>
+                    <Td className="text-right">{formatMoney(item.unit_price, currencySymbol)}</Td>
                     <Td className="text-right">{item.reorder_threshold ?? '—'}</Td>
                     <Td>
                       <Badge tone={item.is_active ? 'success' : 'neutral'}>

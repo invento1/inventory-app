@@ -4,7 +4,11 @@ import { LoginPage } from './auth/LoginPage'
 import { SetPasswordPage } from './auth/SetPasswordPage'
 import { AppLayout } from './components/layout/AppLayout'
 import { DashboardPage } from './features/dashboard/DashboardPage'
+import { ItemsLayout } from './features/items/ItemsLayout'
 import { ItemsListPage } from './features/items/ItemsListPage'
+import { NewItemPage } from './features/items/NewItemPage'
+import { ItemSearchPage } from './features/items/ItemSearchPage'
+import { PriceManagerPage } from './features/items/PriceManagerPage'
 import { StockLevelsPage } from './features/stock/StockLevelsPage'
 import { StockMovementsPage } from './features/stock/StockMovementsPage'
 import { SuppliersListPage } from './features/suppliers/SuppliersListPage'
@@ -19,6 +23,7 @@ import { InvoicesListPage } from './features/invoices/InvoicesListPage'
 import { NewInvoicePage } from './features/invoices/NewInvoicePage'
 import { InvoiceDetailPage } from './features/invoices/InvoiceDetailPage'
 import { SettingsLayout } from './features/settings/SettingsLayout'
+import { CompanyInfoPage } from './features/settings/CompanyInfoPage'
 import { LocationsSettingsPage } from './features/settings/LocationsSettingsPage'
 import { PriceListsPage } from './features/settings/PriceListsPage'
 import { CategoriesPage } from './features/settings/CategoriesPage'
@@ -40,7 +45,13 @@ function App() {
         }
       >
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/items" element={<ItemsListPage />} />
+        <Route path="/items" element={<ItemsLayout />}>
+          <Route index element={<Navigate to="list" replace />} />
+          <Route path="list" element={<ItemsListPage />} />
+          <Route path="new" element={<NewItemPage />} />
+          <Route path="search" element={<ItemSearchPage />} />
+          <Route path="price-manager" element={<PriceManagerPage />} />
+        </Route>
         <Route path="/stock" element={<StockLevelsPage />} />
         <Route path="/stock/movements" element={<StockMovementsPage />} />
         <Route path="/suppliers" element={<SuppliersListPage />} />
@@ -55,7 +66,8 @@ function App() {
         <Route path="/invoices/new" element={<NewInvoicePage />} />
         <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
         <Route path="/settings" element={<SettingsLayout />}>
-          <Route index element={<Navigate to="stores" replace />} />
+          <Route index element={<Navigate to="company-info" replace />} />
+          <Route path="company-info" element={<CompanyInfoPage />} />
           <Route
             path="stores"
             element={

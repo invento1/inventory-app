@@ -9,12 +9,13 @@ import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
+import { formatMoney } from '../../lib/currency'
 import { useInvoice, useVoidInvoice, invoiceStatusTone } from './api'
 import { RecordPaymentModal } from './RecordPaymentModal'
 
 export function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { orgId, role } = useOrg()
+  const { orgId, role, currencySymbol } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isLoading } = useInvoice(orgId, id!)
@@ -84,8 +85,8 @@ export function InvoiceDetailPage() {
                   </Td>
                   <Td>{line.location_name}</Td>
                   <Td className="text-right">{line.quantity}</Td>
-                  <Td className="text-right">${line.unit_price.toFixed(2)}</Td>
-                  <Td className="text-right">${line.line_total.toFixed(2)}</Td>
+                  <Td className="text-right">{formatMoney(line.unit_price, currencySymbol)}</Td>
+                  <Td className="text-right">{formatMoney(line.line_total, currencySymbol)}</Td>
                 </Tr>
               ))}
             </tbody>
@@ -97,19 +98,19 @@ export function InvoiceDetailPage() {
         <div className="w-64 rounded-xl border border-border bg-white p-4 shadow-sm">
           <div className="flex justify-between text-sm text-text-muted">
             <span>Subtotal</span>
-            <span>${invoice.subtotal.toFixed(2)}</span>
+            <span>{formatMoney(invoice.subtotal, currencySymbol)}</span>
           </div>
           <div className="mt-1 flex justify-between text-base font-semibold text-text">
             <span>Total</span>
-            <span>${invoice.total.toFixed(2)}</span>
+            <span>{formatMoney(invoice.total, currencySymbol)}</span>
           </div>
           <div className="mt-1 flex justify-between text-sm text-text-muted">
             <span>Paid</span>
-            <span>${invoice.amount_paid.toFixed(2)}</span>
+            <span>{formatMoney(invoice.amount_paid, currencySymbol)}</span>
           </div>
           <div className="mt-1 flex justify-between text-base font-semibold text-text">
             <span>Balance</span>
-            <span>${balance.toFixed(2)}</span>
+            <span>{formatMoney(balance, currencySymbol)}</span>
           </div>
         </div>
       </div>
@@ -142,7 +143,7 @@ export function InvoiceDetailPage() {
                     <Td>
                       <Badge tone="neutral">{p.payment_method.replace('_', ' ')}</Badge>
                     </Td>
-                    <Td className="text-right">${p.amount.toFixed(2)}</Td>
+                    <Td className="text-right">{formatMoney(p.amount, currencySymbol)}</Td>
                     <Td>{p.notes ?? '—'}</Td>
                   </Tr>
                 ))}
@@ -177,6 +178,7 @@ export function InvoiceDetailPage() {
           orgId={orgId}
           invoiceId={invoice.id}
           balance={balance}
+          currencySymbol={currencySymbol}
           onClose={() => setShowPaymentModal(false)}
         />
       )}

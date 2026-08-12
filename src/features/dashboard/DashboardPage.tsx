@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom'
-import { Package, AlertTriangle, Receipt, DollarSign, Plus, FileWarning } from 'lucide-react'
+import { Package, AlertTriangle, Receipt, DollarSign, Plus, FileWarning, Users, TrendingUp } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Table, THead, Th, Td, Tr, EmptyState } from '../../components/ui/Table'
 import { Button } from '../../components/ui/Button'
 import { PageSpinner } from '../../components/ui/Spinner'
+import { formatMoney } from '../../lib/currency'
 import { useDashboardSummary, useLowStock } from './api'
 
 function StatCard({
@@ -27,7 +28,7 @@ function StatCard({
       onClick={() => navigate(to)}
       className="cursor-pointer transition-shadow hover:shadow-md"
     >
-      <CardBody className="flex items-center gap-4">
+      <CardBody className="flex flex-col items-center gap-2 text-center">
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${tone}`}>
           <Icon size={20} />
         </div>
@@ -41,7 +42,7 @@ function StatCard({
 }
 
 export function DashboardPage() {
-  const { orgId } = useOrg()
+  const { orgId, currencySymbol } = useOrg()
   const navigate = useNavigate()
   const { data: summary, isLoading: summaryLoading } = useDashboardSummary(orgId)
   const { data: lowStock, isLoading: lowStockLoading } = useLowStock(orgId)
@@ -85,14 +86,14 @@ export function DashboardPage() {
           />
           <StatCard
             label="Revenue today"
-            value={`$${(summary?.today_sales_total ?? 0).toFixed(2)}`}
+            value={formatMoney(summary?.today_sales_total ?? 0, currencySymbol)}
             icon={DollarSign}
             tone="bg-accent-50 text-accent-700"
             to="/sales"
           />
           <StatCard
             label="Outstanding AR"
-            value={`$${(summary?.outstanding_ar_total ?? 0).toFixed(2)}`}
+            value={formatMoney(summary?.outstanding_ar_total ?? 0, currencySymbol)}
             icon={DollarSign}
             tone="bg-warning-50 text-warning-600"
             to="/invoices"
@@ -103,6 +104,27 @@ export function DashboardPage() {
             icon={FileWarning}
             tone="bg-danger-50 text-danger-600"
             to="/invoices"
+          />
+          <StatCard
+            label="Customers"
+            value={String(summary?.customer_count ?? 0)}
+            icon={Users}
+            tone="bg-accent-50 text-accent-700"
+            to="/customers"
+          />
+          <StatCard
+            label="Revenue this week"
+            value={formatMoney(summary?.revenue_this_week ?? 0, currencySymbol)}
+            icon={TrendingUp}
+            tone="bg-success-50 text-success-600"
+            to="/sales"
+          />
+          <StatCard
+            label="Revenue last week"
+            value={formatMoney(summary?.revenue_last_week ?? 0, currencySymbol)}
+            icon={TrendingUp}
+            tone="bg-surface-muted text-text-muted"
+            to="/sales"
           />
         </div>
       )}

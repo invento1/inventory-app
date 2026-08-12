@@ -7,10 +7,11 @@ import { Table, THead, Th, Td, Tr, EmptyState } from '../../components/ui/Table'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { PageSpinner } from '../../components/ui/Spinner'
+import { formatMoney } from '../../lib/currency'
 import { useInvoices, invoiceStatusTone } from './api'
 
 export function InvoicesListPage() {
-  const { orgId } = useOrg()
+  const { orgId, currencySymbol } = useOrg()
   const { data: invoices, isLoading } = useInvoices(orgId)
   const navigate = useNavigate()
 
@@ -53,8 +54,10 @@ export function InvoicesListPage() {
                     </Td>
                     <Td>{inv.customer_name}</Td>
                     <Td>{inv.due_date}</Td>
-                    <Td className="text-right">${inv.total.toFixed(2)}</Td>
-                    <Td className="text-right">${(inv.total - inv.amount_paid).toFixed(2)}</Td>
+                    <Td className="text-right">{formatMoney(inv.total, currencySymbol)}</Td>
+                    <Td className="text-right">
+                      {formatMoney(inv.total - inv.amount_paid, currencySymbol)}
+                    </Td>
                     <Td>
                       <Badge tone={tone}>{label}</Badge>
                     </Td>

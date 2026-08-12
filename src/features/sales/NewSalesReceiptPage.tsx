@@ -9,6 +9,7 @@ import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
 import { useToast } from '../../components/ui/Toast'
+import { formatMoney } from '../../lib/currency'
 import { SalesReceiptCartLine } from './SalesReceiptCartLine'
 import { CustomerPicker } from './CustomerPicker'
 import { useBarcodeInput } from './useBarcodeInput'
@@ -16,7 +17,7 @@ import { useCreateSalesReceipt } from './api'
 import type { CartLine } from './types'
 
 export function NewSalesReceiptPage() {
-  const { orgId } = useOrg()
+  const { orgId, currencySymbol } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const { data: items } = useItems(orgId)
@@ -198,7 +199,7 @@ export function NewSalesReceiptPage() {
                           <span className="font-medium text-text">{item.name}</span>
                           <span className="ml-2 text-text-muted">{item.sku}</span>
                         </span>
-                        <span className="text-text-muted">${item.unit_price.toFixed(2)}</span>
+                        <span className="text-text-muted">{formatMoney(item.unit_price, currencySymbol)}</span>
                       </button>
                     ))}
                   </div>
@@ -223,6 +224,7 @@ export function NewSalesReceiptPage() {
                       locations={locations ?? []}
                       onChange={(patch) => updateLine(line.key, patch)}
                       onRemove={() => removeLine(line.key)}
+                      currencySymbol={currencySymbol}
                     />
                   ))}
                 </div>
@@ -250,11 +252,11 @@ export function NewSalesReceiptPage() {
               <div className="border-t border-border pt-4">
                 <div className="flex justify-between text-sm text-text-muted">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>{formatMoney(subtotal, currencySymbol)}</span>
                 </div>
                 <div className="mt-1 flex justify-between text-base font-semibold text-text">
                   <span>Total</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>{formatMoney(subtotal, currencySymbol)}</span>
                 </div>
               </div>
 

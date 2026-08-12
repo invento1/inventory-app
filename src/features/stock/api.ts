@@ -65,6 +65,30 @@ export function useStockMovements(orgId: string) {
   })
 }
 
+export function useItemStockMovements(orgId: string, itemId: string) {
+  return useQuery({
+    queryKey: ['stock_movements', orgId, 'item', itemId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stock_movements')
+        .select('id, created_at, quantity_delta, reason, items(name), locations(name)')
+        .eq('org_id', orgId)
+        .eq('item_id', itemId)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        created_at: row.created_at,
+        quantity_delta: row.quantity_delta,
+        reason: row.reason,
+        item_name: row.items?.name ?? '',
+        location_name: row.locations?.name ?? '',
+      })) satisfies StockMovementRow[]
+    },
+    enabled: !!itemId,
+  })
+}
+
 export function useAdjustStock(orgId: string) {
   const queryClient = useQueryClient()
   return useMutation({

@@ -7,10 +7,11 @@ import { Table, THead, Th, Td, Tr, EmptyState } from '../../components/ui/Table'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { PageSpinner } from '../../components/ui/Spinner'
+import { formatMoney } from '../../lib/currency'
 import { useSalesReceipts } from './api'
 
 export function SalesReceiptsListPage() {
-  const { orgId } = useOrg()
+  const { orgId, currencySymbol } = useOrg()
   const { data: receipts, isLoading } = useSalesReceipts(orgId)
   const navigate = useNavigate()
 
@@ -52,7 +53,7 @@ export function SalesReceiptsListPage() {
                   <Td>
                     <Badge tone="neutral">{r.payment_method.replace('_', ' ')}</Badge>
                   </Td>
-                  <Td className="text-right">${r.total.toFixed(2)}</Td>
+                  <Td className="text-right">{formatMoney(r.total, currencySymbol)}</Td>
                   <Td>{new Date(r.created_at).toLocaleString()}</Td>
                 </Tr>
               ))}

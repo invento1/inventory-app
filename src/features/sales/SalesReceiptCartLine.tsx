@@ -2,6 +2,7 @@ import { Trash2 } from 'lucide-react'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
+import { formatMoney } from '../../lib/currency'
 import type { Location } from '../../lib/useLocations'
 import type { CartLine } from './types'
 
@@ -10,11 +11,13 @@ export function SalesReceiptCartLine({
   locations,
   onChange,
   onRemove,
+  currencySymbol,
 }: {
   line: CartLine
   locations: Location[]
   onChange: (patch: Partial<CartLine>) => void
   onRemove: () => void
+  currencySymbol: string
 }) {
   const lineTotal = line.quantity * line.unit_price
 
@@ -52,7 +55,7 @@ export function SalesReceiptCartLine({
         </Select>
       </div>
       <div className="col-span-1 text-right text-sm font-medium text-text">
-        ${lineTotal.toFixed(2)}
+        {formatMoney(lineTotal, currencySymbol)}
       </div>
       <div className="col-span-1 text-right">
         <Button type="button" variant="ghost" size="sm" onClick={onRemove}>

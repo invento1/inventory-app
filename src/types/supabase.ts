@@ -556,21 +556,36 @@ export type Database = {
       }
       orgs: {
         Row: {
+          address: string | null
           created_at: string
+          currency_code: string
+          currency_symbol: string
+          email: string | null
           id: string
           name: string
+          phone: string | null
           slug: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
+          currency_code?: string
+          currency_symbol?: string
+          email?: string | null
           id?: string
           name: string
+          phone?: string | null
           slug: string
         }
         Update: {
+          address?: string | null
           created_at?: string
+          currency_code?: string
+          currency_symbol?: string
+          email?: string | null
           id?: string
           name?: string
+          phone?: string | null
           slug?: string
         }
         Relationships: []
@@ -1131,10 +1146,13 @@ export type Database = {
       dashboard_summary: {
         Args: { p_org_id: string }
         Returns: {
+          customer_count: number
           item_count: number
           low_stock_count: number
           outstanding_ar_total: number
           overdue_invoice_count: number
+          revenue_last_week: number
+          revenue_this_week: number
           today_sales_count: number
           today_sales_total: number
         }[]

@@ -8,12 +8,16 @@ interface OrgMembership {
   orgId: string
   orgName: string
   role: string
+  currencySymbol: string
+  currencyCode: string
 }
 
 interface OrgContextValue {
   orgId: string
   orgName: string
   role: string
+  currencySymbol: string
+  currencyCode: string
   memberships: OrgMembership[]
 }
 
@@ -27,7 +31,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('org_members')
-        .select('org_id, role, orgs(id, name)')
+        .select('org_id, role, orgs(id, name, currency_symbol, currency_code)')
         .eq('user_id', user!.id)
       if (error) throw error
       return (data ?? [])
@@ -36,6 +40,8 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           orgId: row.org_id,
           orgName: row.orgs!.name,
           role: row.role,
+          currencySymbol: row.orgs!.currency_symbol,
+          currencyCode: row.orgs!.currency_code,
         })) satisfies OrgMembership[]
     },
     enabled: !!user,
@@ -69,6 +75,8 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         orgId: current.orgId,
         orgName: current.orgName,
         role: current.role,
+        currencySymbol: current.currencySymbol,
+        currencyCode: current.currencyCode,
         memberships,
       }}
     >

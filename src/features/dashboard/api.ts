@@ -8,6 +8,9 @@ export interface DashboardSummary {
   today_sales_total: number
   outstanding_ar_total: number
   overdue_invoice_count: number
+  customer_count: number
+  revenue_this_week: number
+  revenue_last_week: number
 }
 
 export function useDashboardSummary(orgId: string) {

@@ -4,17 +4,20 @@ import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
 import { useToast } from '../../components/ui/Toast'
+import { formatMoney } from '../../lib/currency'
 import { useRecordInvoicePayment } from './api'
 
 export function RecordPaymentModal({
   orgId,
   invoiceId,
   balance,
+  currencySymbol,
   onClose,
 }: {
   orgId: string
   invoiceId: string
   balance: number
+  currencySymbol: string
   onClose: () => void
 }) {
   const toast = useToast()
@@ -38,7 +41,7 @@ export function RecordPaymentModal({
     // Mirrors the server-side check in record_invoice_payment for
     // immediate feedback -- the server remains the source of truth.
     if (amountNum > balance) {
-      setError(`Amount exceeds the remaining balance of $${balance.toFixed(2)}.`)
+      setError(`Amount exceeds the remaining balance of ${formatMoney(balance, currencySymbol)}.`)
       return
     }
 

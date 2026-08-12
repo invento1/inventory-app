@@ -9,19 +9,7 @@ import { useCategories, useBrands, useUnitsOfMeasure } from '../settings/api'
 import { CategoryForm } from '../settings/CategoryForm'
 import { BrandForm } from '../settings/BrandForm'
 import { UnitForm } from '../settings/UnitForm'
-import { useCreateItem, useUpdateItem, type Item, type ItemInput } from './api'
-
-const emptyForm: ItemInput = {
-  sku: '',
-  barcode: '',
-  name: '',
-  description: '',
-  unit: 'unit',
-  unit_price: 0,
-  reorder_threshold: null,
-  category_id: null,
-  brand_id: null,
-}
+import { useUpdateItem, type Item, type ItemInput } from './api'
 
 export function ItemForm({
   orgId,
@@ -29,32 +17,27 @@ export function ItemForm({
   onClose,
 }: {
   orgId: string
-  item?: Item | null
+  item: Item
   onClose: () => void
 }) {
-  const [form, setForm] = useState<ItemInput>(
-    item
-      ? {
-          sku: item.sku,
-          barcode: item.barcode,
-          name: item.name,
-          description: item.description,
-          unit: item.unit,
-          unit_price: item.unit_price,
-          reorder_threshold: item.reorder_threshold,
-          category_id: item.category_id,
-          brand_id: item.brand_id,
-        }
-      : emptyForm,
-  )
+  const [form, setForm] = useState<ItemInput>({
+    sku: item.sku,
+    barcode: item.barcode,
+    name: item.name,
+    description: item.description,
+    unit: item.unit,
+    unit_price: item.unit_price,
+    reorder_threshold: item.reorder_threshold,
+    category_id: item.category_id,
+    brand_id: item.brand_id,
+  })
   const [error, setError] = useState<string | null>(null)
-  const createItem = useCreateItem(orgId)
   const updateItem = useUpdateItem(orgId)
   const { data: categories } = useCategories(orgId)
   const { data: brands } = useBrands(orgId)
   const { data: units } = useUnitsOfMeasure(orgId)
   const toast = useToast()
-  const saving = createItem.isPending || updateItem.isPending
+  const saving = updateItem.isPending
 
   const [addingCategory, setAddingCategory] = useState(false)
   const [addingBrand, setAddingBrand] = useState(false)
@@ -71,14 +54,8 @@ export function ItemForm({
     e.preventDefault()
     setError(null)
     try {
-      if (item) {
-        await updateItem.mutateAsync({ id: item.id, input: form })
-        toast.success('Item updated')
-      } else {
-        const { sku: _sku, ...createInput } = form
-        await createItem.mutateAsync(createInput)
-        toast.success('Item created')
-      }
+      await updateItem.mutateAsync({ id: item.id, input: form })
+      toast.success('Item updated')
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -86,7 +63,7 @@ export function ItemForm({
   }
 
   return (
-    <Modal title={item ? 'Edit item' : 'New item'} onClose={onClose}>
+    <Modal title="Edit item" onClose={onClose}>
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <Input
           label="Name"
@@ -94,15 +71,13 @@ export function ItemForm({
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
         />
-        <div className={item ? 'grid grid-cols-2 gap-4' : ''}>
-          {item && (
-            <Input
-              label="SKU"
-              required
-              value={form.sku}
-              onChange={(e) => setForm({ ...form, sku: e.target.value })}
-            />
-          )}
+        <div className="grid grid-cols-2 gap-4">
+          <Input
+            label="SKU"
+            required
+            value={form.sku}
+            onChange={(e) => setForm({ ...form, sku: e.target.value })}
+          />
           <Input
             label="Barcode"
             value={form.barcode ?? ''}
@@ -204,7 +179,7 @@ export function ItemForm({
             Cancel
           </Button>
           <Button type="submit" disabled={saving}>
-            {saving ? 'Saving…' : item ? 'Save changes' : 'Create item'}
+            {saving ? 'Saving…' : 'Save changes'}
           </Button>
         </div>
       </form>

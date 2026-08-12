@@ -2,17 +2,13 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { cn } from '../../lib/cn'
 
 const tabs = [
-  { to: '/settings/company-info', label: 'Company Info' },
-  { to: '/settings/stores', label: 'Stores' },
-  { to: '/settings/warehouses', label: 'Warehouses' },
-  { to: '/settings/price-lists', label: 'Price Lists' },
-  { to: '/settings/categories', label: 'Categories' },
-  { to: '/settings/brands', label: 'Brands' },
-  { to: '/settings/units', label: 'Units' },
-  { to: '/settings/areas', label: 'Regions & Areas' },
+  { to: '/items/list', label: 'Item List' },
+  { to: '/items/new', label: 'New Item' },
+  { to: '/items/search', label: 'Search Item' },
+  { to: '/items/price-manager', label: 'Price Manager' },
 ]
 
-export function SettingsLayout() {
+export function ItemsLayout() {
   return (
     <div>
       <nav className="mb-6 flex flex-wrap gap-1 border-b border-border">

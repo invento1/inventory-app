@@ -3,6 +3,44 @@ import { supabase } from '../../lib/supabaseClient'
 import type { Database } from '../../types/supabase'
 import type { Location } from '../../lib/useLocations'
 
+export type OrgDetails = Database['public']['Tables']['orgs']['Row']
+export type OrgDetailsInput = Pick<
+  Database['public']['Tables']['orgs']['Update'],
+  'name' | 'address' | 'phone' | 'email' | 'currency_symbol' | 'currency_code'
+>
+
+export function useOrgDetails(orgId: string) {
+  return useQuery({
+    queryKey: ['org_details', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('orgs').select('*').eq('id', orgId).single()
+      if (error) throw error
+      return data as OrgDetails
+    },
+  })
+}
+
+export function useUpdateOrgDetails(orgId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: OrgDetailsInput) => {
+      const { data, error } = await supabase
+        .from('orgs')
+        .update(input)
+        .eq('id', orgId)
+        .select()
+        .single()
+      if (error) throw error
+      return data as OrgDetails
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['org_details', orgId] })
+      // Refreshes OrgProvider's cached currency symbol/org name app-wide.
+      queryClient.invalidateQueries({ queryKey: ['org_members'] })
+    },
+  })
+}
+
 export type LocationType = 'store' | 'warehouse'
 export type LocationInput = Pick<
   Database['public']['Tables']['locations']['Insert'],

@@ -6,11 +6,12 @@ import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Table, THead, Th, Td, Tr } from '../../components/ui/Table'
 import { Badge } from '../../components/ui/Badge'
 import { PageSpinner } from '../../components/ui/Spinner'
+import { formatMoney } from '../../lib/currency'
 import { useSalesReceipt } from './api'
 
 export function SalesReceiptDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { orgId } = useOrg()
+  const { orgId, currencySymbol } = useOrg()
   const navigate = useNavigate()
   const { data, isLoading } = useSalesReceipt(orgId, id!)
 
@@ -64,8 +65,8 @@ export function SalesReceiptDetailPage() {
                   </Td>
                   <Td>{line.location_name}</Td>
                   <Td className="text-right">{line.quantity}</Td>
-                  <Td className="text-right">${line.unit_price.toFixed(2)}</Td>
-                  <Td className="text-right">${line.line_total.toFixed(2)}</Td>
+                  <Td className="text-right">{formatMoney(line.unit_price, currencySymbol)}</Td>
+                  <Td className="text-right">{formatMoney(line.line_total, currencySymbol)}</Td>
                 </Tr>
               ))}
             </tbody>
@@ -77,11 +78,11 @@ export function SalesReceiptDetailPage() {
         <div className="w-64 rounded-xl border border-border bg-white p-4 shadow-sm">
           <div className="flex justify-between text-sm text-text-muted">
             <span>Subtotal</span>
-            <span>${receipt.subtotal.toFixed(2)}</span>
+            <span>{formatMoney(receipt.subtotal, currencySymbol)}</span>
           </div>
           <div className="mt-1 flex justify-between text-base font-semibold text-text">
             <span>Total</span>
-            <span>${receipt.total.toFixed(2)}</span>
+            <span>{formatMoney(receipt.total, currencySymbol)}</span>
           </div>
         </div>
       </div>

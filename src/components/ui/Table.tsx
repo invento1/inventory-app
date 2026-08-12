@@ -29,14 +29,16 @@ export function Td({ children, className = '' }: { children?: ReactNode; classNa
 export function Tr({
   children,
   onClick,
+  className = '',
 }: {
   children: ReactNode
   onClick?: () => void
+  className?: string
 }) {
   return (
     <tr
       onClick={onClick}
-      className={`border-b border-border last:border-0 ${onClick ? 'cursor-pointer hover:bg-surface-muted' : ''}`}
+      className={`border-b border-border last:border-0 ${onClick ? 'cursor-pointer hover:bg-surface-muted' : ''} ${className}`}
     >
       {children}
     </tr>
