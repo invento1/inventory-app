@@ -8,6 +8,7 @@ import {
   Users,
   ShoppingCart,
   FileText,
+  Settings,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 
@@ -20,6 +21,7 @@ const navItems = [
   { to: '/customers', label: 'Customers', icon: Users },
   { to: '/sales', label: 'Sales', icon: ShoppingCart },
   { to: '/invoices', label: 'Invoices', icon: FileText },
+  { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
 export function Sidebar() {

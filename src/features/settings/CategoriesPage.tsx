@@ -6,23 +6,25 @@ import { Card } from '../../components/ui/Card'
 import { Table, THead, Th, Td, Tr, EmptyState } from '../../components/ui/Table'
 import { Button } from '../../components/ui/Button'
 import { PageSpinner } from '../../components/ui/Spinner'
-import { useCustomers, type CustomerListRow } from './api'
-import { CustomerForm } from './CustomerForm'
+import { useCategories, type Category } from './api'
+import { CategoryForm } from './CategoryForm'
 
-export function CustomersListPage() {
+export function CategoriesPage() {
   const { orgId } = useOrg()
-  const { data: customers, isLoading } = useCustomers(orgId)
-  const [editing, setEditing] = useState<CustomerListRow | null | undefined>(undefined)
+  const { data: categories, isLoading } = useCategories(orgId)
+  const [editing, setEditing] = useState<Category | null | undefined>(undefined)
+
+  const nameById = new Map((categories ?? []).map((c) => [c.id, c.name]))
 
   return (
     <div>
       <PageHeader
-        title="Customers"
-        subtitle="Who you sell to"
+        title="Categories"
+        subtitle="Group items into categories"
         action={
           <Button onClick={() => setEditing(null)}>
             <Plus size={16} />
-            New customer
+            New category
           </Button>
         }
       />
@@ -34,20 +36,14 @@ export function CustomersListPage() {
           <Table>
             <THead>
               <Th>Name</Th>
-              <Th>Phone</Th>
-              <Th>Email</Th>
-              <Th>Address</Th>
-              <Th>Area</Th>
+              <Th>Parent</Th>
             </THead>
             <tbody>
-              {(!customers || customers.length === 0) && <EmptyState message="No customers yet." />}
-              {customers?.map((c) => (
+              {(!categories || categories.length === 0) && <EmptyState message="No categories yet." />}
+              {categories?.map((c) => (
                 <Tr key={c.id} onClick={() => setEditing(c)}>
                   <Td className="font-medium">{c.name}</Td>
-                  <Td>{c.phone || '—'}</Td>
-                  <Td>{c.email || '—'}</Td>
-                  <Td>{c.address || '—'}</Td>
-                  <Td>{c.area_name || '—'}</Td>
+                  <Td>{(c.parent_id && nameById.get(c.parent_id)) || '—'}</Td>
                 </Tr>
               ))}
             </tbody>
@@ -56,7 +52,7 @@ export function CustomersListPage() {
       </Card>
 
       {editing !== undefined && (
-        <CustomerForm orgId={orgId} customer={editing} onClose={() => setEditing(undefined)} />
+        <CategoryForm orgId={orgId} category={editing} onClose={() => setEditing(undefined)} />
       )}
     </div>
   )

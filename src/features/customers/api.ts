@@ -5,8 +5,12 @@ import type { Database } from '../../types/supabase'
 export type Customer = Database['public']['Tables']['customers']['Row']
 export type CustomerInput = Pick<
   Database['public']['Tables']['customers']['Insert'],
-  'name' | 'phone' | 'email' | 'address'
+  'name' | 'phone' | 'email' | 'address' | 'area_id'
 >
+
+export interface CustomerListRow extends Customer {
+  area_name: string | null
+}
 
 export function useCustomers(orgId: string) {
   return useQuery({
@@ -14,11 +18,14 @@ export function useCustomers(orgId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('customers')
-        .select('*')
+        .select('*, areas(name)')
         .eq('org_id', orgId)
         .order('name')
       if (error) throw error
-      return data as Customer[]
+      return (data ?? []).map((row) => ({
+        ...row,
+        area_name: row.areas?.name ?? null,
+      })) satisfies CustomerListRow[]
     },
   })
 }

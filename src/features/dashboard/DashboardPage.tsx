@@ -13,14 +13,20 @@ function StatCard({
   value,
   icon: Icon,
   tone,
+  to,
 }: {
   label: string
   value: string
   icon: typeof Package
   tone: string
+  to: string
 }) {
+  const navigate = useNavigate()
   return (
-    <Card>
+    <Card
+      onClick={() => navigate(to)}
+      className="cursor-pointer transition-shadow hover:shadow-md"
+    >
       <CardBody className="flex items-center gap-4">
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${tone}`}>
           <Icon size={20} />
@@ -61,36 +67,42 @@ export function DashboardPage() {
             value={String(summary?.item_count ?? 0)}
             icon={Package}
             tone="bg-accent-50 text-accent-700"
+            to="/items"
           />
           <StatCard
             label="Low stock"
             value={String(summary?.low_stock_count ?? 0)}
             icon={AlertTriangle}
             tone="bg-warning-50 text-warning-600"
+            to="/stock"
           />
           <StatCard
             label="Sales today"
             value={String(summary?.today_sales_count ?? 0)}
             icon={Receipt}
             tone="bg-success-50 text-success-600"
+            to="/sales"
           />
           <StatCard
             label="Revenue today"
             value={`$${(summary?.today_sales_total ?? 0).toFixed(2)}`}
             icon={DollarSign}
             tone="bg-accent-50 text-accent-700"
+            to="/sales"
           />
           <StatCard
             label="Outstanding AR"
             value={`$${(summary?.outstanding_ar_total ?? 0).toFixed(2)}`}
             icon={DollarSign}
             tone="bg-warning-50 text-warning-600"
+            to="/invoices"
           />
           <StatCard
             label="Overdue invoices"
             value={String(summary?.overdue_invoice_count ?? 0)}
             icon={FileWarning}
             tone="bg-danger-50 text-danger-600"
+            to="/invoices"
           />
         </div>
       )}

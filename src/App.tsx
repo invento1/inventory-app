@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { LoginPage } from './auth/LoginPage'
 import { SetPasswordPage } from './auth/SetPasswordPage'
@@ -18,6 +18,13 @@ import { SalesReceiptDetailPage } from './features/sales/SalesReceiptDetailPage'
 import { InvoicesListPage } from './features/invoices/InvoicesListPage'
 import { NewInvoicePage } from './features/invoices/NewInvoicePage'
 import { InvoiceDetailPage } from './features/invoices/InvoiceDetailPage'
+import { SettingsLayout } from './features/settings/SettingsLayout'
+import { LocationsSettingsPage } from './features/settings/LocationsSettingsPage'
+import { PriceListsPage } from './features/settings/PriceListsPage'
+import { CategoriesPage } from './features/settings/CategoriesPage'
+import { BrandsPage } from './features/settings/BrandsPage'
+import { UnitsPage } from './features/settings/UnitsPage'
+import { AreasPage } from './features/settings/AreasPage'
 
 function App() {
   return (
@@ -47,6 +54,31 @@ function App() {
         <Route path="/invoices" element={<InvoicesListPage />} />
         <Route path="/invoices/new" element={<NewInvoicePage />} />
         <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
+        <Route path="/settings" element={<SettingsLayout />}>
+          <Route index element={<Navigate to="stores" replace />} />
+          <Route
+            path="stores"
+            element={
+              <LocationsSettingsPage type="store" title="Stores" subtitle="Retail locations" singular="Store" />
+            }
+          />
+          <Route
+            path="warehouses"
+            element={
+              <LocationsSettingsPage
+                type="warehouse"
+                title="Warehouses"
+                subtitle="Storage locations"
+                singular="Warehouse"
+              />
+            }
+          />
+          <Route path="price-lists" element={<PriceListsPage />} />
+          <Route path="categories" element={<CategoriesPage />} />
+          <Route path="brands" element={<BrandsPage />} />
+          <Route path="units" element={<UnitsPage />} />
+          <Route path="areas" element={<AreasPage />} />
+        </Route>
       </Route>
     </Routes>
   )

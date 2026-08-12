@@ -1,11 +1,15 @@
 import { useState, type FormEvent } from 'react'
+import { Plus } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { Input } from '../../components/ui/Input'
+import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
 import { useToast } from '../../components/ui/Toast'
+import { useAreas } from '../settings/api'
+import { AreaForm } from '../settings/AreaForm'
 import { useCreateCustomer, useUpdateCustomer, type Customer, type CustomerInput } from './api'
 
-const emptyForm: CustomerInput = { name: '', phone: '', email: '', address: '' }
+const emptyForm: CustomerInput = { name: '', phone: '', email: '', address: '', area_id: null }
 
 export function CustomerForm({
   orgId,
@@ -23,14 +27,17 @@ export function CustomerForm({
           phone: customer.phone,
           email: customer.email,
           address: customer.address,
+          area_id: customer.area_id,
         }
       : emptyForm,
   )
   const [error, setError] = useState<string | null>(null)
   const createCustomer = useCreateCustomer(orgId)
   const updateCustomer = useUpdateCustomer(orgId)
+  const { data: areas } = useAreas(orgId)
   const toast = useToast()
   const saving = createCustomer.isPending || updateCustomer.isPending
+  const [addingArea, setAddingArea] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -76,6 +83,25 @@ export function CustomerForm({
           value={form.address ?? ''}
           onChange={(e) => setForm({ ...form, address: e.target.value || null })}
         />
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Select
+              label="Area / Zone"
+              value={form.area_id ?? ''}
+              onChange={(e) => setForm({ ...form, area_id: e.target.value || null })}
+            >
+              <option value="">None</option>
+              {areas?.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setAddingArea(true)}>
+            <Plus size={14} />
+          </Button>
+        </div>
         {error && <p className="text-sm text-danger-600">{error}</p>}
         <div className="mt-2 flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
@@ -86,6 +112,14 @@ export function CustomerForm({
           </Button>
         </div>
       </form>
+
+      {addingArea && (
+        <AreaForm
+          orgId={orgId}
+          onClose={() => setAddingArea(false)}
+          onCreated={(created) => setForm((f) => ({ ...f, area_id: created.id }))}
+        />
+      )}
     </Modal>
   )
 }

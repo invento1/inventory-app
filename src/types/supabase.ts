@@ -39,9 +39,119 @@ export type Database = {
   }
   public: {
     Tables: {
+      areas: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          region: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          region?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          region?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "areas_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brands: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brands_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          parent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
+          area_id: string | null
           created_at: string
           email: string | null
           id: string
@@ -53,6 +163,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          area_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -64,6 +175,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          area_id?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -74,6 +186,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "customers_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "customers_org_id_fkey"
             columns: ["org_id"]
@@ -298,6 +417,8 @@ export type Database = {
       items: {
         Row: {
           barcode: string | null
+          brand_id: string | null
+          category_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -312,6 +433,8 @@ export type Database = {
         }
         Insert: {
           barcode?: string | null
+          brand_id?: string | null
+          category_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -326,6 +449,8 @@ export type Database = {
         }
         Update: {
           barcode?: string | null
+          brand_id?: string | null
+          category_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -339,6 +464,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "items_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "items_org_id_fkey"
             columns: ["org_id"]
@@ -356,6 +495,7 @@ export type Database = {
           is_active: boolean
           name: string
           org_id: string
+          type: string
         }
         Insert: {
           address?: string | null
@@ -364,6 +504,7 @@ export type Database = {
           is_active?: boolean
           name: string
           org_id: string
+          type?: string
         }
         Update: {
           address?: string | null
@@ -372,6 +513,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           org_id?: string
+          type?: string
         }
         Relationships: [
           {
@@ -432,6 +574,44 @@ export type Database = {
           slug?: string
         }
         Relationships: []
+      }
+      price_lists: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          list_date: string
+          list_type: string
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          list_date?: string
+          list_type?: string
+          org_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          list_date?: string
+          list_type?: string
+          org_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_lists_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       purchase_order_lines: {
         Row: {
@@ -786,6 +966,41 @@ export type Database = {
           },
         ]
       }
+      units_of_measure: {
+        Row: {
+          abbreviation: string | null
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          abbreviation?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          updated_at?: string
+        }
+        Update: {
+          abbreviation?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_of_measure_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       low_stock_report: {
@@ -929,6 +1144,7 @@ export type Database = {
         Args: { p_doc_type: string; p_org_id: string; p_prefix: string }
         Returns: string
       }
+      next_item_sku: { Args: { p_org_id: string }; Returns: string }
       org_role: { Args: { target_org: string }; Returns: string }
       receive_purchase_order_line: {
         Args: {

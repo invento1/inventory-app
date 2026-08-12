@@ -8,14 +8,14 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Badge } from '../../components/ui/Badge'
 import { PageSpinner } from '../../components/ui/Spinner'
-import { useItems, type Item } from './api'
+import { useItems, type ItemListRow } from './api'
 import { ItemForm } from './ItemForm'
 
 export function ItemsListPage() {
   const { orgId } = useOrg()
   const { data: items, isLoading } = useItems(orgId)
   const [search, setSearch] = useState('')
-  const [editing, setEditing] = useState<Item | null | undefined>(undefined)
+  const [editing, setEditing] = useState<ItemListRow | null | undefined>(undefined)
 
   const filtered = useMemo(() => {
     if (!items) return []
@@ -59,26 +59,37 @@ export function ItemsListPage() {
               <Th>Name</Th>
               <Th>SKU</Th>
               <Th>Barcode</Th>
+              <Th>Category</Th>
+              <Th>Brand</Th>
+              <Th className="text-right">On hand</Th>
               <Th className="text-right">Price</Th>
               <Th className="text-right">Reorder at</Th>
               <Th>Status</Th>
             </THead>
             <tbody>
               {filtered.length === 0 && <EmptyState message="No items yet." />}
-              {filtered.map((item) => (
-                <Tr key={item.id} onClick={() => setEditing(item)}>
-                  <Td className="font-medium">{item.name}</Td>
-                  <Td>{item.sku}</Td>
-                  <Td>{item.barcode || '—'}</Td>
-                  <Td className="text-right">${item.unit_price.toFixed(2)}</Td>
-                  <Td className="text-right">{item.reorder_threshold ?? '—'}</Td>
-                  <Td>
-                    <Badge tone={item.is_active ? 'success' : 'neutral'}>
-                      {item.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </Td>
-                </Tr>
-              ))}
+              {filtered.map((item) => {
+                const low = item.reorder_threshold != null && item.on_hand <= item.reorder_threshold
+                return (
+                  <Tr key={item.id} onClick={() => setEditing(item)}>
+                    <Td className="font-medium">{item.name}</Td>
+                    <Td>{item.sku}</Td>
+                    <Td>{item.barcode || '—'}</Td>
+                    <Td>{item.category_name || '—'}</Td>
+                    <Td>{item.brand_name || '—'}</Td>
+                    <Td className={`text-right ${low ? 'text-danger-600 font-medium' : ''}`}>
+                      {item.on_hand}
+                    </Td>
+                    <Td className="text-right">${item.unit_price.toFixed(2)}</Td>
+                    <Td className="text-right">{item.reorder_threshold ?? '—'}</Td>
+                    <Td>
+                      <Badge tone={item.is_active ? 'success' : 'neutral'}>
+                        {item.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </Td>
+                  </Tr>
+                )
+              })}
             </tbody>
           </Table>
         )}
