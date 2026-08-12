@@ -7,6 +7,7 @@ import {
   ClipboardList,
   Users,
   ShoppingCart,
+  FileText,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 
@@ -18,6 +19,7 @@ const navItems = [
   { to: '/purchase-orders', label: 'Purchase Orders', icon: ClipboardList },
   { to: '/customers', label: 'Customers', icon: Users },
   { to: '/sales', label: 'Sales', icon: ShoppingCart },
+  { to: '/invoices', label: 'Invoices', icon: FileText },
 ]
 
 export function Sidebar() {

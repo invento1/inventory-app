@@ -15,6 +15,9 @@ import { CustomersListPage } from './features/customers/CustomersListPage'
 import { SalesReceiptsListPage } from './features/sales/SalesReceiptsListPage'
 import { NewSalesReceiptPage } from './features/sales/NewSalesReceiptPage'
 import { SalesReceiptDetailPage } from './features/sales/SalesReceiptDetailPage'
+import { InvoicesListPage } from './features/invoices/InvoicesListPage'
+import { NewInvoicePage } from './features/invoices/NewInvoicePage'
+import { InvoiceDetailPage } from './features/invoices/InvoiceDetailPage'
 
 function App() {
   return (
@@ -41,6 +44,9 @@ function App() {
         <Route path="/sales" element={<SalesReceiptsListPage />} />
         <Route path="/sales/new" element={<NewSalesReceiptPage />} />
         <Route path="/sales/:id" element={<SalesReceiptDetailPage />} />
+        <Route path="/invoices" element={<InvoicesListPage />} />
+        <Route path="/invoices/new" element={<NewInvoicePage />} />
+        <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
       </Route>
     </Routes>
   )

@@ -6,6 +6,8 @@ export interface DashboardSummary {
   low_stock_count: number
   today_sales_count: number
   today_sales_total: number
+  outstanding_ar_total: number
+  overdue_invoice_count: number
 }
 
 export function useDashboardSummary(orgId: string) {

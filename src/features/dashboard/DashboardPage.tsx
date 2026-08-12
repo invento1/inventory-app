@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Package, AlertTriangle, Receipt, DollarSign, Plus } from 'lucide-react'
+import { Package, AlertTriangle, Receipt, DollarSign, Plus, FileWarning } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
@@ -55,7 +55,7 @@ export function DashboardPage() {
       {summaryLoading ? (
         <PageSpinner />
       ) : (
-        <div className="mb-6 grid grid-cols-4 gap-4">
+        <div className="mb-6 grid grid-cols-3 gap-4 lg:grid-cols-6">
           <StatCard
             label="Active items"
             value={String(summary?.item_count ?? 0)}
@@ -79,6 +79,18 @@ export function DashboardPage() {
             value={`$${(summary?.today_sales_total ?? 0).toFixed(2)}`}
             icon={DollarSign}
             tone="bg-accent-50 text-accent-700"
+          />
+          <StatCard
+            label="Outstanding AR"
+            value={`$${(summary?.outstanding_ar_total ?? 0).toFixed(2)}`}
+            icon={DollarSign}
+            tone="bg-warning-50 text-warning-600"
+          />
+          <StatCard
+            label="Overdue invoices"
+            value={String(summary?.overdue_invoice_count ?? 0)}
+            icon={FileWarning}
+            tone="bg-danger-50 text-danger-600"
           />
         </div>
       )}
