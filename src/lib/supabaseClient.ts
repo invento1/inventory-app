@@ -10,4 +10,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+// detectSessionInUrl is disabled because it reads window.location.hash, which
+// HashRouter also owns for routing -- the two race on load. main.tsx handles
+// the auth callback itself, before HashRouter ever mounts, and hands off a
+// clean "#/..." route.
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: { detectSessionInUrl: false },
+})

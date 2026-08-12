@@ -4,7 +4,11 @@ There's no public sign-up page on purpose — you (the app owner) create every n
 
 ## One-time setup (only needed once, ever)
 
+### a. Site URL
+
 In the Supabase Dashboard → **Authentication → URL Configuration**, set the Site URL (and add as a Redirect URL) to your deployed app's address, e.g. `https://invento1.github.io/inventory-app/`. This makes sure invite emails send people to the right place.
+
+Nothing else to configure here — the app itself handles Supabase's default invite link format (see `src/main.tsx`), so no email template editing or custom SMTP setup is required for invites to work. (Editing email templates is gated behind configuring custom SMTP in this Supabase project anyway; that's only worth doing later for production-grade deliverability/branding, not required for onboarding.)
 
 ## Steps for each new client
 
