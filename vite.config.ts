@@ -7,5 +7,5 @@ export default defineConfig({
   // GitHub Pages serves project sites from /<repo-name>/, not the domain root.
   // Set this to '/<your-repo-name>/' once the repo is created (leave as '/' if
   // you deploy to a custom domain or a user/org page instead).
-  base: '/',
+  base: '/inventory-app/',
 })
