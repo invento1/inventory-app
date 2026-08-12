@@ -39,6 +39,76 @@ export type Database = {
   }
   public: {
     Tables: {
+      customers: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          org_id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          org_id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          org_id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doc_number_counters: {
+        Row: {
+          doc_type: string
+          next_number: number
+          org_id: string
+        }
+        Insert: {
+          doc_type: string
+          next_number?: number
+          org_id: string
+        }
+        Update: {
+          doc_type?: string
+          next_number?: number
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doc_number_counters_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       items: {
         Row: {
           barcode: string | null
@@ -51,6 +121,7 @@ export type Database = {
           reorder_threshold: number | null
           sku: string
           unit: string
+          unit_price: number
           updated_at: string
         }
         Insert: {
@@ -64,6 +135,7 @@ export type Database = {
           reorder_threshold?: number | null
           sku: string
           unit?: string
+          unit_price?: number
           updated_at?: string
         }
         Update: {
@@ -77,6 +149,7 @@ export type Database = {
           reorder_threshold?: number | null
           sku?: string
           unit?: string
+          unit_price?: number
           updated_at?: string
         }
         Relationships: [
@@ -267,6 +340,121 @@ export type Database = {
           },
         ]
       }
+      sales_receipt_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          line_total: number
+          location_id: string
+          quantity: number
+          sales_receipt_id: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          line_total: number
+          location_id: string
+          quantity: number
+          sales_receipt_id: string
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          line_total?: number
+          location_id?: string
+          quantity?: number
+          sales_receipt_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_receipt_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_receipt_items_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_receipt_items_sales_receipt_id_fkey"
+            columns: ["sales_receipt_id"]
+            isOneToOne: false
+            referencedRelation: "sales_receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_receipts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          id: string
+          notes: string | null
+          org_id: string
+          payment_method: string
+          receipt_number: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          id?: string
+          notes?: string | null
+          org_id: string
+          payment_method: string
+          receipt_number: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          id?: string
+          notes?: string | null
+          org_id?: string
+          payment_method?: string
+          receipt_number?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_receipts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_receipts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_levels: {
         Row: {
           item_id: string
@@ -448,7 +636,48 @@ export type Database = {
       }
     }
     Functions: {
+      create_sales_receipt: {
+        Args: {
+          p_customer_id: string
+          p_lines: Json
+          p_org_id: string
+          p_payment_method: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          id: string
+          notes: string | null
+          org_id: string
+          payment_method: string
+          receipt_number: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sales_receipts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      dashboard_summary: {
+        Args: { p_org_id: string }
+        Returns: {
+          item_count: number
+          low_stock_count: number
+          today_sales_count: number
+          today_sales_total: number
+        }[]
+      }
       is_org_member: { Args: { target_org: string }; Returns: boolean }
+      next_document_number: {
+        Args: { p_doc_type: string; p_org_id: string; p_prefix: string }
+        Returns: string
+      }
       org_role: { Args: { target_org: string }; Returns: string }
       receive_purchase_order_line: {
         Args: {

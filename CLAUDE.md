@@ -4,7 +4,9 @@
 
 Multi-tenant inventory management SaaS, replacing a Google Sheets "backend" that clients complained was too slow. One codebase serves several separate client businesses (orgs), each with isolated inventory data and users. Built on Supabase (Postgres + Auth + Realtime). **Speed is a first-class requirement** — every schema and architecture decision below exists to keep reads/writes fast, not just correct.
 
-Status: greenfield. No app code, no Supabase project, no migrations exist yet. This document is the source of truth for architecture decisions made before implementation started, so later sessions build consistently instead of re-deriving them.
+Status: Phase 1 in progress (core inventory + a simple walk-in sales flow). This document is the source of truth for architecture decisions, so later sessions build consistently instead of re-deriving them.
+
+**Reference app**: the owner's previous system, "Hashir Hub," is a full multi-client double-entry accounting app (invoicing, AR/AP, ~30 reports, one Google Sheet + Apps Script per client). It was reviewed in depth as a feature/data-model reference but is explicitly **not** being ported in full — Phase 1 here is deliberately just items/stock/customers/suppliers/purchase-orders/a paid-in-full "sales receipt" flow. Full accounting (ledger, invoicing, AR/AP, reports) is an intentional later phase, not an oversight if you notice it's missing.
 
 ## 2. Tech Stack
 
@@ -87,6 +89,21 @@ create policy "admins can delete"
 
 `orgs` and `org_members` need their own policies too (members can see their org and their own org's membership rows; only owner/admin can insert/update/delete members) — this is the one place `is_org_member` exists specifically to avoid RLS recursion on `org_members` itself.
 
+**Line-item child table exception**: a table that is only ever written as part of one atomic parent-transaction (e.g. `purchase_order_lines` under `purchase_orders`, `sales_receipt_items` under `sales_receipts` — both created and read only through their parent header row, never queried org-wide on their own) may omit its own `org_id` and scope its policies via `EXISTS` against the parent instead:
+
+```sql
+create policy "org members can select <child>"
+  on public.<child> for select
+  using (
+    exists (
+      select 1 from <parent> p
+      where p.id = <child>.<parent>_id and is_org_member(p.org_id)
+    )
+  );
+```
+
+This isn't the default — every other table still gets its own `org_id` column per the rule above. Only use this when the child truly has no independent access path.
+
 **Rules to follow everywhere**:
 - Never create a tenant-scoped table without an `org_id` column and RLS policies from the start — don't ship a table "temporarily" without RLS.
 - Use `is_org_member(org_id)` / `org_role(org_id)` in policies; never inline the membership subquery repeatedly across tables.
@@ -99,7 +116,8 @@ create policy "admins can delete"
 - Every table: `id uuid primary key default gen_random_uuid()`, `created_at timestamptz default now()`, and `updated_at` where rows are mutable.
 - **Stock quantity is never written directly.** `stock_levels.quantity` is a derived cache, kept in sync by an `AFTER INSERT` trigger on `stock_movements` (`stock_levels.quantity += NEW.quantity_delta`). The app always writes to `stock_movements` (an append-only audit log — reason: receive/sale/adjustment/transfer, reference to the originating record). This keeps `stock_levels` reads O(1) while preserving full traceability of every quantity change.
 - Aggregate or cross-row queries (total stock per item across locations, low-stock report) are Postgres **views** or **RPC functions**, not client-side joins/loops. Views inherit RLS from their base tables automatically — no separate policy needed on the view itself.
-- Multi-step writes that must be atomic (e.g. receiving a PO line: update `purchase_order_lines.quantity_received`, insert a `stock_movements` row, let the trigger update `stock_levels`) are a single Postgres RPC function, not several round-trips from the client.
+- Multi-step writes that must be atomic (e.g. receiving a PO line: update `purchase_order_lines.quantity_received`, insert a `stock_movements` row, let the trigger update `stock_levels`; or creating a sale: header + lines + stock movements) are a single Postgres RPC function, not several round-trips from the client.
+- Sequential, prefixed document numbers (e.g. `SR-000123`) go through the shared `next_document_number(org_id, doc_type, prefix)` function backed by `doc_number_counters` — a single `UPDATE ... RETURNING` gives concurrency safety for free via Postgres's implicit row lock, no explicit locking needed. Reuse this for every future document type (invoices, POs) instead of inventing per-type counters.
 
 ### Core tables (reference sketch — refine at migration time)
 
@@ -107,8 +125,9 @@ create policy "admins can delete"
 orgs                    -- tenants
 org_members             -- user_id x org_id, role: owner/admin/staff
 locations               -- org_id, name, address, is_active
-items                   -- org_id, sku, barcode, name, description, unit, reorder_threshold, is_active
+items                   -- org_id, sku, barcode, name, description, unit, reorder_threshold, is_active, unit_price
                         --   unique index (org_id, sku); index (org_id, barcode) for fast scan lookups
+                        --   no cost_price yet -- Phase 1 has no purchasing-driven costing automation
 stock_levels            -- org_id, item_id, location_id, quantity
                         --   unique index (org_id, item_id, location_id)
 stock_movements         -- org_id, item_id, location_id, quantity_delta, reason,
@@ -117,7 +136,17 @@ stock_movements         -- org_id, item_id, location_id, quantity_delta, reason,
 suppliers               -- org_id, name, contact info
 purchase_orders         -- org_id, supplier_id, status, created_by, expected_date
 purchase_order_lines    -- po_id, item_id, quantity_ordered, quantity_received, unit_cost
+customers               -- org_id, name, phone, email, address, is_active (contact record only -- no AR/balance in Phase 1)
+doc_number_counters     -- org_id, doc_type, next_number (system-managed, no client policies)
+sales_receipts          -- org_id, receipt_number, customer_id, status, payment_method, subtotal, total
+                        --   walk-in, paid-in-full sale only -- no invoicing/AR in Phase 1
+sales_receipt_items     -- sales_receipt_id, item_id, location_id, quantity, unit_price, line_total
+                        --   no org_id (line-item child table exception, see §3)
 ```
+
+`create_sales_receipt(org_id, customer_id, payment_method, lines jsonb)` is the atomic RPC for completing a sale: computes the total server-side from `lines` (never trusts a client-sent total), validates every `item_id`/`location_id` actually belongs to `org_id` (required because SECURITY DEFINER bypasses RLS), inserts the header + line items, and inserts one `stock_movements` row per line (`reason='sale'`) which the existing trigger turns into a `stock_levels` update. No stock-sufficiency check — sales are allowed to go negative, surfacing via `low_stock_report` rather than blocking the sale.
+
+`dashboard_summary(org_id)` returns item/low-stock/today's-sales counts in one round trip; unlike the other RPCs here it's plain SQL with ordinary RLS (no `security definer`), since it only reads.
 
 Example low-stock view:
 
@@ -140,17 +169,22 @@ where sl.quantity <= coalesce(i.reorder_threshold, 0);
 │   ├── migrations/                -- SQL migrations, supabase CLI managed
 │   └── config.toml
 ├── src/
-│   ├── main.tsx / App.tsx
+│   ├── main.tsx / App.tsx          -- providers (QueryClient, Auth, Org, HashRouter) + route table
 │   ├── lib/supabaseClient.ts      -- single createClient() instance
-│   ├── auth/                      -- login, session context, org switcher
+│   ├── auth/                      -- AuthProvider, OrgProvider, ProtectedRoute, LoginPage, SetPasswordPage
 │   ├── features/
 │   │   ├── items/
 │   │   ├── stock/
 │   │   ├── suppliers/
 │   │   ├── purchase-orders/
-│   │   └── alerts/
-│   ├── components/                -- shared UI
+│   │   ├── customers/
+│   │   ├── sales/                 -- barcode-driven sales receipt flow
+│   │   └── dashboard/
+│   ├── components/
+│   │   ├── ui/                    -- hand-owned primitives (Button, Input, Card, Table, Modal, ...)
+│   │   └── layout/                -- AppLayout, Sidebar
 │   └── types/                     -- generated via `supabase gen types typescript`
+├── docs/onboarding-new-client.md  -- non-developer runbook for provisioning a new client org
 └── .github/workflows/deploy.yml
 ```
 
@@ -184,5 +218,6 @@ where sl.quantity <= coalesce(i.reorder_threshold, 0);
 ## 10. Roadmap / Out of Scope
 
 - No Google Sheets data migration needed — starting fresh.
-- Not yet done: Supabase project creation, first migration, app scaffold, auth flow, feature UIs, CI/CD workflow. These are follow-up steps once this document is confirmed.
+- **Phase 1** (in progress): items, stock (levels/movements/adjustments), suppliers, purchase orders + receiving, customers, a walk-in paid-in-full sales receipt flow (barcode/SKU lookup via USB scanner input, no camera scanning yet), a basic dashboard. No public signup — new client orgs are provisioned manually, see `docs/onboarding-new-client.md`.
+- **Explicitly deferred to later phases**: double-entry accounting ledger, invoicing/Accounts Receivable, supplier bills beyond PO receiving, weighted-average costing automation, wholesale pricing, the ~30 report screens from the old app, camera-based barcode scanning, multi-org switcher UI (schema supports multi-org membership already; Phase 1 UI just auto-selects a user's single org).
 - This is a living document — update it as schema or architecture decisions evolve, don't let it drift from reality.
