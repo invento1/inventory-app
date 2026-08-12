@@ -6,9 +6,11 @@ import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
 import { useToast } from '../../components/ui/Toast'
 import { useCategories, useBrands, useUnitsOfMeasure } from '../settings/api'
+import { useSuppliers } from '../suppliers/api'
 import { CategoryForm } from '../settings/CategoryForm'
 import { BrandForm } from '../settings/BrandForm'
 import { UnitForm } from '../settings/UnitForm'
+import { SupplierForm } from '../suppliers/SupplierForm'
 import { useUpdateItem, type Item, type ItemInput } from './api'
 
 export function ItemForm({
@@ -30,18 +32,21 @@ export function ItemForm({
     reorder_threshold: item.reorder_threshold,
     category_id: item.category_id,
     brand_id: item.brand_id,
+    supplier_id: item.supplier_id,
   })
   const [error, setError] = useState<string | null>(null)
   const updateItem = useUpdateItem(orgId)
   const { data: categories } = useCategories(orgId)
   const { data: brands } = useBrands(orgId)
   const { data: units } = useUnitsOfMeasure(orgId)
+  const { data: suppliers } = useSuppliers(orgId)
   const toast = useToast()
   const saving = updateItem.isPending
 
   const [addingCategory, setAddingCategory] = useState(false)
   const [addingBrand, setAddingBrand] = useState(false)
   const [addingUnit, setAddingUnit] = useState(false)
+  const [addingSupplier, setAddingSupplier] = useState(false)
 
   // Existing items may have a unit value that predates the UOM list (or
   // doesn't match any current abbreviation/name) -- keep it selectable
@@ -128,7 +133,7 @@ export function ItemForm({
             }
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div className="flex items-end gap-2">
             <div className="flex-1">
               <Select
@@ -164,6 +169,25 @@ export function ItemForm({
               </Select>
             </div>
             <Button type="button" variant="secondary" size="sm" onClick={() => setAddingBrand(true)}>
+              <Plus size={14} />
+            </Button>
+          </div>
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <Select
+                label="Supplier"
+                value={form.supplier_id ?? ''}
+                onChange={(e) => setForm({ ...form, supplier_id: e.target.value || null })}
+              >
+                <option value="">None</option>
+                {suppliers?.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <Button type="button" variant="secondary" size="sm" onClick={() => setAddingSupplier(true)}>
               <Plus size={14} />
             </Button>
           </div>
@@ -205,6 +229,13 @@ export function ItemForm({
           onCreated={(created) =>
             setForm((f) => ({ ...f, unit: created.abbreviation || created.name }))
           }
+        />
+      )}
+      {addingSupplier && (
+        <SupplierForm
+          orgId={orgId}
+          onClose={() => setAddingSupplier(false)}
+          onCreated={(created) => setForm((f) => ({ ...f, supplier_id: created.id }))}
         />
       )}
     </Modal>

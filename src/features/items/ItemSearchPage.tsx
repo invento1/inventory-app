@@ -110,7 +110,7 @@ function ItemDetail({
       <Card>
         <CardHeader title={item.name} subtitle={`SKU ${item.sku}`} />
         <CardBody>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             <div>
               <p className="text-xs text-text-muted">On-hand</p>
               <p className="text-lg font-semibold text-text">{item.on_hand}</p>
@@ -126,6 +126,10 @@ function ItemDetail({
             <div>
               <p className="text-xs text-text-muted">Brand</p>
               <p className="text-sm text-text">{item.brand_name || '—'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-text-muted">Supplier</p>
+              <p className="text-sm text-text">{item.supplier_name || '—'}</p>
             </div>
           </div>
         </CardBody>

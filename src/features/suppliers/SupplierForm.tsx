@@ -16,10 +16,12 @@ export function SupplierForm({
   orgId,
   supplier,
   onClose,
+  onCreated,
 }: {
   orgId: string
   supplier?: Supplier | null
   onClose: () => void
+  onCreated?: (supplier: Supplier) => void
 }) {
   const [form, setForm] = useState<SupplierInput>(
     supplier
@@ -45,8 +47,9 @@ export function SupplierForm({
         await updateSupplier.mutateAsync({ id: supplier.id, input: form })
         toast.success('Supplier updated')
       } else {
-        await createSupplier.mutateAsync(form)
+        const created = await createSupplier.mutateAsync(form)
         toast.success('Supplier created')
+        onCreated?.(created)
       }
       onClose()
     } catch (err) {

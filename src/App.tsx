@@ -4,7 +4,6 @@ import { LoginPage } from './auth/LoginPage'
 import { SetPasswordPage } from './auth/SetPasswordPage'
 import { AppLayout } from './components/layout/AppLayout'
 import { DashboardPage } from './features/dashboard/DashboardPage'
-import { ItemsLayout } from './features/items/ItemsLayout'
 import { ItemsListPage } from './features/items/ItemsListPage'
 import { NewItemPage } from './features/items/NewItemPage'
 import { ItemSearchPage } from './features/items/ItemSearchPage'
@@ -22,7 +21,6 @@ import { SalesReceiptDetailPage } from './features/sales/SalesReceiptDetailPage'
 import { InvoicesListPage } from './features/invoices/InvoicesListPage'
 import { NewInvoicePage } from './features/invoices/NewInvoicePage'
 import { InvoiceDetailPage } from './features/invoices/InvoiceDetailPage'
-import { SettingsLayout } from './features/settings/SettingsLayout'
 import { CompanyInfoPage } from './features/settings/CompanyInfoPage'
 import { LocationsSettingsPage } from './features/settings/LocationsSettingsPage'
 import { PriceListsPage } from './features/settings/PriceListsPage'
@@ -30,6 +28,10 @@ import { CategoriesPage } from './features/settings/CategoriesPage'
 import { BrandsPage } from './features/settings/BrandsPage'
 import { UnitsPage } from './features/settings/UnitsPage'
 import { AreasPage } from './features/settings/AreasPage'
+import { CapitalMatrixPage } from './features/accounts/CapitalMatrixPage'
+import { AccountLedgerPage } from './features/accounts/AccountLedgerPage'
+import { FiscalDaybookPage } from './features/accounts/FiscalDaybookPage'
+import { NewJournalEntryPage } from './features/accounts/NewJournalEntryPage'
 
 function App() {
   return (
@@ -45,13 +47,13 @@ function App() {
         }
       >
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/items" element={<ItemsLayout />}>
-          <Route index element={<Navigate to="list" replace />} />
-          <Route path="list" element={<ItemsListPage />} />
-          <Route path="new" element={<NewItemPage />} />
-          <Route path="search" element={<ItemSearchPage />} />
-          <Route path="price-manager" element={<PriceManagerPage />} />
-        </Route>
+
+        <Route path="/items" element={<Navigate to="/items/list" replace />} />
+        <Route path="/items/list" element={<ItemsListPage />} />
+        <Route path="/items/new" element={<NewItemPage />} />
+        <Route path="/items/search" element={<ItemSearchPage />} />
+        <Route path="/items/price-manager" element={<PriceManagerPage />} />
+
         <Route path="/stock" element={<StockLevelsPage />} />
         <Route path="/stock/movements" element={<StockMovementsPage />} />
         <Route path="/suppliers" element={<SuppliersListPage />} />
@@ -65,32 +67,37 @@ function App() {
         <Route path="/invoices" element={<InvoicesListPage />} />
         <Route path="/invoices/new" element={<NewInvoicePage />} />
         <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
-        <Route path="/settings" element={<SettingsLayout />}>
-          <Route index element={<Navigate to="company-info" replace />} />
-          <Route path="company-info" element={<CompanyInfoPage />} />
-          <Route
-            path="stores"
-            element={
-              <LocationsSettingsPage type="store" title="Stores" subtitle="Retail locations" singular="Store" />
-            }
-          />
-          <Route
-            path="warehouses"
-            element={
-              <LocationsSettingsPage
-                type="warehouse"
-                title="Warehouses"
-                subtitle="Storage locations"
-                singular="Warehouse"
-              />
-            }
-          />
-          <Route path="price-lists" element={<PriceListsPage />} />
-          <Route path="categories" element={<CategoriesPage />} />
-          <Route path="brands" element={<BrandsPage />} />
-          <Route path="units" element={<UnitsPage />} />
-          <Route path="areas" element={<AreasPage />} />
-        </Route>
+
+        <Route path="/account" element={<Navigate to="/account/capital-matrix" replace />} />
+        <Route path="/account/capital-matrix" element={<CapitalMatrixPage />} />
+        <Route path="/account/capital-matrix/:id" element={<AccountLedgerPage />} />
+        <Route path="/account/fiscal-daybook" element={<FiscalDaybookPage />} />
+        <Route path="/account/fiscal-daybook/new" element={<NewJournalEntryPage />} />
+
+        <Route path="/settings" element={<Navigate to="/settings/company-info" replace />} />
+        <Route path="/settings/company-info" element={<CompanyInfoPage />} />
+        <Route
+          path="/settings/stores"
+          element={
+            <LocationsSettingsPage type="store" title="Stores" subtitle="Retail locations" singular="Store" />
+          }
+        />
+        <Route
+          path="/settings/warehouses"
+          element={
+            <LocationsSettingsPage
+              type="warehouse"
+              title="Warehouses"
+              subtitle="Storage locations"
+              singular="Warehouse"
+            />
+          }
+        />
+        <Route path="/settings/price-lists" element={<PriceListsPage />} />
+        <Route path="/settings/categories" element={<CategoriesPage />} />
+        <Route path="/settings/brands" element={<BrandsPage />} />
+        <Route path="/settings/units" element={<UnitsPage />} />
+        <Route path="/settings/areas" element={<AreasPage />} />
       </Route>
     </Routes>
   )

@@ -427,6 +427,7 @@ export type Database = {
           org_id: string
           reorder_threshold: number | null
           sku: string
+          supplier_id: string | null
           unit: string
           unit_price: number
           updated_at: string
@@ -443,6 +444,7 @@ export type Database = {
           org_id: string
           reorder_threshold?: number | null
           sku: string
+          supplier_id?: string | null
           unit?: string
           unit_price?: number
           updated_at?: string
@@ -459,6 +461,7 @@ export type Database = {
           org_id?: string
           reorder_threshold?: number | null
           sku?: string
+          supplier_id?: string | null
           unit?: string
           unit_price?: number
           updated_at?: string
@@ -483,6 +486,173 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_entries: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entry_date: string
+          entry_number: string
+          id: string
+          memo: string | null
+          org_id: string
+          reference_id: string | null
+          reference_type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          entry_number: string
+          id?: string
+          memo?: string | null
+          org_id: string
+          reference_id?: string | null
+          reference_type?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entry_date?: string
+          entry_number?: string
+          id?: string
+          memo?: string | null
+          org_id?: string
+          reference_id?: string | null
+          reference_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_lines: {
+        Row: {
+          account_id: string
+          credit: number
+          debit: number
+          id: string
+          journal_entry_id: string
+          line_order: number
+          memo: string | null
+          name: string | null
+        }
+        Insert: {
+          account_id: string
+          credit?: number
+          debit?: number
+          id?: string
+          journal_entry_id: string
+          line_order?: number
+          memo?: string | null
+          name?: string | null
+        }
+        Update: {
+          account_id?: string
+          credit?: number
+          debit?: number
+          id?: string
+          journal_entry_id?: string
+          line_order?: number
+          memo?: string | null
+          name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "journal_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_lines_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ledger_accounts: {
+        Row: {
+          account_number: string | null
+          account_type: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          org_id: string
+          parent_account_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          account_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          org_id: string
+          parent_account_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          account_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          org_id?: string
+          parent_account_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_accounts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ledger_accounts_parent_account_id_fkey"
+            columns: ["parent_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "ledger_accounts_parent_account_id_fkey"
+            columns: ["parent_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -1018,6 +1188,22 @@ export type Database = {
       }
     }
     Views: {
+      ledger_account_balances: {
+        Row: {
+          account_id: string | null
+          balance: number | null
+          org_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_accounts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       low_stock_report: {
         Row: {
           item_id: string | null
@@ -1111,6 +1297,33 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "invoices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_journal_entry: {
+        Args: {
+          p_entry_date: string
+          p_lines: Json
+          p_memo: string
+          p_org_id: string
+          p_reference_id?: string
+          p_reference_type?: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          entry_date: string
+          entry_number: string
+          id: string
+          memo: string | null
+          org_id: string
+          reference_id: string | null
+          reference_type: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "journal_entries"
           isOneToOne: true
           isSetofReturn: false
         }

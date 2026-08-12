@@ -64,6 +64,7 @@ export function ItemsListPage() {
               <Th>Barcode</Th>
               <Th>Category</Th>
               <Th>Brand</Th>
+              <Th>Supplier</Th>
               <Th className="text-right">On hand</Th>
               <Th className="text-right">Price</Th>
               <Th className="text-right">Reorder at</Th>
@@ -80,6 +81,7 @@ export function ItemsListPage() {
                     <Td>{item.barcode || '—'}</Td>
                     <Td>{item.category_name || '—'}</Td>
                     <Td>{item.brand_name || '—'}</Td>
+                    <Td>{item.supplier_name || '—'}</Td>
                     <Td className={`text-right ${low ? 'text-danger-600 font-medium' : ''}`}>
                       {item.on_hand}
                     </Td>

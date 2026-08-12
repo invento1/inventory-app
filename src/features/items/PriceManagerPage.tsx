@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
 import { useCategories, useBrands } from '../settings/api'
+import { useSuppliers } from '../suppliers/api'
 import { useItems, useUpdateItem } from './api'
 
 interface Edit {
@@ -22,19 +23,24 @@ export function PriceManagerPage() {
   const { data: items, isLoading } = useItems(orgId)
   const { data: categories } = useCategories(orgId)
   const { data: brands } = useBrands(orgId)
+  const { data: suppliers } = useSuppliers(orgId)
   const updateItem = useUpdateItem(orgId)
 
   const [categoryId, setCategoryId] = useState('')
   const [brandId, setBrandId] = useState('')
+  const [supplierId, setSupplierId] = useState('')
   const [edits, setEdits] = useState<Record<string, Edit>>({})
   const [saving, setSaving] = useState(false)
 
   const filtered = useMemo(() => {
     if (!items) return []
     return items.filter(
-      (i) => (!categoryId || i.category_id === categoryId) && (!brandId || i.brand_id === brandId),
+      (i) =>
+        (!categoryId || i.category_id === categoryId) &&
+        (!brandId || i.brand_id === brandId) &&
+        (!supplierId || i.supplier_id === supplierId),
     )
-  }, [items, categoryId, brandId])
+  }, [items, categoryId, brandId, supplierId])
 
   const editCount = Object.keys(edits).length
 
@@ -82,7 +88,7 @@ export function PriceManagerPage() {
 
       <Card className="mb-4">
         <CardBody>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <Select label="Category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
               <option value="">All</option>
               {categories?.map((c) => (
@@ -96,6 +102,14 @@ export function PriceManagerPage() {
               {brands?.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
+                </option>
+              ))}
+            </Select>
+            <Select label="Supplier" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+              <option value="">All</option>
+              {suppliers?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
                 </option>
               ))}
             </Select>

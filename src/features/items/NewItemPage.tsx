@@ -9,9 +9,11 @@ import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
 import { useToast } from '../../components/ui/Toast'
 import { useCategories, useBrands, useUnitsOfMeasure } from '../settings/api'
+import { useSuppliers } from '../suppliers/api'
 import { CategoryForm } from '../settings/CategoryForm'
 import { BrandForm } from '../settings/BrandForm'
 import { UnitForm } from '../settings/UnitForm'
+import { SupplierForm } from '../suppliers/SupplierForm'
 import { useCreateItem, type ItemInput } from './api'
 
 const emptyForm: Omit<ItemInput, 'sku'> = {
@@ -23,6 +25,7 @@ const emptyForm: Omit<ItemInput, 'sku'> = {
   reorder_threshold: null,
   category_id: null,
   brand_id: null,
+  supplier_id: null,
 }
 
 export function NewItemPage() {
@@ -35,11 +38,13 @@ export function NewItemPage() {
   const { data: categories } = useCategories(orgId)
   const { data: brands } = useBrands(orgId)
   const { data: units } = useUnitsOfMeasure(orgId)
+  const { data: suppliers } = useSuppliers(orgId)
   const saving = createItem.isPending
 
   const [addingCategory, setAddingCategory] = useState(false)
   const [addingBrand, setAddingBrand] = useState(false)
   const [addingUnit, setAddingUnit] = useState(false)
+  const [addingSupplier, setAddingSupplier] = useState(false)
 
   // The default 'unit' value won't necessarily match any UOM row (e.g. a
   // fresh org with none created yet) -- keep it displayable via a
@@ -133,7 +138,7 @@ export function NewItemPage() {
                 }
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <Select
@@ -169,6 +174,25 @@ export function NewItemPage() {
                   </Select>
                 </div>
                 <Button type="button" variant="secondary" size="sm" onClick={() => setAddingBrand(true)}>
+                  <Plus size={14} />
+                </Button>
+              </div>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Select
+                    label="Supplier"
+                    value={form.supplier_id ?? ''}
+                    onChange={(e) => setForm({ ...form, supplier_id: e.target.value || null })}
+                  >
+                    <option value="">None</option>
+                    {suppliers?.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <Button type="button" variant="secondary" size="sm" onClick={() => setAddingSupplier(true)}>
                   <Plus size={14} />
                 </Button>
               </div>
@@ -212,6 +236,13 @@ export function NewItemPage() {
           orgId={orgId}
           onClose={() => setAddingUnit(false)}
           onCreated={(created) => setForm((f) => ({ ...f, unit: created.abbreviation || created.name }))}
+        />
+      )}
+      {addingSupplier && (
+        <SupplierForm
+          orgId={orgId}
+          onClose={() => setAddingSupplier(false)}
+          onCreated={(created) => setForm((f) => ({ ...f, supplier_id: created.id }))}
         />
       )}
     </div>

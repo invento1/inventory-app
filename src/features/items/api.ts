@@ -14,11 +14,13 @@ export type ItemInput = Pick<
   | 'reorder_threshold'
   | 'category_id'
   | 'brand_id'
+  | 'supplier_id'
 >
 
 export interface ItemListRow extends Item {
   category_name: string | null
   brand_name: string | null
+  supplier_name: string | null
   on_hand: number
 }
 
@@ -28,7 +30,7 @@ export function useItems(orgId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('items')
-        .select('*, categories(name), brands(name), stock_levels(quantity)')
+        .select('*, categories(name), brands(name), suppliers(name), stock_levels(quantity)')
         .eq('org_id', orgId)
         .order('name')
       if (error) throw error
@@ -36,6 +38,7 @@ export function useItems(orgId: string) {
         ...row,
         category_name: row.categories?.name ?? null,
         brand_name: row.brands?.name ?? null,
+        supplier_name: row.suppliers?.name ?? null,
         on_hand: (row.stock_levels ?? []).reduce((sum, s) => sum + s.quantity, 0),
       })) satisfies ItemListRow[]
     },
