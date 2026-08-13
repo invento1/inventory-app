@@ -11,7 +11,13 @@ import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { useToast } from '../../components/ui/Toast'
 import { formatMoney } from '../../lib/currency'
-import { useLedgerAccounts, useCreateJournalEntry, isManuallyPostable, type JournalEntryLinePayload } from './api'
+import {
+  useLedgerAccounts,
+  useCreateJournalEntry,
+  isManuallyPostable,
+  type JournalEntryLinePayload,
+  type LedgerAccountRow,
+} from './api'
 
 interface DraftLine {
   key: number
@@ -30,6 +36,49 @@ function blankLine(): DraftLine {
 
 function today() {
   return new Date().toISOString().slice(0, 10)
+}
+
+// Balance-sheet types (asset/liability/equity) get a prominent badge --
+// these are the "how much do I actually have/owe" accounts a user checks
+// before debiting/crediting. Income/expense/COGS accounts stay as plain
+// small text, since their running balance is a period total, not a
+// spendable amount, and doesn't warrant the same visual weight.
+const BALANCE_SHEET_TYPES = new Set([
+  'bank',
+  'equity',
+  'accounts_receivable',
+  'accounts_payable',
+  'other_current_asset',
+  'other_asset',
+  'fixed_asset',
+  'other_current_liability',
+  'long_term_liability',
+])
+// Of those, only true asset types warrant a "you may be about to overdraw
+// this" warning on a zero/negative balance -- a liability or equity
+// account sitting at zero isn't inherently a red flag the way an empty
+// Cash/Bank account is.
+const ASSET_TYPES = new Set(['bank', 'other_current_asset', 'other_asset', 'fixed_asset'])
+
+function AccountBalanceHint({ account, currencySymbol }: { account: LedgerAccountRow; currencySymbol: string }) {
+  const isBalanceSheet = BALANCE_SHEET_TYPES.has(account.account_type)
+  const isLowAsset = ASSET_TYPES.has(account.account_type) && account.balance <= 0
+
+  if (!isBalanceSheet) {
+    return (
+      <span className="mt-1 block text-xs text-text-muted">
+        Balance: {formatMoney(account.balance, currencySymbol)}
+      </span>
+    )
+  }
+
+  return (
+    <div className="mt-1">
+      <Badge tone={isLowAsset ? 'warning' : 'accent'}>
+        Balance: {formatMoney(account.balance, currencySymbol)}
+      </Badge>
+    </div>
+  )
 }
 
 export function NewJournalEntryPage() {
@@ -150,62 +199,68 @@ export function NewJournalEntryPage() {
                 <Th></Th>
               </THead>
               <tbody>
-                {lines.map((line) => (
-                  <tr key={line.key} className="border-b border-border last:border-0">
-                    <Td>
-                      <Select
-                        value={line.account_id}
-                        onChange={(e) => updateLine(line.key, { account_id: e.target.value })}
-                      >
-                        <option value="">Select an account…</option>
-                        {postableAccounts?.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.name}
-                          </option>
-                        ))}
-                      </Select>
-                    </Td>
-                    <Td>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={line.debit}
-                        onChange={(e) =>
-                          updateLine(line.key, { debit: e.target.value, credit: e.target.value ? '' : line.credit })
-                        }
-                      />
-                    </Td>
-                    <Td>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={line.credit}
-                        onChange={(e) =>
-                          updateLine(line.key, { credit: e.target.value, debit: e.target.value ? '' : line.debit })
-                        }
-                      />
-                    </Td>
-                    <Td>
-                      <Input value={line.name} onChange={(e) => updateLine(line.key, { name: e.target.value })} />
-                    </Td>
-                    <Td>
-                      <Input value={line.memo} onChange={(e) => updateLine(line.key, { memo: e.target.value })} />
-                    </Td>
-                    <Td>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeLine(line.key)}
-                        disabled={lines.length === 1}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </Td>
-                  </tr>
-                ))}
+                {lines.map((line) => {
+                  const selectedAccount = postableAccounts?.find((a) => a.id === line.account_id)
+                  return (
+                    <tr key={line.key} className="border-b border-border last:border-0">
+                      <Td>
+                        <Select
+                          value={line.account_id}
+                          onChange={(e) => updateLine(line.key, { account_id: e.target.value })}
+                        >
+                          <option value="">Select an account…</option>
+                          {postableAccounts?.map((a) => (
+                            <option key={a.id} value={a.id}>
+                              {a.name}
+                            </option>
+                          ))}
+                        </Select>
+                        {selectedAccount && (
+                          <AccountBalanceHint account={selectedAccount} currencySymbol={currencySymbol} />
+                        )}
+                      </Td>
+                      <Td>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={line.debit}
+                          onChange={(e) =>
+                            updateLine(line.key, { debit: e.target.value, credit: e.target.value ? '' : line.credit })
+                          }
+                        />
+                      </Td>
+                      <Td>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={line.credit}
+                          onChange={(e) =>
+                            updateLine(line.key, { credit: e.target.value, debit: e.target.value ? '' : line.debit })
+                          }
+                        />
+                      </Td>
+                      <Td>
+                        <Input value={line.name} onChange={(e) => updateLine(line.key, { name: e.target.value })} />
+                      </Td>
+                      <Td>
+                        <Input value={line.memo} onChange={(e) => updateLine(line.key, { memo: e.target.value })} />
+                      </Td>
+                      <Td>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeLine(line.key)}
+                          disabled={lines.length === 1}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </Td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </Table>
             <div className="flex items-center justify-between border-t border-border p-4">
