@@ -11,7 +11,7 @@ import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { useToast } from '../../components/ui/Toast'
 import { formatMoney } from '../../lib/currency'
-import { useLedgerAccounts, useCreateJournalEntry, type JournalEntryLinePayload } from './api'
+import { useLedgerAccounts, useCreateJournalEntry, isManuallyPostable, type JournalEntryLinePayload } from './api'
 
 interface DraftLine {
   key: number
@@ -37,6 +37,7 @@ export function NewJournalEntryPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { data: accounts } = useLedgerAccounts(orgId)
+  const postableAccounts = accounts?.filter(isManuallyPostable)
   const createEntry = useCreateJournalEntry(orgId)
 
   const [entryDate, setEntryDate] = useState(today())
@@ -157,7 +158,7 @@ export function NewJournalEntryPage() {
                         onChange={(e) => updateLine(line.key, { account_id: e.target.value })}
                       >
                         <option value="">Select an account…</option>
-                        {accounts?.map((a) => (
+                        {postableAccounts?.map((a) => (
                           <option key={a.id} value={a.id}>
                             {a.name}
                           </option>
@@ -223,6 +224,11 @@ export function NewJournalEntryPage() {
             </div>
           </CardBody>
         </Card>
+
+        <p className="text-xs text-text-muted">
+          Undeposited Funds, Accounts Receivable, and Accounts Payable aren't listed here — they're kept in
+          sync automatically. Use Receive Payment, Pay Bills, or Record Deposit to clear those instead.
+        </p>
 
         {error && <p className="text-sm text-danger-600">{error}</p>}
 

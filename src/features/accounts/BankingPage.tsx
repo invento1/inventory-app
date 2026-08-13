@@ -9,7 +9,7 @@ import { Button } from '../../components/ui/Button'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
 import { formatMoney } from '../../lib/currency'
-import { useLedgerAccounts, useCreateFundTransfer, useFundTransfers } from './api'
+import { useLedgerAccounts, useCreateFundTransfer, useFundTransfers, isManuallyPostable } from './api'
 
 function today() {
   return new Date().toISOString().slice(0, 10)
@@ -19,6 +19,7 @@ export function BankingPage() {
   const { orgId, currencySymbol } = useOrg()
   const toast = useToast()
   const { data: accounts } = useLedgerAccounts(orgId)
+  const transferableAccounts = accounts?.filter(isManuallyPostable)
   const { data: transfers, isLoading } = useFundTransfers(orgId)
   const createTransfer = useCreateFundTransfer(orgId)
 
@@ -78,7 +79,7 @@ export function BankingPage() {
                 onChange={(e) => setFromAccountId(e.target.value)}
               >
                 <option value="">Select an account…</option>
-                {accounts?.map((a) => (
+                {transferableAccounts?.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
                   </option>
@@ -91,7 +92,7 @@ export function BankingPage() {
                 onChange={(e) => setToAccountId(e.target.value)}
               >
                 <option value="">Select an account…</option>
-                {accounts?.map((a) => (
+                {transferableAccounts?.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
                   </option>
@@ -115,6 +116,10 @@ export function BankingPage() {
               />
               <Input label="Memo" value={memo} onChange={(e) => setMemo(e.target.value)} />
             </div>
+            <p className="mt-3 text-xs text-text-muted">
+              Undeposited Funds, Accounts Receivable, and Accounts Payable aren't listed here — they're kept
+              in sync automatically. Use Receive Payment, Pay Bills, or Record Deposit to clear those instead.
+            </p>
             {error && <p className="mt-3 text-sm text-danger-600">{error}</p>}
             <div className="mt-4 flex justify-end">
               <Button type="submit" disabled={createTransfer.isPending}>

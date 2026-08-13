@@ -887,6 +887,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          is_control_account: boolean
           name: string
           org_id: string
           parent_account_id: string | null
@@ -899,6 +900,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_control_account?: boolean
           name: string
           org_id: string
           parent_account_id?: string | null
@@ -911,6 +913,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_control_account?: boolean
           name?: string
           org_id?: string
           parent_account_id?: string | null
@@ -2066,6 +2069,10 @@ export type Database = {
           p_reference_number?: string
           p_supplier_id: string
         }
+        Returns: undefined
+      }
+      assert_accounts_not_controlled: {
+        Args: { p_account_ids: string[] }
         Returns: undefined
       }
       convert_purchase_order_to_bill: {

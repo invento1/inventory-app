@@ -54,6 +54,19 @@ export interface LedgerAccountRow extends LedgerAccount {
   balance: number
 }
 
+// Undeposited Funds, Accounts Receivable, and Accounts Payable are
+// sub-ledger-backed control accounts -- the server rejects manual journal
+// entries/fund transfers that touch them (see the control_account_guardrails
+// migration), so keep them out of those pickers rather than letting a user
+// pick one and hit an error.
+export function isManuallyPostable(account: Pick<LedgerAccount, 'is_control_account' | 'account_type'>) {
+  return (
+    !account.is_control_account &&
+    account.account_type !== 'accounts_receivable' &&
+    account.account_type !== 'accounts_payable'
+  )
+}
+
 export function useLedgerAccounts(orgId: string) {
   return useQuery({
     queryKey: ['ledger_accounts', orgId],
