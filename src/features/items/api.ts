@@ -45,43 +45,6 @@ export function useItems(orgId: string) {
   })
 }
 
-export interface ItemAveragePurchasePrice {
-  avg_unit_cost: number
-  total_quantity: number
-  bill_count: number
-}
-
-// Weighted average cost per item across every non-voided supplier bill
-// (see item_average_purchase_price view) -- items have no stored
-// cost_price, so this is the closest thing to one. Deliberately sourced
-// from supplier_bill_items only, not purchase_order_lines (PO unit_cost is
-// unenforced/display-only, never a real AP document). Surfaced as a hover
-// tooltip on the unit price field when creating a sales receipt or
-// invoice, to gauge available discount room.
-export function useItemAveragePurchasePrices(orgId: string) {
-  return useQuery({
-    queryKey: ['item_average_purchase_price', orgId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('item_average_purchase_price')
-        .select('item_id, avg_unit_cost, total_quantity, bill_count')
-        .eq('org_id', orgId)
-      if (error) throw error
-      const map = new Map<string, ItemAveragePurchasePrice>()
-      for (const row of data ?? []) {
-        if (row.item_id && row.avg_unit_cost != null) {
-          map.set(row.item_id, {
-            avg_unit_cost: row.avg_unit_cost,
-            total_quantity: row.total_quantity ?? 0,
-            bill_count: row.bill_count ?? 0,
-          })
-        }
-      }
-      return map
-    },
-  })
-}
-
 export function useCreateItem(orgId: string) {
   const queryClient = useQueryClient()
   return useMutation({

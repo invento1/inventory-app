@@ -10,6 +10,7 @@ import { formatMoney } from '../../lib/currency'
 import { useProfitAndLoss } from './api'
 
 const INCOME_TYPES = new Set(['income', 'other_income'])
+const COGS_TYPE = 'cost_of_goods_sold'
 
 function toDateInput(d: Date) {
   return d.toISOString().slice(0, 10)
@@ -32,13 +33,28 @@ export function ProfitLossPage() {
 
   const { data: rows, isLoading } = useProfitAndLoss(orgId, startDate, endDate)
 
-  const { income, expenses, totalIncome, totalExpenses, netProfit } = useMemo(() => {
-    const income = (rows ?? []).filter((r) => INCOME_TYPES.has(r.account_type))
-    const expenses = (rows ?? []).filter((r) => !INCOME_TYPES.has(r.account_type))
-    const totalIncome = income.reduce((sum, r) => sum + r.amount, 0)
-    const totalExpenses = expenses.reduce((sum, r) => sum + r.amount, 0)
-    return { income, expenses, totalIncome, totalExpenses, netProfit: totalIncome - totalExpenses }
-  }, [rows])
+  const { income, cogs, operatingExpenses, totalIncome, totalCogs, totalOperatingExpenses, grossProfit, netProfit } =
+    useMemo(() => {
+      const income = (rows ?? []).filter((r) => INCOME_TYPES.has(r.account_type))
+      const cogs = (rows ?? []).filter((r) => r.account_type === COGS_TYPE)
+      const operatingExpenses = (rows ?? []).filter(
+        (r) => !INCOME_TYPES.has(r.account_type) && r.account_type !== COGS_TYPE,
+      )
+      const totalIncome = income.reduce((sum, r) => sum + r.amount, 0)
+      const totalCogs = cogs.reduce((sum, r) => sum + r.amount, 0)
+      const totalOperatingExpenses = operatingExpenses.reduce((sum, r) => sum + r.amount, 0)
+      const grossProfit = totalIncome - totalCogs
+      return {
+        income,
+        cogs,
+        operatingExpenses,
+        totalIncome,
+        totalCogs,
+        totalOperatingExpenses,
+        grossProfit,
+        netProfit: grossProfit - totalOperatingExpenses,
+      }
+    }, [rows])
 
   function applyPreset(preset: 'this-month' | 'last-month' | 'this-year') {
     const now = new Date()
@@ -110,7 +126,7 @@ export function ProfitLossPage() {
           </Card>
 
           <Card>
-            <CardHeader title="Expenses" />
+            <CardHeader title="Cost of Goods Sold" />
             <CardBody className="p-0">
               <Table>
                 <THead>
@@ -118,16 +134,53 @@ export function ProfitLossPage() {
                   <Th className="text-right">Amount</Th>
                 </THead>
                 <tbody>
-                  {expenses.length === 0 && <EmptyState message="No expense accounts." />}
-                  {expenses.map((r) => (
+                  {cogs.length === 0 && <EmptyState message="No cost of goods sold in this range." />}
+                  {cogs.map((r) => (
                     <Tr key={r.account_id}>
                       <Td>{r.account_name}</Td>
                       <Td className="text-right">{formatMoney(r.amount, currencySymbol)}</Td>
                     </Tr>
                   ))}
                   <Tr className="font-semibold">
-                    <Td>Total expenses</Td>
-                    <Td className="text-right">{formatMoney(totalExpenses, currencySymbol)}</Td>
+                    <Td>Total COGS</Td>
+                    <Td className="text-right">{formatMoney(totalCogs, currencySymbol)}</Td>
+                  </Tr>
+                </tbody>
+              </Table>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <span className="text-base font-semibold text-text">Gross profit</span>
+                <span className={`text-lg font-bold ${grossProfit >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                  {formatMoney(grossProfit, currencySymbol)}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-text-muted">Total income minus Cost of Goods Sold.</p>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader title="Operating Expenses" />
+            <CardBody className="p-0">
+              <Table>
+                <THead>
+                  <Th>Account</Th>
+                  <Th className="text-right">Amount</Th>
+                </THead>
+                <tbody>
+                  {operatingExpenses.length === 0 && <EmptyState message="No operating expense accounts." />}
+                  {operatingExpenses.map((r) => (
+                    <Tr key={r.account_id}>
+                      <Td>{r.account_name}</Td>
+                      <Td className="text-right">{formatMoney(r.amount, currencySymbol)}</Td>
+                    </Tr>
+                  ))}
+                  <Tr className="font-semibold">
+                    <Td>Total operating expenses</Td>
+                    <Td className="text-right">{formatMoney(totalOperatingExpenses, currencySymbol)}</Td>
                   </Tr>
                 </tbody>
               </Table>

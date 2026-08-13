@@ -11,6 +11,7 @@ import { useToast } from '../../components/ui/Toast'
 import { useCategories, useBrands } from '../settings/api'
 import { useSuppliers } from '../suppliers/api'
 import { useItems, useUpdateItem } from './api'
+import { formatMoney } from '../../lib/currency'
 
 interface Edit {
   unit_price: string
@@ -18,7 +19,7 @@ interface Edit {
 }
 
 export function PriceManagerPage() {
-  const { orgId } = useOrg()
+  const { orgId, currencySymbol } = useOrg()
   const toast = useToast()
   const { data: items, isLoading } = useItems(orgId)
   const { data: categories } = useCategories(orgId)
@@ -128,6 +129,7 @@ export function PriceManagerPage() {
               <Th>Category</Th>
               <Th>Brand</Th>
               <Th className="text-right">On hand</Th>
+              <Th className="text-right">Avg. cost</Th>
               <Th className="text-right">Price</Th>
               <Th className="text-right">Reorder at</Th>
             </THead>
@@ -146,6 +148,7 @@ export function PriceManagerPage() {
                     <Td>{item.category_name || '—'}</Td>
                     <Td>{item.brand_name || '—'}</Td>
                     <Td className="text-right">{item.on_hand}</Td>
+                    <Td className="text-right text-text-muted">{formatMoney(item.avg_cost, currencySymbol)}</Td>
                     <Td className="text-right">
                       <Input
                         type="number"

@@ -507,6 +507,7 @@ export type Database = {
           line_total: number
           location_id: string
           quantity: number
+          unit_cost: number | null
           unit_price: number
         }
         Insert: {
@@ -517,6 +518,7 @@ export type Database = {
           line_total: number
           location_id: string
           quantity: number
+          unit_cost?: number | null
           unit_price: number
         }
         Update: {
@@ -527,6 +529,7 @@ export type Database = {
           line_total?: number
           location_id?: string
           quantity?: number
+          unit_cost?: number | null
           unit_price?: number
         }
         Relationships: [
@@ -699,6 +702,7 @@ export type Database = {
       }
       items: {
         Row: {
+          avg_cost: number
           barcode: string | null
           brand_id: string | null
           category_id: string | null
@@ -716,6 +720,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avg_cost?: number
           barcode?: string | null
           brand_id?: string | null
           category_id?: string | null
@@ -733,6 +738,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avg_cost?: number
           barcode?: string | null
           brand_id?: string | null
           category_id?: string | null
@@ -1385,6 +1391,7 @@ export type Database = {
           location_id: string
           quantity: number
           sales_receipt_id: string
+          unit_cost: number | null
           unit_price: number
         }
         Insert: {
@@ -1395,6 +1402,7 @@ export type Database = {
           location_id: string
           quantity: number
           sales_receipt_id: string
+          unit_cost?: number | null
           unit_price: number
         }
         Update: {
@@ -1405,6 +1413,7 @@ export type Database = {
           location_id?: string
           quantity?: number
           sales_receipt_id?: string
+          unit_cost?: number | null
           unit_price?: number
         }
         Relationships: [
@@ -1904,31 +1913,6 @@ export type Database = {
           txn_date: string | null
         }
         Relationships: []
-      }
-      item_average_purchase_price: {
-        Row: {
-          avg_unit_cost: number | null
-          bill_count: number | null
-          item_id: string | null
-          org_id: string | null
-          total_quantity: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "supplier_bill_items_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supplier_bills_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "orgs"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       ledger_account_balances: {
         Row: {
@@ -2459,6 +2443,10 @@ export type Database = {
           p_po_line_id: string
           p_quantity: number
         }
+        Returns: undefined
+      }
+      recompute_item_avg_cost: {
+        Args: { p_item_id: string }
         Returns: undefined
       }
       record_deposit: {

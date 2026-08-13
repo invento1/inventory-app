@@ -4,7 +4,6 @@ import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
 import { formatMoney } from '../../lib/currency'
 import type { Location } from '../../lib/useLocations'
-import type { ItemAveragePurchasePrice } from '../items/api'
 import type { CartLine } from './types'
 
 export function SalesReceiptCartLine({
@@ -14,7 +13,7 @@ export function SalesReceiptCartLine({
   onRemove,
   currencySymbol,
   onHand,
-  avgPurchasePrice,
+  avgCost,
 }: {
   line: CartLine
   locations: Location[]
@@ -22,12 +21,12 @@ export function SalesReceiptCartLine({
   onRemove: () => void
   currencySymbol: string
   onHand: number
-  avgPurchasePrice?: ItemAveragePurchasePrice
+  avgCost?: number
 }) {
   const lineTotal = line.quantity * line.unit_price
-  const priceTitle = avgPurchasePrice
-    ? `Average purchase price: ${formatMoney(avgPurchasePrice.avg_unit_cost, currencySymbol)} (${avgPurchasePrice.bill_count} bill${avgPurchasePrice.bill_count === 1 ? '' : 's'})`
-    : 'No purchase history for this item'
+  const priceTitle = avgCost != null
+    ? `Moving average cost: ${formatMoney(avgCost, currencySymbol)}`
+    : 'No cost data for this item'
 
   return (
     <div className="grid grid-cols-12 items-center gap-3 py-2">

@@ -10,7 +10,7 @@ import { Select } from '../../components/ui/Select'
 import { useToast } from '../../components/ui/Toast'
 import { useCustomers } from '../customers/api'
 import { CustomerForm } from '../customers/CustomerForm'
-import { useItems, useItemAveragePurchasePrices } from '../items/api'
+import { useItems } from '../items/api'
 import { useStockLevels } from '../stock/api'
 import { useLocations } from '../../lib/useLocations'
 import { formatMoney } from '../../lib/currency'
@@ -40,10 +40,10 @@ export function NewInvoicePage() {
   const { data: items } = useItems(orgId)
   const { data: locations } = useLocations(orgId)
   const { data: stockLevels } = useStockLevels(orgId)
-  const { data: avgPurchasePrices } = useItemAveragePurchasePrices(orgId)
   const createInvoice = useCreateInvoice(orgId)
 
   const stockByKey = new Map((stockLevels ?? []).map((s) => [`${s.item_id}:${s.location_id}`, s.quantity]))
+  const avgCostByItem = new Map((items ?? []).map((i) => [i.id, i.avg_cost]))
   const [addingCustomer, setAddingCustomer] = useState(false)
 
   const [customerId, setCustomerId] = useState('')
@@ -192,10 +192,10 @@ export function NewInvoicePage() {
                 const onHand = line.item_id && line.location_id
                   ? (stockByKey.get(`${line.item_id}:${line.location_id}`) ?? 0)
                   : null
-                const avgPrice = line.item_id ? avgPurchasePrices?.get(line.item_id) : undefined
-                const priceTitle = avgPrice
-                  ? `Average purchase price: ${formatMoney(avgPrice.avg_unit_cost, currencySymbol)} (${avgPrice.bill_count} bill${avgPrice.bill_count === 1 ? '' : 's'})`
-                  : 'No purchase history for this item'
+                const avgCost = line.item_id ? avgCostByItem.get(line.item_id) : undefined
+                const priceTitle = avgCost != null
+                  ? `Moving average cost: ${formatMoney(avgCost, currencySymbol)}`
+                  : 'No cost data for this item'
 
                 return (
                   <div key={line.key} className="grid grid-cols-12 items-end gap-3">
