@@ -40,6 +40,7 @@ const navEntries: NavEntry[] = [
   { type: 'leaf', to: '/customers', label: 'Customers', icon: Users },
   { type: 'leaf', to: '/sales', label: 'Sales', icon: ShoppingCart },
   { type: 'leaf', to: '/invoices', label: 'Invoices', icon: FileText },
+  { type: 'leaf', to: '/supplier-bills', label: 'Supplier Bills', icon: FileText },
   {
     type: 'group',
     key: 'account',
@@ -48,6 +49,9 @@ const navEntries: NavEntry[] = [
     children: [
       { to: '/account/capital-matrix', label: 'Capital Matrix' },
       { to: '/account/fiscal-daybook', label: 'Fiscal Daybook' },
+      { to: '/account/customer-payment', label: 'Customer Payment' },
+      { to: '/account/supplier-payment', label: 'Supplier Payment' },
+      { to: '/account/banking', label: 'Banking' },
     ],
   },
   {

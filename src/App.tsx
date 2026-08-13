@@ -21,6 +21,9 @@ import { SalesReceiptDetailPage } from './features/sales/SalesReceiptDetailPage'
 import { InvoicesListPage } from './features/invoices/InvoicesListPage'
 import { NewInvoicePage } from './features/invoices/NewInvoicePage'
 import { InvoiceDetailPage } from './features/invoices/InvoiceDetailPage'
+import { SupplierBillsListPage } from './features/supplier-bills/SupplierBillsListPage'
+import { NewSupplierBillPage } from './features/supplier-bills/NewSupplierBillPage'
+import { SupplierBillDetailPage } from './features/supplier-bills/SupplierBillDetailPage'
 import { CompanyInfoPage } from './features/settings/CompanyInfoPage'
 import { LocationsSettingsPage } from './features/settings/LocationsSettingsPage'
 import { PriceListsPage } from './features/settings/PriceListsPage'
@@ -32,6 +35,9 @@ import { CapitalMatrixPage } from './features/accounts/CapitalMatrixPage'
 import { AccountLedgerPage } from './features/accounts/AccountLedgerPage'
 import { FiscalDaybookPage } from './features/accounts/FiscalDaybookPage'
 import { NewJournalEntryPage } from './features/accounts/NewJournalEntryPage'
+import { CustomerPaymentPage } from './features/accounts/CustomerPaymentPage'
+import { SupplierPaymentPage } from './features/accounts/SupplierPaymentPage'
+import { BankingPage } from './features/accounts/BankingPage'
 
 function App() {
   return (
@@ -67,12 +73,18 @@ function App() {
         <Route path="/invoices" element={<InvoicesListPage />} />
         <Route path="/invoices/new" element={<NewInvoicePage />} />
         <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
+        <Route path="/supplier-bills" element={<SupplierBillsListPage />} />
+        <Route path="/supplier-bills/new" element={<NewSupplierBillPage />} />
+        <Route path="/supplier-bills/:id" element={<SupplierBillDetailPage />} />
 
         <Route path="/account" element={<Navigate to="/account/capital-matrix" replace />} />
         <Route path="/account/capital-matrix" element={<CapitalMatrixPage />} />
         <Route path="/account/capital-matrix/:id" element={<AccountLedgerPage />} />
         <Route path="/account/fiscal-daybook" element={<FiscalDaybookPage />} />
         <Route path="/account/fiscal-daybook/new" element={<NewJournalEntryPage />} />
+        <Route path="/account/customer-payment" element={<CustomerPaymentPage />} />
+        <Route path="/account/supplier-payment" element={<SupplierPaymentPage />} />
+        <Route path="/account/banking" element={<BankingPage />} />
 
         <Route path="/settings" element={<Navigate to="/settings/company-info" replace />} />
         <Route path="/settings/company-info" element={<CompanyInfoPage />} />

@@ -11,6 +11,8 @@ export interface DashboardSummary {
   customer_count: number
   revenue_this_week: number
   revenue_last_week: number
+  outstanding_ap_total: number
+  overdue_bill_count: number
 }
 
 export function useDashboardSummary(orgId: string) {

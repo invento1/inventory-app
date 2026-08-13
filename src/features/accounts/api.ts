@@ -165,6 +165,187 @@ export function useCreateJournalEntry(orgId: string) {
   })
 }
 
+export interface OutstandingInvoiceRow {
+  id: string
+  invoice_number: string
+  due_date: string
+  balance: number
+  is_overdue: boolean
+}
+
+export function useOutstandingInvoicesForCustomer(orgId: string, customerId: string) {
+  return useQuery({
+    queryKey: ['outstanding_invoices', orgId, customerId],
+    enabled: !!customerId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('outstanding_invoices')
+        .select('id, invoice_number, due_date, balance, is_overdue')
+        .eq('org_id', orgId)
+        .eq('customer_id', customerId)
+        .order('due_date')
+      if (error) throw error
+      return (data ?? []) as OutstandingInvoiceRow[]
+    },
+  })
+}
+
+export interface OutstandingBillRow {
+  id: string
+  bill_number: string
+  due_date: string
+  balance: number
+  is_overdue: boolean
+}
+
+export function useOutstandingBillsForSupplier(orgId: string, supplierId: string) {
+  return useQuery({
+    queryKey: ['outstanding_supplier_bills', orgId, supplierId],
+    enabled: !!supplierId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('outstanding_supplier_bills')
+        .select('id, bill_number, due_date, balance, is_overdue')
+        .eq('org_id', orgId)
+        .eq('supplier_id', supplierId)
+        .order('due_date')
+      if (error) throw error
+      return (data ?? []) as OutstandingBillRow[]
+    },
+  })
+}
+
+export interface PaymentAllocation {
+  amount: number
+}
+
+export function useApplyCustomerPayment(orgId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      customerId: string
+      amount: number
+      paymentMethod: string
+      paidAt: string
+      notes: string | null
+      allocations: { invoice_id: string; amount: number }[]
+    }) => {
+      const { error } = await supabase.rpc('apply_customer_payment', {
+        p_org_id: orgId,
+        p_customer_id: input.customerId,
+        p_amount: input.amount,
+        p_payment_method: input.paymentMethod,
+        p_paid_at: input.paidAt,
+        p_notes: input.notes as unknown as string,
+        p_allocations: input.allocations as unknown as Json,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['outstanding_invoices', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['invoices', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['ledger_accounts', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['journal_entries', orgId] })
+    },
+  })
+}
+
+export function useApplySupplierPayment(orgId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      supplierId: string
+      amount: number
+      paymentMethod: string
+      paidAt: string
+      notes: string | null
+      allocations: { bill_id: string; amount: number }[]
+    }) => {
+      const { error } = await supabase.rpc('apply_supplier_payment', {
+        p_org_id: orgId,
+        p_supplier_id: input.supplierId,
+        p_amount: input.amount,
+        p_payment_method: input.paymentMethod,
+        p_paid_at: input.paidAt,
+        p_notes: input.notes as unknown as string,
+        p_allocations: input.allocations as unknown as Json,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['outstanding_supplier_bills', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['supplier_bills', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['ledger_accounts', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['journal_entries', orgId] })
+    },
+  })
+}
+
+export function useCreateFundTransfer(orgId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      fromAccountId: string
+      toAccountId: string
+      amount: number
+      transferDate: string
+      memo: string | null
+    }) => {
+      const { data, error } = await supabase.rpc('create_fund_transfer', {
+        p_org_id: orgId,
+        p_from_account_id: input.fromAccountId,
+        p_to_account_id: input.toAccountId,
+        p_amount: input.amount,
+        p_transfer_date: input.transferDate,
+        p_memo: input.memo as unknown as string,
+      })
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ledger_accounts', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['journal_entries', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['fund_transfers', orgId] })
+    },
+  })
+}
+
+export interface FundTransferRow {
+  id: string
+  entry_date: string
+  entry_number: string
+  memo: string | null
+  lines: { account_name: string; debit: number; credit: number }[]
+}
+
+export function useFundTransfers(orgId: string) {
+  return useQuery({
+    queryKey: ['fund_transfers', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .select('id, entry_date, entry_number, memo, journal_lines(debit, credit, ledger_accounts(name))')
+        .eq('org_id', orgId)
+        .eq('reference_type', 'fund_transfer')
+        .order('entry_date', { ascending: false })
+      if (error) throw error
+      return (data ?? []).map((entry) => ({
+        id: entry.id,
+        entry_date: entry.entry_date,
+        entry_number: entry.entry_number,
+        memo: entry.memo,
+        lines: (entry.journal_lines ?? []).map((l) => ({
+          account_name: l.ledger_accounts?.name ?? '',
+          debit: l.debit,
+          credit: l.credit,
+        })),
+      })) satisfies FundTransferRow[]
+    },
+  })
+}
+
 export interface AccountLedgerLine {
   id: string
   entry_date: string

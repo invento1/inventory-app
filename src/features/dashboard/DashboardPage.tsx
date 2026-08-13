@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Package, AlertTriangle, Receipt, DollarSign, Plus, FileWarning, Users, TrendingUp } from 'lucide-react'
+import { Package, AlertTriangle, Receipt, DollarSign, Plus, FileWarning, Users, TrendingUp, Landmark } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
@@ -125,6 +125,20 @@ export function DashboardPage() {
             icon={TrendingUp}
             tone="bg-surface-muted text-text-muted"
             to="/sales"
+          />
+          <StatCard
+            label="Outstanding AP"
+            value={formatMoney(summary?.outstanding_ap_total ?? 0, currencySymbol)}
+            icon={Landmark}
+            tone="bg-warning-50 text-warning-600"
+            to="/supplier-bills"
+          />
+          <StatCard
+            label="Overdue bills"
+            value={String(summary?.overdue_bill_count ?? 0)}
+            icon={FileWarning}
+            tone="bg-danger-50 text-danger-600"
+            to="/supplier-bills"
           />
         </div>
       )}

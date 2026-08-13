@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -1113,6 +1113,192 @@ export type Database = {
           },
         ]
       }
+      supplier_bill_items: {
+        Row: {
+          bill_id: string
+          created_at: string
+          id: string
+          item_id: string
+          line_total: number
+          location_id: string
+          quantity: number
+          unit_cost: number
+        }
+        Insert: {
+          bill_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          line_total: number
+          location_id: string
+          quantity: number
+          unit_cost: number
+        }
+        Update: {
+          bill_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          line_total?: number
+          location_id?: string
+          quantity?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_bill_items_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "outstanding_supplier_bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_bill_items_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_bill_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_bill_items_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_bill_payments: {
+        Row: {
+          amount: number
+          bill_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          org_id: string
+          paid_at: string
+          payment_method: string
+        }
+        Insert: {
+          amount: number
+          bill_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          org_id: string
+          paid_at?: string
+          payment_method: string
+        }
+        Update: {
+          amount?: number
+          bill_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          org_id?: string
+          paid_at?: string
+          payment_method?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_bill_payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "outstanding_supplier_bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_bill_payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_bill_payments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_bills: {
+        Row: {
+          amount_paid: number
+          bill_number: string
+          created_at: string
+          created_by: string | null
+          due_date: string
+          id: string
+          issue_date: string
+          notes: string | null
+          org_id: string
+          status: string
+          subtotal: number
+          supplier_id: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          bill_number: string
+          created_at?: string
+          created_by?: string | null
+          due_date: string
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          org_id: string
+          status?: string
+          subtotal?: number
+          supplier_id: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          bill_number?: string
+          created_at?: string
+          created_by?: string | null
+          due_date?: string
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          org_id?: string
+          status?: string
+          subtotal?: number
+          supplier_id?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_bills_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_bills_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           contact_email: string | null
@@ -1268,8 +1454,91 @@ export type Database = {
           },
         ]
       }
+      outstanding_supplier_bills: {
+        Row: {
+          amount_paid: number | null
+          balance: number | null
+          bill_number: string | null
+          due_date: string | null
+          id: string | null
+          is_overdue: boolean | null
+          issue_date: string | null
+          org_id: string | null
+          status: string | null
+          supplier_id: string | null
+          supplier_name: string | null
+          total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_bills_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_bills_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      apply_customer_payment: {
+        Args: {
+          p_allocations: Json
+          p_amount: number
+          p_customer_id: string
+          p_notes: string
+          p_org_id: string
+          p_paid_at: string
+          p_payment_method: string
+        }
+        Returns: undefined
+      }
+      apply_supplier_payment: {
+        Args: {
+          p_allocations: Json
+          p_amount: number
+          p_notes: string
+          p_org_id: string
+          p_paid_at: string
+          p_payment_method: string
+          p_supplier_id: string
+        }
+        Returns: undefined
+      }
+      create_fund_transfer: {
+        Args: {
+          p_amount: number
+          p_from_account_id: string
+          p_memo: string
+          p_org_id: string
+          p_to_account_id: string
+          p_transfer_date: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          entry_date: string
+          entry_number: string
+          id: string
+          memo: string | null
+          org_id: string
+          reference_id: string | null
+          reference_type: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "journal_entries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_invoice: {
         Args: {
           p_customer_id: string
@@ -1356,19 +1625,56 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_supplier_bill: {
+        Args: {
+          p_due_date: string
+          p_lines: Json
+          p_notes?: string
+          p_org_id: string
+          p_supplier_id: string
+        }
+        Returns: {
+          amount_paid: number
+          bill_number: string
+          created_at: string
+          created_by: string | null
+          due_date: string
+          id: string
+          issue_date: string
+          notes: string | null
+          org_id: string
+          status: string
+          subtotal: number
+          supplier_id: string
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "supplier_bills"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       dashboard_summary: {
         Args: { p_org_id: string }
         Returns: {
           customer_count: number
           item_count: number
           low_stock_count: number
+          outstanding_ap_total: number
           outstanding_ar_total: number
+          overdue_bill_count: number
           overdue_invoice_count: number
           revenue_last_week: number
           revenue_this_week: number
           today_sales_count: number
           today_sales_total: number
         }[]
+      }
+      get_or_create_default_account: {
+        Args: { p_account_type: string; p_name: string; p_org_id: string }
+        Returns: string
       }
       is_org_member: { Args: { target_org: string }; Returns: boolean }
       next_document_number: {
@@ -1377,6 +1683,33 @@ export type Database = {
       }
       next_item_sku: { Args: { p_org_id: string }; Returns: string }
       org_role: { Args: { target_org: string }; Returns: string }
+      post_journal_entry: {
+        Args: {
+          p_entry_date: string
+          p_lines: Json
+          p_memo: string
+          p_org_id: string
+          p_reference_id: string
+          p_reference_type: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          entry_date: string
+          entry_number: string
+          id: string
+          memo: string | null
+          org_id: string
+          reference_id: string | null
+          reference_type: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "journal_entries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       receive_purchase_order_line: {
         Args: {
           p_location_id: string
@@ -1416,6 +1749,37 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      record_supplier_bill_payment: {
+        Args: {
+          p_amount: number
+          p_bill_id: string
+          p_notes?: string
+          p_paid_at?: string
+          p_payment_method: string
+        }
+        Returns: {
+          amount_paid: number
+          bill_number: string
+          created_at: string
+          created_by: string | null
+          due_date: string
+          id: string
+          issue_date: string
+          notes: string | null
+          org_id: string
+          status: string
+          subtotal: number
+          supplier_id: string
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "supplier_bills"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       void_invoice: {
         Args: { p_invoice_id: string }
         Returns: {
@@ -1437,6 +1801,31 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "invoices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      void_supplier_bill: {
+        Args: { p_bill_id: string }
+        Returns: {
+          amount_paid: number
+          bill_number: string
+          created_at: string
+          created_by: string | null
+          due_date: string
+          id: string
+          issue_date: string
+          notes: string | null
+          org_id: string
+          status: string
+          subtotal: number
+          supplier_id: string
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "supplier_bills"
           isOneToOne: true
           isSetofReturn: false
         }
