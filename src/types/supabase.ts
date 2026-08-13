@@ -2461,6 +2461,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      reset_org_data: {
+        Args: { p_categories: string[]; p_org_id: string }
+        Returns: undefined
+      }
       void_credit_memo: {
         Args: { p_credit_memo_id: string }
         Returns: {

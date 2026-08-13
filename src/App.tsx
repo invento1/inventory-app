@@ -31,6 +31,7 @@ import { CategoriesPage } from './features/settings/CategoriesPage'
 import { BrandsPage } from './features/settings/BrandsPage'
 import { UnitsPage } from './features/settings/UnitsPage'
 import { AreasPage } from './features/settings/AreasPage'
+import { ResetDataPage } from './features/settings/ResetDataPage'
 import { CapitalMatrixPage } from './features/accounts/CapitalMatrixPage'
 import { AccountLedgerPage } from './features/accounts/AccountLedgerPage'
 import { FiscalDaybookPage } from './features/accounts/FiscalDaybookPage'
@@ -145,6 +146,7 @@ function App() {
         <Route path="/settings/brands" element={<BrandsPage />} />
         <Route path="/settings/units" element={<UnitsPage />} />
         <Route path="/settings/areas" element={<AreasPage />} />
+        <Route path="/settings/reset-data" element={<ResetDataPage />} />
       </Route>
     </Routes>
   )

@@ -3,6 +3,57 @@ import { supabase } from '../../lib/supabaseClient'
 import type { Database } from '../../types/supabase'
 import type { Location } from '../../lib/useLocations'
 
+export interface ResetDataCategory {
+  key: string
+  label: string
+  description: string
+}
+
+export const RESET_DATA_CATEGORIES: { group: string; categories: ResetDataCategory[] }[] = [
+  {
+    group: 'Transactions',
+    categories: [
+      { key: 'sales_receipts', label: 'Sales Receipts', description: 'Every walk-in sale' },
+      { key: 'invoices', label: 'Invoices', description: 'Credit sales, their payments, and any deposits built from them' },
+      { key: 'supplier_bills', label: 'Supplier Bills', description: 'Goods received and their payments' },
+      { key: 'purchase_orders', label: 'Purchase Orders', description: 'Every purchase order' },
+      { key: 'quotations', label: 'Quotations', description: 'Every estimate' },
+      { key: 'credit_memos', label: 'Credit Memos', description: 'Every customer credit note' },
+      { key: 'refunds', label: 'Refunds', description: 'Every cash-back record' },
+      { key: 'expenses', label: 'Expenses', description: 'Every recorded expense' },
+      { key: 'inventory_activity', label: 'Inventory Transfers & Adjustments', description: 'Stock moved between locations or manually adjusted' },
+      { key: 'ledger_entries', label: 'Manual Ledger Entries & Fund Transfers', description: 'Fiscal Daybook manual entries and Banking transfers' },
+    ],
+  },
+  {
+    group: 'Master data',
+    categories: [
+      { key: 'items', label: 'Items', description: 'Your entire product catalog' },
+      { key: 'customers', label: 'Customers', description: 'Every customer contact' },
+      { key: 'suppliers', label: 'Suppliers', description: 'Every supplier contact' },
+      { key: 'locations', label: 'Locations', description: 'Every store/warehouse' },
+      { key: 'reference_data', label: 'Categories, Brands, Units & Areas', description: 'Item classification reference lists' },
+      { key: 'chart_of_accounts', label: 'Chart of Accounts', description: 'Every ledger account (Capital Matrix)' },
+    ],
+  },
+]
+
+export function useResetOrgData(orgId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (categories: string[]) => {
+      const { error } = await supabase.rpc('reset_org_data', {
+        p_org_id: orgId,
+        p_categories: categories,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries()
+    },
+  })
+}
+
 export type OrgDetails = Database['public']['Tables']['orgs']['Row']
 export type OrgDetailsInput = Pick<
   Database['public']['Tables']['orgs']['Update'],

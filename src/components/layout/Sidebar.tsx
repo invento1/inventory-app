@@ -99,6 +99,7 @@ const navEntries: NavEntry[] = [
       { type: 'leaf', to: '/settings/brands', label: 'Brands' },
       { type: 'leaf', to: '/settings/units', label: 'Units' },
       { type: 'leaf', to: '/settings/areas', label: 'Regions & Areas' },
+      { type: 'leaf', to: '/settings/reset-data', label: 'Reset Data' },
     ],
   },
 ]
