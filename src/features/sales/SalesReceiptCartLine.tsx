@@ -4,7 +4,7 @@ import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
 import { formatMoney } from '../../lib/currency'
 import type { Location } from '../../lib/useLocations'
-import type { ItemLastPurchasePrice } from '../items/api'
+import type { ItemAveragePurchasePrice } from '../items/api'
 import type { CartLine } from './types'
 
 export function SalesReceiptCartLine({
@@ -14,7 +14,7 @@ export function SalesReceiptCartLine({
   onRemove,
   currencySymbol,
   onHand,
-  lastPurchasePrice,
+  avgPurchasePrice,
 }: {
   line: CartLine
   locations: Location[]
@@ -22,11 +22,11 @@ export function SalesReceiptCartLine({
   onRemove: () => void
   currencySymbol: string
   onHand: number
-  lastPurchasePrice?: ItemLastPurchasePrice
+  avgPurchasePrice?: ItemAveragePurchasePrice
 }) {
   const lineTotal = line.quantity * line.unit_price
-  const priceTitle = lastPurchasePrice
-    ? `Last purchase price: ${formatMoney(lastPurchasePrice.unit_cost, currencySymbol)}`
+  const priceTitle = avgPurchasePrice
+    ? `Average purchase price: ${formatMoney(avgPurchasePrice.avg_unit_cost, currencySymbol)} (${avgPurchasePrice.bill_count} bill${avgPurchasePrice.bill_count === 1 ? '' : 's'})`
     : 'No purchase history for this item'
 
   return (

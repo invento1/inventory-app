@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ScanLine, Search } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { useLocations } from '../../lib/useLocations'
-import { useItems, useItemLastPurchasePrices, type Item } from '../items/api'
+import { useItems, useItemAveragePurchasePrices, type Item } from '../items/api'
 import { useStockLevels } from '../stock/api'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
@@ -24,7 +24,7 @@ export function NewSalesReceiptPage() {
   const { data: items } = useItems(orgId)
   const { data: locations } = useLocations(orgId)
   const { data: stockLevels } = useStockLevels(orgId)
-  const { data: lastPurchasePrices } = useItemLastPurchasePrices(orgId)
+  const { data: avgPurchasePrices } = useItemAveragePurchasePrices(orgId)
   const createReceipt = useCreateSalesReceipt(orgId)
 
   const stockByKey = new Map((stockLevels ?? []).map((s) => [`${s.item_id}:${s.location_id}`, s.quantity]))
@@ -231,7 +231,7 @@ export function NewSalesReceiptPage() {
                       onRemove={() => removeLine(line.key)}
                       currencySymbol={currencySymbol}
                       onHand={stockByKey.get(`${line.item_id}:${line.location_id}`) ?? 0}
-                      lastPurchasePrice={lastPurchasePrices?.get(line.item_id)}
+                      avgPurchasePrice={avgPurchasePrices?.get(line.item_id)}
                     />
                   ))}
                 </div>

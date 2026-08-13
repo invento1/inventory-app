@@ -45,29 +45,36 @@ export function useItems(orgId: string) {
   })
 }
 
-export interface ItemLastPurchasePrice {
-  unit_cost: number
-  purchased_at: string
+export interface ItemAveragePurchasePrice {
+  avg_unit_cost: number
+  total_quantity: number
+  bill_count: number
 }
 
-// Last price paid per item, sourced from whichever is more recent between
-// purchase_order_lines and supplier_bill_items (see item_last_purchase_price
-// view) -- items have no stored cost_price, so this is the closest thing to
-// one. Surfaced as a hover tooltip on the unit price field when creating a
-// sales receipt or invoice, to gauge available discount room.
-export function useItemLastPurchasePrices(orgId: string) {
+// Weighted average cost per item across every non-voided supplier bill
+// (see item_average_purchase_price view) -- items have no stored
+// cost_price, so this is the closest thing to one. Deliberately sourced
+// from supplier_bill_items only, not purchase_order_lines (PO unit_cost is
+// unenforced/display-only, never a real AP document). Surfaced as a hover
+// tooltip on the unit price field when creating a sales receipt or
+// invoice, to gauge available discount room.
+export function useItemAveragePurchasePrices(orgId: string) {
   return useQuery({
-    queryKey: ['item_last_purchase_price', orgId],
+    queryKey: ['item_average_purchase_price', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('item_last_purchase_price')
-        .select('item_id, unit_cost, purchased_at')
+        .from('item_average_purchase_price')
+        .select('item_id, avg_unit_cost, total_quantity, bill_count')
         .eq('org_id', orgId)
       if (error) throw error
-      const map = new Map<string, ItemLastPurchasePrice>()
+      const map = new Map<string, ItemAveragePurchasePrice>()
       for (const row of data ?? []) {
-        if (row.item_id && row.unit_cost != null && row.purchased_at) {
-          map.set(row.item_id, { unit_cost: row.unit_cost, purchased_at: row.purchased_at })
+        if (row.item_id && row.avg_unit_cost != null) {
+          map.set(row.item_id, {
+            avg_unit_cost: row.avg_unit_cost,
+            total_quantity: row.total_quantity ?? 0,
+            bill_count: row.bill_count ?? 0,
+          })
         }
       }
       return map

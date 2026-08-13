@@ -15,10 +15,12 @@ export function CustomerForm({
   orgId,
   customer,
   onClose,
+  onCreated,
 }: {
   orgId: string
   customer?: Customer | null
   onClose: () => void
+  onCreated?: (customer: Customer) => void
 }) {
   const [form, setForm] = useState<CustomerInput>(
     customer
@@ -47,8 +49,9 @@ export function CustomerForm({
         await updateCustomer.mutateAsync({ id: customer.id, input: form })
         toast.success('Customer updated')
       } else {
-        await createCustomer.mutateAsync(form)
+        const created = await createCustomer.mutateAsync(form)
         toast.success('Customer created')
+        onCreated?.(created)
       }
       onClose()
     } catch (err) {

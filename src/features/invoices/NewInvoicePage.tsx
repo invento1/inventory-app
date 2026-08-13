@@ -9,7 +9,8 @@ import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import { useToast } from '../../components/ui/Toast'
 import { useCustomers } from '../customers/api'
-import { useItems, useItemLastPurchasePrices } from '../items/api'
+import { CustomerForm } from '../customers/CustomerForm'
+import { useItems, useItemAveragePurchasePrices } from '../items/api'
 import { useStockLevels } from '../stock/api'
 import { useLocations } from '../../lib/useLocations'
 import { formatMoney } from '../../lib/currency'
@@ -39,10 +40,11 @@ export function NewInvoicePage() {
   const { data: items } = useItems(orgId)
   const { data: locations } = useLocations(orgId)
   const { data: stockLevels } = useStockLevels(orgId)
-  const { data: lastPurchasePrices } = useItemLastPurchasePrices(orgId)
+  const { data: avgPurchasePrices } = useItemAveragePurchasePrices(orgId)
   const createInvoice = useCreateInvoice(orgId)
 
   const stockByKey = new Map((stockLevels ?? []).map((s) => [`${s.item_id}:${s.location_id}`, s.quantity]))
+  const [addingCustomer, setAddingCustomer] = useState(false)
 
   const [customerId, setCustomerId] = useState('')
   const [dueDate, setDueDate] = useState(defaultDueDate())
@@ -151,19 +153,26 @@ export function NewInvoicePage() {
         <Card>
           <CardBody>
             <div className="grid grid-cols-3 gap-4">
-              <Select
-                label="Customer"
-                required
-                value={customerId}
-                onChange={(e) => setCustomerId(e.target.value)}
-              >
-                <option value="">Select a customer…</option>
-                {customers?.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Select
+                    label="Customer"
+                    required
+                    value={customerId}
+                    onChange={(e) => setCustomerId(e.target.value)}
+                  >
+                    <option value="">Select a customer…</option>
+                    {customers?.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <Button type="button" variant="secondary" size="sm" onClick={() => setAddingCustomer(true)}>
+                  <Plus size={14} />
+                </Button>
+              </div>
               <Input
                 label="Due date"
                 type="date"
@@ -183,9 +192,9 @@ export function NewInvoicePage() {
                 const onHand = line.item_id && line.location_id
                   ? (stockByKey.get(`${line.item_id}:${line.location_id}`) ?? 0)
                   : null
-                const lastPrice = line.item_id ? lastPurchasePrices?.get(line.item_id) : undefined
-                const priceTitle = lastPrice
-                  ? `Last purchase price: ${formatMoney(lastPrice.unit_cost, currencySymbol)}`
+                const avgPrice = line.item_id ? avgPurchasePrices?.get(line.item_id) : undefined
+                const priceTitle = avgPrice
+                  ? `Average purchase price: ${formatMoney(avgPrice.avg_unit_cost, currencySymbol)} (${avgPrice.bill_count} bill${avgPrice.bill_count === 1 ? '' : 's'})`
                   : 'No purchase history for this item'
 
                 return (
@@ -276,6 +285,14 @@ export function NewInvoicePage() {
           </Button>
         </div>
       </form>
+
+      {addingCustomer && (
+        <CustomerForm
+          orgId={orgId}
+          onClose={() => setAddingCustomer(false)}
+          onCreated={(created) => setCustomerId(created.id)}
+        />
+      )}
     </div>
   )
 }

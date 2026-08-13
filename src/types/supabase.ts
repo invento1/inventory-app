@@ -1875,14 +1875,30 @@ export type Database = {
         }
         Relationships: []
       }
-      item_last_purchase_price: {
+      item_average_purchase_price: {
         Row: {
+          avg_unit_cost: number | null
+          bill_count: number | null
           item_id: string | null
           org_id: string | null
-          purchased_at: string | null
-          unit_cost: number | null
+          total_quantity: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "supplier_bill_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_bills_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ledger_account_balances: {
         Row: {
