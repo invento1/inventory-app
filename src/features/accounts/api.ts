@@ -3,6 +3,28 @@ import { supabase } from '../../lib/supabaseClient'
 import type { Database, Json } from '../../types/supabase'
 
 export type LedgerAccount = Database['public']['Tables']['ledger_accounts']['Row']
+
+export interface ProfitAndLossRow {
+  account_id: string
+  account_name: string
+  account_type: string
+  amount: number
+}
+
+export function useProfitAndLoss(orgId: string, startDate: string, endDate: string) {
+  return useQuery({
+    queryKey: ['profit_and_loss', orgId, startDate, endDate],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('profit_and_loss', {
+        p_org_id: orgId,
+        p_start_date: startDate,
+        p_end_date: endDate,
+      })
+      if (error) throw error
+      return (data ?? []) as ProfitAndLossRow[]
+    },
+  })
+}
 export type LedgerAccountInput = Pick<
   Database['public']['Tables']['ledger_accounts']['Insert'],
   'name' | 'account_type' | 'parent_account_id' | 'description' | 'is_active'

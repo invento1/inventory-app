@@ -2378,6 +2378,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      profit_and_loss: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          account_id: string
+          account_name: string
+          account_type: string
+          amount: number
+        }[]
+      }
       receive_purchase_order_line: {
         Args: {
           p_location_id: string

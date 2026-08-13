@@ -83,6 +83,7 @@ const navEntries: NavEntry[] = [
         ],
       },
       { type: 'leaf', to: '/account/banking', label: 'Banking' },
+      { type: 'leaf', to: '/account/profit-loss', label: 'Profit & Loss' },
     ],
   },
   {

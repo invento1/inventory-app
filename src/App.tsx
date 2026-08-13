@@ -43,6 +43,7 @@ import { ViewDepositsPage } from './features/accounts/ViewDepositsPage'
 import { PayBillsPage } from './features/accounts/PayBillsPage'
 import { ViewPaidBillsPage } from './features/accounts/ViewPaidBillsPage'
 import { BankingPage } from './features/accounts/BankingPage'
+import { ProfitLossPage } from './features/accounts/ProfitLossPage'
 import { AllTransactionsPage } from './features/transactions/AllTransactionsPage'
 import { InventoryTransfersPage } from './features/inventory/InventoryTransfersPage'
 import { InventoryAdjustmentsPage } from './features/inventory/InventoryAdjustmentsPage'
@@ -121,6 +122,7 @@ function App() {
         <Route path="/account/pay-bills" element={<PayBillsPage />} />
         <Route path="/account/view-paid-bills" element={<ViewPaidBillsPage />} />
         <Route path="/account/banking" element={<BankingPage />} />
+        <Route path="/account/profit-loss" element={<ProfitLossPage />} />
 
         <Route path="/settings" element={<Navigate to="/settings/company-info" replace />} />
         <Route path="/settings/company-info" element={<CompanyInfoPage />} />
