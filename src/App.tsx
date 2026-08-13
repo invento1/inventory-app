@@ -42,6 +42,19 @@ import { ViewDepositsPage } from './features/accounts/ViewDepositsPage'
 import { PayBillsPage } from './features/accounts/PayBillsPage'
 import { ViewPaidBillsPage } from './features/accounts/ViewPaidBillsPage'
 import { BankingPage } from './features/accounts/BankingPage'
+import { AllTransactionsPage } from './features/transactions/AllTransactionsPage'
+import { InventoryTransfersPage } from './features/inventory/InventoryTransfersPage'
+import { InventoryAdjustmentsPage } from './features/inventory/InventoryAdjustmentsPage'
+import { ExpensesListPage } from './features/expenses/ExpensesListPage'
+import { NewExpensePage } from './features/expenses/NewExpensePage'
+import { QuotationsListPage } from './features/quotations/QuotationsListPage'
+import { NewQuotationPage } from './features/quotations/NewQuotationPage'
+import { QuotationDetailPage } from './features/quotations/QuotationDetailPage'
+import { CreditMemosListPage } from './features/credit-memos/CreditMemosListPage'
+import { NewCreditMemoPage } from './features/credit-memos/NewCreditMemoPage'
+import { CreditMemoDetailPage } from './features/credit-memos/CreditMemoDetailPage'
+import { RefundsListPage } from './features/refunds/RefundsListPage'
+import { NewRefundPage } from './features/refunds/NewRefundPage'
 
 function App() {
   return (
@@ -80,6 +93,20 @@ function App() {
         <Route path="/supplier-bills" element={<SupplierBillsListPage />} />
         <Route path="/supplier-bills/new" element={<NewSupplierBillPage />} />
         <Route path="/supplier-bills/:id" element={<SupplierBillDetailPage />} />
+
+        <Route path="/transactions" element={<AllTransactionsPage />} />
+        <Route path="/inventory-transfers" element={<InventoryTransfersPage />} />
+        <Route path="/inventory-adjustments" element={<InventoryAdjustmentsPage />} />
+        <Route path="/expenses" element={<ExpensesListPage />} />
+        <Route path="/expenses/new" element={<NewExpensePage />} />
+        <Route path="/quotations" element={<QuotationsListPage />} />
+        <Route path="/quotations/new" element={<NewQuotationPage />} />
+        <Route path="/quotations/:id" element={<QuotationDetailPage />} />
+        <Route path="/credit-memos" element={<CreditMemosListPage />} />
+        <Route path="/credit-memos/new" element={<NewCreditMemoPage />} />
+        <Route path="/credit-memos/:id" element={<CreditMemoDetailPage />} />
+        <Route path="/refunds" element={<RefundsListPage />} />
+        <Route path="/refunds/new" element={<NewRefundPage />} />
 
         <Route path="/account" element={<Navigate to="/account/capital-matrix" replace />} />
         <Route path="/account/capital-matrix" element={<CapitalMatrixPage />} />

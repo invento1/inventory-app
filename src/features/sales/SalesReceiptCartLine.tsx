@@ -4,6 +4,7 @@ import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
 import { formatMoney } from '../../lib/currency'
 import type { Location } from '../../lib/useLocations'
+import type { ItemLastPurchasePrice } from '../items/api'
 import type { CartLine } from './types'
 
 export function SalesReceiptCartLine({
@@ -12,20 +13,28 @@ export function SalesReceiptCartLine({
   onChange,
   onRemove,
   currencySymbol,
+  onHand,
+  lastPurchasePrice,
 }: {
   line: CartLine
   locations: Location[]
   onChange: (patch: Partial<CartLine>) => void
   onRemove: () => void
   currencySymbol: string
+  onHand: number
+  lastPurchasePrice?: ItemLastPurchasePrice
 }) {
   const lineTotal = line.quantity * line.unit_price
+  const priceTitle = lastPurchasePrice
+    ? `Last purchase price: ${formatMoney(lastPurchasePrice.unit_cost, currencySymbol)}`
+    : 'No purchase history for this item'
 
   return (
     <div className="grid grid-cols-12 items-center gap-3 py-2">
       <div className="col-span-4">
         <p className="text-sm font-medium text-text">{line.item_name}</p>
         <p className="text-xs text-text-muted">{line.item_sku}</p>
+        <p className={`text-xs ${onHand <= 0 ? 'text-danger-600' : 'text-text-muted'}`}>On hand: {onHand}</p>
       </div>
       <div className="col-span-2">
         <Input
@@ -41,6 +50,7 @@ export function SalesReceiptCartLine({
           type="number"
           min="0"
           step="0.01"
+          title={priceTitle}
           value={line.unit_price}
           onChange={(e) => onChange({ unit_price: Number(e.target.value) })}
         />

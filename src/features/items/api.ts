@@ -45,6 +45,36 @@ export function useItems(orgId: string) {
   })
 }
 
+export interface ItemLastPurchasePrice {
+  unit_cost: number
+  purchased_at: string
+}
+
+// Last price paid per item, sourced from whichever is more recent between
+// purchase_order_lines and supplier_bill_items (see item_last_purchase_price
+// view) -- items have no stored cost_price, so this is the closest thing to
+// one. Surfaced as a hover tooltip on the unit price field when creating a
+// sales receipt or invoice, to gauge available discount room.
+export function useItemLastPurchasePrices(orgId: string) {
+  return useQuery({
+    queryKey: ['item_last_purchase_price', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('item_last_purchase_price')
+        .select('item_id, unit_cost, purchased_at')
+        .eq('org_id', orgId)
+      if (error) throw error
+      const map = new Map<string, ItemLastPurchasePrice>()
+      for (const row of data ?? []) {
+        if (row.item_id && row.unit_cost != null && row.purchased_at) {
+          map.set(row.item_id, { unit_cost: row.unit_cost, purchased_at: row.purchased_at })
+        }
+      }
+      return map
+    },
+  })
+}
+
 export function useCreateItem(orgId: string) {
   const queryClient = useQueryClient()
   return useMutation({

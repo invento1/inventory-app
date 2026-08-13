@@ -9,8 +9,10 @@ import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import { useToast } from '../../components/ui/Toast'
 import { useCustomers } from '../customers/api'
-import { useItems } from '../items/api'
+import { useItems, useItemLastPurchasePrices } from '../items/api'
+import { useStockLevels } from '../stock/api'
 import { useLocations } from '../../lib/useLocations'
+import { formatMoney } from '../../lib/currency'
 import { useCreateInvoice, type InvoiceLinePayload } from './api'
 
 interface DraftLine {
@@ -30,13 +32,17 @@ function defaultDueDate() {
 }
 
 export function NewInvoicePage() {
-  const { orgId } = useOrg()
+  const { orgId, currencySymbol } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const { data: customers } = useCustomers(orgId)
   const { data: items } = useItems(orgId)
   const { data: locations } = useLocations(orgId)
+  const { data: stockLevels } = useStockLevels(orgId)
+  const { data: lastPurchasePrices } = useItemLastPurchasePrices(orgId)
   const createInvoice = useCreateInvoice(orgId)
+
+  const stockByKey = new Map((stockLevels ?? []).map((s) => [`${s.item_id}:${s.location_id}`, s.quantity]))
 
   const [customerId, setCustomerId] = useState('')
   const [dueDate, setDueDate] = useState(defaultDueDate())
@@ -173,68 +179,84 @@ export function NewInvoicePage() {
         <Card>
           <CardBody>
             <div className="flex flex-col gap-3">
-              {lines.map((line) => (
-                <div key={line.key} className="grid grid-cols-12 items-end gap-3">
-                  <div className="col-span-4">
-                    <Select
-                      label="Item"
-                      value={line.item_id}
-                      onChange={(e) => selectItem(line.key, e.target.value)}
-                    >
-                      <option value="">Select an item…</option>
-                      {items?.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name} ({item.sku})
-                        </option>
-                      ))}
-                    </Select>
+              {lines.map((line) => {
+                const onHand = line.item_id && line.location_id
+                  ? (stockByKey.get(`${line.item_id}:${line.location_id}`) ?? 0)
+                  : null
+                const lastPrice = line.item_id ? lastPurchasePrices?.get(line.item_id) : undefined
+                const priceTitle = lastPrice
+                  ? `Last purchase price: ${formatMoney(lastPrice.unit_cost, currencySymbol)}`
+                  : 'No purchase history for this item'
+
+                return (
+                  <div key={line.key} className="grid grid-cols-12 items-end gap-3">
+                    <div className="col-span-4">
+                      <Select
+                        label="Item"
+                        value={line.item_id}
+                        onChange={(e) => selectItem(line.key, e.target.value)}
+                      >
+                        <option value="">Select an item…</option>
+                        {items?.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name} ({item.sku})
+                          </option>
+                        ))}
+                      </Select>
+                      {onHand !== null && (
+                        <p className={`mt-1 text-xs ${onHand <= 0 ? 'text-danger-600' : 'text-text-muted'}`}>
+                          On hand: {onHand}
+                        </p>
+                      )}
+                    </div>
+                    <div className="col-span-3">
+                      <Select
+                        label="Location"
+                        value={line.location_id}
+                        onChange={(e) => updateLine(line.key, { location_id: e.target.value })}
+                      >
+                        <option value="">Select a location…</option>
+                        {locations?.map((loc) => (
+                          <option key={loc.id} value={loc.id}>
+                            {loc.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    <div className="col-span-2">
+                      <Input
+                        label="Quantity"
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={line.quantity}
+                        onChange={(e) => updateLine(line.key, { quantity: e.target.value })}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Input
+                        label="Unit price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        title={priceTitle}
+                        value={line.unit_price}
+                        onChange={(e) => updateLine(line.key, { unit_price: e.target.value })}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => removeLine(line.key)}
+                        disabled={lines.length === 1}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="col-span-3">
-                    <Select
-                      label="Location"
-                      value={line.location_id}
-                      onChange={(e) => updateLine(line.key, { location_id: e.target.value })}
-                    >
-                      <option value="">Select a location…</option>
-                      {locations?.map((loc) => (
-                        <option key={loc.id} value={loc.id}>
-                          {loc.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div className="col-span-2">
-                    <Input
-                      label="Quantity"
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={line.quantity}
-                      onChange={(e) => updateLine(line.key, { quantity: e.target.value })}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Input
-                      label="Unit price"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={line.unit_price}
-                      onChange={(e) => updateLine(line.key, { unit_price: e.target.value })}
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => removeLine(line.key)}
-                      disabled={lines.length === 1}
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
               <Button type="button" variant="secondary" className="self-start" onClick={addLine}>
                 <Plus size={16} />
                 Add line

@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { ScanLine, Search } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { useLocations } from '../../lib/useLocations'
-import { useItems, type Item } from '../items/api'
+import { useItems, useItemLastPurchasePrices, type Item } from '../items/api'
+import { useStockLevels } from '../stock/api'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Select } from '../../components/ui/Select'
@@ -22,7 +23,11 @@ export function NewSalesReceiptPage() {
   const toast = useToast()
   const { data: items } = useItems(orgId)
   const { data: locations } = useLocations(orgId)
+  const { data: stockLevels } = useStockLevels(orgId)
+  const { data: lastPurchasePrices } = useItemLastPurchasePrices(orgId)
   const createReceipt = useCreateSalesReceipt(orgId)
+
+  const stockByKey = new Map((stockLevels ?? []).map((s) => [`${s.item_id}:${s.location_id}`, s.quantity]))
 
   const [defaultLocationId, setDefaultLocationId] = useState('')
   const [cart, setCart] = useState<CartLine[]>([])
@@ -225,6 +230,8 @@ export function NewSalesReceiptPage() {
                       onChange={(patch) => updateLine(line.key, patch)}
                       onRemove={() => removeLine(line.key)}
                       currencySymbol={currencySymbol}
+                      onHand={stockByKey.get(`${line.item_id}:${line.location_id}`) ?? 0}
+                      lastPurchasePrice={lastPurchasePrices?.get(line.item_id)}
                     />
                   ))}
                 </div>

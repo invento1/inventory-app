@@ -92,13 +92,19 @@ export function useItemStockMovements(orgId: string, itemId: string) {
 export function useAdjustStock(orgId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { itemId: string; locationId: string; quantityDelta: number }) => {
+    mutationFn: async (input: {
+      itemId: string
+      locationId: string
+      quantityDelta: number
+      notes?: string | null
+    }) => {
       const { error } = await supabase.from('stock_movements').insert({
         org_id: orgId,
         item_id: input.itemId,
         location_id: input.locationId,
         quantity_delta: input.quantityDelta,
         reason: 'adjustment',
+        notes: input.notes ?? null,
       })
       if (error) throw error
     },

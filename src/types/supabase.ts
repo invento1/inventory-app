@@ -148,6 +148,121 @@ export type Database = {
           },
         ]
       }
+      credit_memo_items: {
+        Row: {
+          created_at: string
+          credit_memo_id: string
+          id: string
+          item_id: string
+          line_total: number
+          location_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          credit_memo_id: string
+          id?: string
+          item_id: string
+          line_total: number
+          location_id: string
+          quantity: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          credit_memo_id?: string
+          id?: string
+          item_id?: string
+          line_total?: number
+          location_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_memo_items_credit_memo_id_fkey"
+            columns: ["credit_memo_id"]
+            isOneToOne: false
+            referencedRelation: "credit_memos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_memo_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_memo_items_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_memos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          credit_memo_number: string
+          customer_id: string
+          id: string
+          issue_date: string
+          notes: string | null
+          org_id: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          credit_memo_number: string
+          customer_id: string
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          org_id: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          credit_memo_number?: string
+          customer_id?: string
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          org_id?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_memos_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_memos_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -282,6 +397,103 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          account_id: string | null
+          amount: number
+          category_account_id: string
+          created_at: string
+          created_by: string | null
+          expense_date: string
+          expense_number: string
+          id: string
+          notes: string | null
+          org_id: string
+          payee_name: string | null
+          payee_supplier_id: string | null
+          payment_method: string
+          reference_number: string | null
+          status: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          category_account_id: string
+          created_at?: string
+          created_by?: string | null
+          expense_date?: string
+          expense_number: string
+          id?: string
+          notes?: string | null
+          org_id: string
+          payee_name?: string | null
+          payee_supplier_id?: string | null
+          payment_method: string
+          reference_number?: string | null
+          status?: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          category_account_id?: string
+          created_at?: string
+          created_by?: string | null
+          expense_date?: string
+          expense_number?: string
+          id?: string
+          notes?: string | null
+          org_id?: string
+          payee_name?: string | null
+          payee_supplier_id?: string | null
+          payment_method?: string
+          reference_number?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "expenses_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_category_account_id_fkey"
+            columns: ["category_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "expenses_category_account_id_fkey"
+            columns: ["category_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_payee_supplier_id_fkey"
+            columns: ["payee_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -962,6 +1174,188 @@ export type Database = {
           },
         ]
       }
+      quotation_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          line_total: number
+          quantity: number
+          quotation_id: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          line_total: number
+          quantity: number
+          quotation_id: string
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          line_total?: number
+          quantity?: number
+          quotation_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotation_items_quotation_id_fkey"
+            columns: ["quotation_id"]
+            isOneToOne: false
+            referencedRelation: "quotations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          expiry_date: string | null
+          id: string
+          issue_date: string
+          notes: string | null
+          org_id: string
+          quotation_number: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          org_id: string
+          quotation_number: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          org_id?: string
+          quotation_number?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      refunds: {
+        Row: {
+          account_id: string | null
+          amount: number
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          notes: string | null
+          org_id: string
+          payment_method: string
+          reference_number: string | null
+          refund_date: string
+          refund_number: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          notes?: string | null
+          org_id: string
+          payment_method: string
+          reference_number?: string | null
+          refund_date?: string
+          refund_number: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          notes?: string | null
+          org_id?: string
+          payment_method?: string
+          reference_number?: string | null
+          refund_date?: string
+          refund_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "refunds_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_receipt_items: {
         Row: {
           created_at: string
@@ -1130,6 +1524,7 @@ export type Database = {
           id: string
           item_id: string
           location_id: string
+          notes: string | null
           org_id: string
           quantity_delta: number
           reason: string
@@ -1142,6 +1537,7 @@ export type Database = {
           id?: string
           item_id: string
           location_id: string
+          notes?: string | null
           org_id: string
           quantity_delta: number
           reason: string
@@ -1154,6 +1550,7 @@ export type Database = {
           id?: string
           item_id?: string
           location_id?: string
+          notes?: string | null
           org_id?: string
           quantity_delta?: number
           reason?: string
@@ -1465,6 +1862,28 @@ export type Database = {
       }
     }
     Views: {
+      all_transactions: {
+        Row: {
+          doc_id: string | null
+          doc_number: string | null
+          doc_type: string | null
+          org_id: string | null
+          party_name: string | null
+          status: string | null
+          total: number | null
+          txn_date: string | null
+        }
+        Relationships: []
+      }
+      item_last_purchase_price: {
+        Row: {
+          item_id: string | null
+          org_id: string | null
+          purchased_at: string | null
+          unit_cost: number | null
+        }
+        Relationships: []
+      }
       ledger_account_balances: {
         Row: {
           account_id: string | null
@@ -1606,6 +2025,71 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_credit_memo: {
+        Args: {
+          p_customer_id: string
+          p_lines: Json
+          p_notes?: string
+          p_org_id: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          credit_memo_number: string
+          customer_id: string
+          id: string
+          issue_date: string
+          notes: string | null
+          org_id: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_memos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_expense: {
+        Args: {
+          p_account_id?: string
+          p_amount: number
+          p_category_account_id: string
+          p_expense_date: string
+          p_notes?: string
+          p_org_id: string
+          p_payee_name: string
+          p_payee_supplier_id: string
+          p_payment_method: string
+          p_reference_number?: string
+        }
+        Returns: {
+          account_id: string | null
+          amount: number
+          category_account_id: string
+          created_at: string
+          created_by: string | null
+          expense_date: string
+          expense_number: string
+          id: string
+          notes: string | null
+          org_id: string
+          payee_name: string | null
+          payee_supplier_id: string | null
+          payment_method: string
+          reference_number: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "expenses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_fund_transfer: {
         Args: {
           p_amount: number
@@ -1691,6 +2175,68 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_quotation: {
+        Args: {
+          p_customer_id: string
+          p_expiry_date: string
+          p_lines: Json
+          p_notes?: string
+          p_org_id: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          expiry_date: string | null
+          id: string
+          issue_date: string
+          notes: string | null
+          org_id: string
+          quotation_number: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "quotations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_refund: {
+        Args: {
+          p_account_id?: string
+          p_amount: number
+          p_customer_id: string
+          p_notes?: string
+          p_org_id: string
+          p_payment_method: string
+          p_reference_number?: string
+          p_refund_date?: string
+        }
+        Returns: {
+          account_id: string | null
+          amount: number
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          notes: string | null
+          org_id: string
+          payment_method: string
+          reference_number: string | null
+          refund_date: string
+          refund_number: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "refunds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_sales_receipt: {
         Args: {
           p_customer_id: string
@@ -1718,6 +2264,18 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      create_stock_transfer: {
+        Args: {
+          p_from_location_id: string
+          p_item_id: string
+          p_notes?: string
+          p_org_id: string
+          p_quantity: number
+          p_to_location_id: string
+          p_transfer_date: string
+        }
+        Returns: undefined
       }
       create_supplier_bill: {
         Args: {
@@ -1903,6 +2461,55 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      void_credit_memo: {
+        Args: { p_credit_memo_id: string }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          credit_memo_number: string
+          customer_id: string
+          id: string
+          issue_date: string
+          notes: string | null
+          org_id: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_memos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      void_expense: {
+        Args: { p_expense_id: string }
+        Returns: {
+          account_id: string | null
+          amount: number
+          category_account_id: string
+          created_at: string
+          created_by: string | null
+          expense_date: string
+          expense_number: string
+          id: string
+          notes: string | null
+          org_id: string
+          payee_name: string | null
+          payee_supplier_id: string | null
+          payment_method: string
+          reference_number: string | null
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "expenses"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       void_invoice: {
         Args: { p_invoice_id: string }
         Returns: {
@@ -1924,6 +2531,30 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "invoices"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      void_quotation: {
+        Args: { p_quotation_id: string }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          expiry_date: string | null
+          id: string
+          issue_date: string
+          notes: string | null
+          org_id: string
+          quotation_number: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "quotations"
           isOneToOne: true
           isSetofReturn: false
         }
