@@ -35,8 +35,12 @@ import { CapitalMatrixPage } from './features/accounts/CapitalMatrixPage'
 import { AccountLedgerPage } from './features/accounts/AccountLedgerPage'
 import { FiscalDaybookPage } from './features/accounts/FiscalDaybookPage'
 import { NewJournalEntryPage } from './features/accounts/NewJournalEntryPage'
-import { CustomerPaymentPage } from './features/accounts/CustomerPaymentPage'
-import { SupplierPaymentPage } from './features/accounts/SupplierPaymentPage'
+import { ReceivePaymentPage } from './features/accounts/ReceivePaymentPage'
+import { ViewPaymentsPage } from './features/accounts/ViewPaymentsPage'
+import { RecordDepositPage } from './features/accounts/RecordDepositPage'
+import { ViewDepositsPage } from './features/accounts/ViewDepositsPage'
+import { PayBillsPage } from './features/accounts/PayBillsPage'
+import { ViewPaidBillsPage } from './features/accounts/ViewPaidBillsPage'
 import { BankingPage } from './features/accounts/BankingPage'
 
 function App() {
@@ -82,8 +86,12 @@ function App() {
         <Route path="/account/capital-matrix/:id" element={<AccountLedgerPage />} />
         <Route path="/account/fiscal-daybook" element={<FiscalDaybookPage />} />
         <Route path="/account/fiscal-daybook/new" element={<NewJournalEntryPage />} />
-        <Route path="/account/customer-payment" element={<CustomerPaymentPage />} />
-        <Route path="/account/supplier-payment" element={<SupplierPaymentPage />} />
+        <Route path="/account/receive-payment" element={<ReceivePaymentPage />} />
+        <Route path="/account/view-payments" element={<ViewPaymentsPage />} />
+        <Route path="/account/record-deposit" element={<RecordDepositPage />} />
+        <Route path="/account/view-deposits" element={<ViewDepositsPage />} />
+        <Route path="/account/pay-bills" element={<PayBillsPage />} />
+        <Route path="/account/view-paid-bills" element={<ViewPaidBillsPage />} />
         <Route path="/account/banking" element={<BankingPage />} />
 
         <Route path="/settings" element={<Navigate to="/settings/company-info" replace />} />

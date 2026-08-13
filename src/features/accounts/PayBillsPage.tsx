@@ -1,6 +1,5 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody } from '../../components/ui/Card'
@@ -12,28 +11,65 @@ import { Badge } from '../../components/ui/Badge'
 import { useToast } from '../../components/ui/Toast'
 import { formatMoney } from '../../lib/currency'
 import { useSuppliers } from '../suppliers/api'
-import { useOutstandingBillsForSupplier, useApplySupplierPayment } from './api'
+import { useAllOutstandingBills, useApplySupplierPayment, useLedgerAccounts } from './api'
 
 function today() {
   return new Date().toISOString().slice(0, 10)
 }
 
-export function SupplierPaymentPage() {
+// Same waterfall split as Receive Payment -- ported from the reference
+// app's "Lump sum -> Split" handler.
+function splitEqually(lump: number, balances: number[]): number[] {
+  const alloc = balances.map(() => 0)
+  let remaining = lump
+  let active = balances.map((_, i) => i)
+  while (remaining > 0.005 && active.length > 0) {
+    const share = remaining / active.length
+    let progressed = false
+    const next: number[] = []
+    for (const i of active) {
+      const room = balances[i] - alloc[i]
+      const give = Math.min(share, room)
+      alloc[i] += give
+      remaining -= give
+      if (balances[i] - alloc[i] > 0.005) next.push(i)
+      if (give > 0.0001) progressed = true
+    }
+    active = next
+    if (!progressed) break
+  }
+  return alloc
+}
+
+export function PayBillsPage() {
   const { orgId, currencySymbol } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const { data: suppliers } = useSuppliers(orgId)
+  const { data: allBills, isLoading } = useAllOutstandingBills(orgId)
+  const { data: accounts } = useLedgerAccounts(orgId)
   const applyPayment = useApplySupplierPayment(orgId)
 
-  const [supplierId, setSupplierId] = useState('')
-  const { data: outstanding, isLoading } = useOutstandingBillsForSupplier(orgId, supplierId)
+  const bankAccounts = useMemo(() => (accounts ?? []).filter((a) => a.account_type === 'bank'), [accounts])
 
-  const [amount, setAmount] = useState('')
+  const [supplierId, setSupplierId] = useState('')
+  const [accountId, setAccountId] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [paidAt, setPaidAt] = useState(today())
+  const [referenceNumber, setReferenceNumber] = useState('')
   const [notes, setNotes] = useState('')
+  const [lumpSum, setLumpSum] = useState('')
   const [allocations, setAllocations] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
+
+  const bills = useMemo(
+    () => (allBills ?? []).filter((b) => !supplierId || b.supplier_id === supplierId),
+    [allBills, supplierId],
+  )
+
+  const selectedAccount = accounts?.find((a) => a.id === accountId)
+  const allocatedTotal = Object.values(allocations).reduce((sum, v) => sum + (Number(v) || 0), 0)
+  const endingBalance = selectedAccount ? selectedAccount.balance - allocatedTotal : null
 
   function toggleBill(billId: string, balance: number, checked: boolean) {
     setAllocations((current) => {
@@ -51,48 +87,60 @@ export function SupplierPaymentPage() {
     setAllocations((current) => ({ ...current, [billId]: value }))
   }
 
-  const allocatedTotal = Object.values(allocations).reduce((sum, v) => sum + (Number(v) || 0), 0)
-  const amountNum = Number(amount) || 0
-  const outBy = Math.round((amountNum - allocatedTotal) * 100) / 100
-  const balanced = allocatedTotal > 0 && Math.abs(outBy) < 0.005
+  function handleSplit() {
+    const lump = Number(lumpSum) || 0
+    if (lump <= 0) {
+      toast.error('Enter a lump sum amount first.')
+      return
+    }
+    if (bills.length === 0) {
+      toast.error('No open bills to split across.')
+      return
+    }
+    const shares = splitEqually(
+      lump,
+      bills.map((b) => b.balance),
+    )
+    const next: Record<string, string> = {}
+    bills.forEach((b, i) => {
+      if (shares[i] > 0) next[b.id] = shares[i].toFixed(2)
+    })
+    setAllocations(next)
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
 
     if (!supplierId) {
-      setError('Choose a supplier.')
+      setError('Choose which supplier you’re paying.')
       return
     }
-    if (!amountNum || amountNum <= 0) {
-      setError('Enter a payment amount greater than zero.')
+    if (!accountId) {
+      setError('Select the account to pay from.')
       return
     }
     const allocationEntries = Object.entries(allocations)
       .map(([bill_id, v]) => ({ bill_id, amount: Number(v) || 0 }))
       .filter((a) => a.amount > 0)
     if (allocationEntries.length === 0) {
-      setError('Check at least one bill to apply this payment to.')
-      return
-    }
-    if (!balanced) {
-      setError(`Allocated amounts must add up to the payment amount (out by ${formatMoney(Math.abs(outBy), currencySymbol)}).`)
+      setError('Tick at least one bill, or enter a lump sum and click Split.')
       return
     }
 
     try {
       await applyPayment.mutateAsync({
         supplierId,
-        amount: amountNum,
+        amount: allocatedTotal,
         paymentMethod,
         paidAt,
         notes: notes || null,
+        referenceNumber: referenceNumber || null,
+        accountId,
         allocations: allocationEntries,
       })
-      toast.success('Payment applied')
-      setAmount('')
-      setAllocations({})
-      navigate('/supplier-bills')
+      toast.success('Payment recorded')
+      navigate('/account/view-paid-bills')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     }
@@ -100,35 +148,21 @@ export function SupplierPaymentPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Supplier payment"
-        subtitle="Apply one payment across a supplier's open bills"
-        action={
-          <button
-            type="button"
-            onClick={() => navigate('/account/capital-matrix')}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-text"
-          >
-            <ArrowLeft size={16} />
-            Back
-          </button>
-        }
-      />
+      <PageHeader title="Pay bills" subtitle="Pay a supplier's open bills from a chosen account" />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Card>
           <CardBody>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <Select
-                label="Supplier"
-                required
+                label="Pay to"
                 value={supplierId}
                 onChange={(e) => {
                   setSupplierId(e.target.value)
                   setAllocations({})
                 }}
               >
-                <option value="">Select a supplier…</option>
+                <option value="">General (all suppliers)</option>
                 {suppliers?.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -136,14 +170,35 @@ export function SupplierPaymentPage() {
                 ))}
               </Select>
               <Input
-                label="Amount"
-                type="number"
-                min="0"
-                step="0.01"
+                label="Date"
+                type="date"
                 required
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                value={paidAt}
+                onChange={(e) => setPaidAt(e.target.value)}
               />
+              <div className="flex flex-col gap-1">
+                <Select
+                  label="Account"
+                  required
+                  value={accountId}
+                  onChange={(e) => setAccountId(e.target.value)}
+                >
+                  <option value="">Select an account…</option>
+                  {bankAccounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </Select>
+                {selectedAccount && endingBalance !== null && (
+                  <span className="text-xs text-text-muted">
+                    Balance {formatMoney(selectedAccount.balance, currencySymbol)} → ending{' '}
+                    {formatMoney(endingBalance, currencySymbol)}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-4">
               <Select
                 label="Payment method"
                 value={paymentMethod}
@@ -155,39 +210,32 @@ export function SupplierPaymentPage() {
                 <option value="other">Other</option>
               </Select>
               <Input
-                label="Date"
-                type="date"
-                required
-                value={paidAt}
-                onChange={(e) => setPaidAt(e.target.value)}
+                label="Reference no."
+                value={referenceNumber}
+                onChange={(e) => setReferenceNumber(e.target.value)}
               />
-            </div>
-            <div className="mt-4">
-              <Input label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+              <Input label="Memo" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
           </CardBody>
         </Card>
 
         <Card>
           <CardBody className="p-0">
-            {!supplierId ? (
-              <div className="p-6 text-sm text-text-muted">Choose a supplier to see their open bills.</div>
-            ) : isLoading ? (
+            {isLoading ? (
               <div className="p-6 text-sm text-text-muted">Loading…</div>
             ) : (
               <Table>
                 <THead>
                   <Th></Th>
                   <Th>Bill #</Th>
+                  <Th>Supplier</Th>
                   <Th>Due date</Th>
                   <Th className="text-right">Balance</Th>
-                  <Th className="text-right">Apply</Th>
+                  <Th className="text-right">Amount to pay</Th>
                 </THead>
                 <tbody>
-                  {(!outstanding || outstanding.length === 0) && (
-                    <EmptyState message="No open bills for this supplier." />
-                  )}
-                  {outstanding?.map((bill) => {
+                  {bills.length === 0 && <EmptyState message="No open bills." />}
+                  {bills.map((bill) => {
                     const checked = bill.id in allocations
                     return (
                       <Tr key={bill.id}>
@@ -199,6 +247,7 @@ export function SupplierPaymentPage() {
                           />
                         </Td>
                         <Td className="font-medium">{bill.bill_number}</Td>
+                        <Td>{bill.supplier_name}</Td>
                         <Td>
                           {bill.due_date} {bill.is_overdue && <Badge tone="danger">Overdue</Badge>}
                         </Td>
@@ -220,13 +269,22 @@ export function SupplierPaymentPage() {
                 </tbody>
               </Table>
             )}
-            <div className="flex items-center justify-end gap-4 border-t border-border p-4 text-sm">
-              <span className="text-text-muted">
-                Allocated {formatMoney(allocatedTotal, currencySymbol)} of {formatMoney(amountNum, currencySymbol)}
+            <div className="flex items-center justify-end gap-3 border-t border-border p-4 text-sm">
+              <span className="text-text-muted">Lump sum (split equally)</span>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                className="w-32"
+                value={lumpSum}
+                onChange={(e) => setLumpSum(e.target.value)}
+              />
+              <Button type="button" variant="secondary" size="sm" onClick={handleSplit}>
+                Split
+              </Button>
+              <span className="ml-4 font-semibold text-text">
+                Total to pay: {formatMoney(allocatedTotal, currencySymbol)}
               </span>
-              <Badge tone={balanced ? 'success' : 'danger'}>
-                {balanced ? 'Balanced' : `Out by ${formatMoney(Math.abs(outBy), currencySymbol)}`}
-              </Badge>
             </div>
           </CardBody>
         </Card>
@@ -235,7 +293,7 @@ export function SupplierPaymentPage() {
 
         <div className="flex justify-end gap-2">
           <Button type="submit" disabled={applyPayment.isPending}>
-            {applyPayment.isPending ? 'Applying…' : 'Apply payment'}
+            {applyPayment.isPending ? 'Paying…' : 'Pay bills'}
           </Button>
         </div>
       </form>

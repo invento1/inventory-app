@@ -215,6 +215,28 @@ export function useOutstandingBillsForSupplier(orgId: string, supplierId: string
   })
 }
 
+export interface OutstandingBillWithSupplierRow extends OutstandingBillRow {
+  supplier_id: string
+  supplier_name: string
+}
+
+// All open bills org-wide, for Pay Bills' "General (all suppliers)" mode --
+// filtered client-side to one supplier when one is selected.
+export function useAllOutstandingBills(orgId: string) {
+  return useQuery({
+    queryKey: ['outstanding_supplier_bills', orgId, 'all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('outstanding_supplier_bills')
+        .select('id, bill_number, supplier_id, supplier_name, due_date, balance, is_overdue')
+        .eq('org_id', orgId)
+        .order('due_date')
+      if (error) throw error
+      return (data ?? []) as OutstandingBillWithSupplierRow[]
+    },
+  })
+}
+
 export interface PaymentAllocation {
   amount: number
 }
@@ -228,6 +250,7 @@ export function useApplyCustomerPayment(orgId: string) {
       paymentMethod: string
       paidAt: string
       notes: string | null
+      referenceNumber: string | null
       allocations: { invoice_id: string; amount: number }[]
     }) => {
       const { error } = await supabase.rpc('apply_customer_payment', {
@@ -238,12 +261,15 @@ export function useApplyCustomerPayment(orgId: string) {
         p_paid_at: input.paidAt,
         p_notes: input.notes as unknown as string,
         p_allocations: input.allocations as unknown as Json,
+        p_reference_number: input.referenceNumber as unknown as string,
       })
       if (error) throw error
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['outstanding_invoices', orgId] })
       queryClient.invalidateQueries({ queryKey: ['invoices', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['invoice_payments', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['undeposited_payments', orgId] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', orgId] })
       queryClient.invalidateQueries({ queryKey: ['ledger_accounts', orgId] })
       queryClient.invalidateQueries({ queryKey: ['journal_entries', orgId] })
@@ -260,6 +286,8 @@ export function useApplySupplierPayment(orgId: string) {
       paymentMethod: string
       paidAt: string
       notes: string | null
+      referenceNumber: string | null
+      accountId: string | null
       allocations: { bill_id: string; amount: number }[]
     }) => {
       const { error } = await supabase.rpc('apply_supplier_payment', {
@@ -270,12 +298,15 @@ export function useApplySupplierPayment(orgId: string) {
         p_paid_at: input.paidAt,
         p_notes: input.notes as unknown as string,
         p_allocations: input.allocations as unknown as Json,
+        p_account_id: input.accountId as unknown as string,
+        p_reference_number: input.referenceNumber as unknown as string,
       })
       if (error) throw error
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['outstanding_supplier_bills', orgId] })
       queryClient.invalidateQueries({ queryKey: ['supplier_bills', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['supplier_bill_payments', orgId] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', orgId] })
       queryClient.invalidateQueries({ queryKey: ['ledger_accounts', orgId] })
       queryClient.invalidateQueries({ queryKey: ['journal_entries', orgId] })
@@ -405,6 +436,193 @@ export function useAccountLedger(orgId: string, accountId: string) {
       })
 
       return { account: account as LedgerAccount, lines: ledgerLines }
+    },
+  })
+}
+
+export interface InvoicePaymentRow {
+  id: string
+  paid_at: string
+  amount: number
+  payment_method: string
+  reference_number: string | null
+  deposit_id: string | null
+  invoice_id: string
+  invoice_number: string
+  customer_name: string
+}
+
+export function useInvoicePayments(orgId: string) {
+  return useQuery({
+    queryKey: ['invoice_payments', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invoice_payments')
+        .select(
+          'id, paid_at, amount, payment_method, reference_number, deposit_id, invoice_id, invoices(invoice_number, customers(name))',
+        )
+        .eq('org_id', orgId)
+        .order('paid_at', { ascending: false })
+      if (error) throw error
+      return (data ?? []).map((p) => ({
+        id: p.id,
+        paid_at: p.paid_at,
+        amount: p.amount,
+        payment_method: p.payment_method,
+        reference_number: p.reference_number,
+        deposit_id: p.deposit_id,
+        invoice_id: p.invoice_id,
+        invoice_number: p.invoices?.invoice_number ?? '',
+        customer_name: p.invoices?.customers?.name ?? '',
+      })) satisfies InvoicePaymentRow[]
+    },
+  })
+}
+
+export function useUndepositedPayments(orgId: string) {
+  return useQuery({
+    queryKey: ['undeposited_payments', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invoice_payments')
+        .select('id, paid_at, amount, reference_number, invoices(invoice_number, customers(name))')
+        .eq('org_id', orgId)
+        .is('deposit_id', null)
+        .order('paid_at')
+      if (error) throw error
+      return (data ?? []).map((p) => ({
+        id: p.id,
+        paid_at: p.paid_at,
+        amount: p.amount,
+        reference_number: p.reference_number,
+        invoice_number: p.invoices?.invoice_number ?? '',
+        customer_name: p.invoices?.customers?.name ?? '',
+      }))
+    },
+  })
+}
+
+export type Deposit = Database['public']['Tables']['deposits']['Row']
+
+export interface DepositRow extends Deposit {
+  account_name: string
+}
+
+export function useDeposits(orgId: string) {
+  return useQuery({
+    queryKey: ['deposits', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('deposits')
+        .select('*, ledger_accounts(name)')
+        .eq('org_id', orgId)
+        .order('deposit_date', { ascending: false })
+      if (error) throw error
+      return (data ?? []).map((d) => ({
+        ...d,
+        account_name: d.ledger_accounts?.name ?? '',
+      })) satisfies DepositRow[]
+    },
+  })
+}
+
+export function useDeposit(orgId: string, id: string) {
+  return useQuery({
+    queryKey: ['deposit', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data: deposit, error: depositError } = await supabase
+        .from('deposits')
+        .select('*, ledger_accounts(name)')
+        .eq('id', id)
+        .eq('org_id', orgId)
+        .single()
+      if (depositError) throw depositError
+
+      const { data: payments, error: paymentsError } = await supabase
+        .from('invoice_payments')
+        .select('id, amount, reference_number, invoices(invoice_number, customers(name))')
+        .eq('deposit_id', id)
+      if (paymentsError) throw paymentsError
+
+      return {
+        deposit: deposit as Deposit & { ledger_accounts: { name: string } | null },
+        payments: (payments ?? []).map((p) => ({
+          id: p.id,
+          amount: p.amount,
+          reference_number: p.reference_number,
+          invoice_number: p.invoices?.invoice_number ?? '',
+          customer_name: p.invoices?.customers?.name ?? '',
+        })),
+      }
+    },
+  })
+}
+
+export function useRecordDeposit(orgId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      accountId: string
+      depositDate: string
+      memo: string | null
+      paymentIds: string[]
+    }) => {
+      const { data, error } = await supabase.rpc('record_deposit', {
+        p_org_id: orgId,
+        p_account_id: input.accountId,
+        p_deposit_date: input.depositDate,
+        p_memo: input.memo as unknown as string,
+        p_payment_ids: input.paymentIds,
+      })
+      if (error) throw error
+      return data as Deposit
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['undeposited_payments', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['invoice_payments', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['deposits', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['ledger_accounts', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['journal_entries', orgId] })
+    },
+  })
+}
+
+export interface SupplierBillPaymentRow {
+  id: string
+  paid_at: string
+  amount: number
+  payment_method: string
+  reference_number: string | null
+  bill_id: string
+  bill_number: string
+  supplier_name: string
+  account_name: string
+}
+
+export function useSupplierBillPayments(orgId: string) {
+  return useQuery({
+    queryKey: ['supplier_bill_payments', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('supplier_bill_payments')
+        .select(
+          'id, paid_at, amount, payment_method, reference_number, bill_id, supplier_bills(bill_number, suppliers(name)), ledger_accounts(name)',
+        )
+        .eq('org_id', orgId)
+        .order('paid_at', { ascending: false })
+      if (error) throw error
+      return (data ?? []).map((p) => ({
+        id: p.id,
+        paid_at: p.paid_at,
+        amount: p.amount,
+        payment_method: p.payment_method,
+        reference_number: p.reference_number,
+        bill_id: p.bill_id,
+        bill_number: p.supplier_bills?.bill_number ?? '',
+        supplier_name: p.supplier_bills?.suppliers?.name ?? '',
+        account_name: p.ledger_accounts?.name ?? '',
+      })) satisfies SupplierBillPaymentRow[]
     },
   })
 }

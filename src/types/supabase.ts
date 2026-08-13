@@ -202,6 +202,64 @@ export type Database = {
           },
         ]
       }
+      deposits: {
+        Row: {
+          account_id: string
+          created_at: string
+          created_by: string | null
+          deposit_date: string
+          deposit_number: string
+          id: string
+          memo: string | null
+          org_id: string
+          total: number
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          created_by?: string | null
+          deposit_date?: string
+          deposit_number: string
+          id?: string
+          memo?: string | null
+          org_id: string
+          total?: number
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          created_by?: string | null
+          deposit_date?: string
+          deposit_number?: string
+          id?: string
+          memo?: string | null
+          org_id?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deposits_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "deposits_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposits_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doc_number_counters: {
         Row: {
           doc_type: string
@@ -295,36 +353,49 @@ export type Database = {
           amount: number
           created_at: string
           created_by: string | null
+          deposit_id: string | null
           id: string
           invoice_id: string
           notes: string | null
           org_id: string
           paid_at: string
           payment_method: string
+          reference_number: string | null
         }
         Insert: {
           amount: number
           created_at?: string
           created_by?: string | null
+          deposit_id?: string | null
           id?: string
           invoice_id: string
           notes?: string | null
           org_id: string
           paid_at?: string
           payment_method: string
+          reference_number?: string | null
         }
         Update: {
           amount?: number
           created_at?: string
           created_by?: string | null
+          deposit_id?: string | null
           id?: string
           invoice_id?: string
           notes?: string | null
           org_id?: string
           paid_at?: string
           payment_method?: string
+          reference_number?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "invoice_payments_deposit_id_fkey"
+            columns: ["deposit_id"]
+            isOneToOne: false
+            referencedRelation: "deposits"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invoice_payments_invoice_id_fkey"
             columns: ["invoice_id"]
@@ -1177,6 +1248,7 @@ export type Database = {
       }
       supplier_bill_payments: {
         Row: {
+          account_id: string | null
           amount: number
           bill_id: string
           created_at: string
@@ -1186,8 +1258,10 @@ export type Database = {
           org_id: string
           paid_at: string
           payment_method: string
+          reference_number: string | null
         }
         Insert: {
+          account_id?: string | null
           amount: number
           bill_id: string
           created_at?: string
@@ -1197,8 +1271,10 @@ export type Database = {
           org_id: string
           paid_at?: string
           payment_method: string
+          reference_number?: string | null
         }
         Update: {
+          account_id?: string | null
           amount?: number
           bill_id?: string
           created_at?: string
@@ -1208,8 +1284,23 @@ export type Database = {
           org_id?: string
           paid_at?: string
           payment_method?: string
+          reference_number?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "supplier_bill_payments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "supplier_bill_payments_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "supplier_bill_payments_bill_id_fkey"
             columns: ["bill_id"]
@@ -1497,17 +1588,20 @@ export type Database = {
           p_org_id: string
           p_paid_at: string
           p_payment_method: string
+          p_reference_number?: string
         }
         Returns: undefined
       }
       apply_supplier_payment: {
         Args: {
+          p_account_id?: string
           p_allocations: Json
           p_amount: number
           p_notes: string
           p_org_id: string
           p_paid_at: string
           p_payment_method: string
+          p_reference_number?: string
           p_supplier_id: string
         }
         Returns: undefined
@@ -1718,6 +1812,32 @@ export type Database = {
         }
         Returns: undefined
       }
+      record_deposit: {
+        Args: {
+          p_account_id: string
+          p_deposit_date: string
+          p_memo: string
+          p_org_id: string
+          p_payment_ids: string[]
+        }
+        Returns: {
+          account_id: string
+          created_at: string
+          created_by: string | null
+          deposit_date: string
+          deposit_number: string
+          id: string
+          memo: string | null
+          org_id: string
+          total: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "deposits"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       record_invoice_payment: {
         Args: {
           p_amount: number
@@ -1725,6 +1845,7 @@ export type Database = {
           p_notes?: string
           p_paid_at?: string
           p_payment_method: string
+          p_reference_number?: string
         }
         Returns: {
           amount_paid: number
@@ -1751,11 +1872,13 @@ export type Database = {
       }
       record_supplier_bill_payment: {
         Args: {
+          p_account_id?: string
           p_amount: number
           p_bill_id: string
           p_notes?: string
           p_paid_at?: string
           p_payment_method: string
+          p_reference_number?: string
         }
         Returns: {
           amount_paid: number

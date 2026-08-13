@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody } from '../../components/ui/Card'
@@ -18,7 +17,33 @@ function today() {
   return new Date().toISOString().slice(0, 10)
 }
 
-export function CustomerPaymentPage() {
+// Splits a lump sum equally across every open invoice, capped at each
+// invoice's own balance, rolling any remainder forward to the invoices
+// that still have room -- ported from the reference app's "Lump sum ->
+// Split" waterfall algorithm.
+function splitEqually(lump: number, balances: number[]): number[] {
+  const alloc = balances.map(() => 0)
+  let remaining = lump
+  let active = balances.map((_, i) => i)
+  while (remaining > 0.005 && active.length > 0) {
+    const share = remaining / active.length
+    let progressed = false
+    const next: number[] = []
+    for (const i of active) {
+      const room = balances[i] - alloc[i]
+      const give = Math.min(share, room)
+      alloc[i] += give
+      remaining -= give
+      if (balances[i] - alloc[i] > 0.005) next.push(i)
+      if (give > 0.0001) progressed = true
+    }
+    active = next
+    if (!progressed) break
+  }
+  return alloc
+}
+
+export function ReceivePaymentPage() {
   const { orgId, currencySymbol } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
@@ -28,10 +53,11 @@ export function CustomerPaymentPage() {
   const [customerId, setCustomerId] = useState('')
   const { data: outstanding, isLoading } = useOutstandingInvoicesForCustomer(orgId, customerId)
 
-  const [amount, setAmount] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [paidAt, setPaidAt] = useState(today())
+  const [referenceNumber, setReferenceNumber] = useState('')
   const [notes, setNotes] = useState('')
+  const [lumpSum, setLumpSum] = useState('')
   const [allocations, setAllocations] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
 
@@ -51,10 +77,28 @@ export function CustomerPaymentPage() {
     setAllocations((current) => ({ ...current, [invoiceId]: value }))
   }
 
+  function handleSplit() {
+    const lump = Number(lumpSum) || 0
+    if (lump <= 0) {
+      toast.error('Enter a lump sum amount first.')
+      return
+    }
+    if (!outstanding || outstanding.length === 0) {
+      toast.error('Select a customer with open invoices.')
+      return
+    }
+    const shares = splitEqually(
+      lump,
+      outstanding.map((inv) => inv.balance),
+    )
+    const next: Record<string, string> = {}
+    outstanding.forEach((inv, i) => {
+      if (shares[i] > 0) next[inv.id] = shares[i].toFixed(2)
+    })
+    setAllocations(next)
+  }
+
   const allocatedTotal = Object.values(allocations).reduce((sum, v) => sum + (Number(v) || 0), 0)
-  const amountNum = Number(amount) || 0
-  const outBy = Math.round((amountNum - allocatedTotal) * 100) / 100
-  const balanced = allocatedTotal > 0 && Math.abs(outBy) < 0.005
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -64,35 +108,26 @@ export function CustomerPaymentPage() {
       setError('Choose a customer.')
       return
     }
-    if (!amountNum || amountNum <= 0) {
-      setError('Enter a payment amount greater than zero.')
-      return
-    }
     const allocationEntries = Object.entries(allocations)
       .map(([invoice_id, v]) => ({ invoice_id, amount: Number(v) || 0 }))
       .filter((a) => a.amount > 0)
     if (allocationEntries.length === 0) {
-      setError('Check at least one invoice to apply this payment to.')
-      return
-    }
-    if (!balanced) {
-      setError(`Allocated amounts must add up to the payment amount (out by ${formatMoney(Math.abs(outBy), currencySymbol)}).`)
+      setError('Tick at least one invoice, or enter a lump sum and click Split.')
       return
     }
 
     try {
       await applyPayment.mutateAsync({
         customerId,
-        amount: amountNum,
+        amount: allocatedTotal,
         paymentMethod,
         paidAt,
         notes: notes || null,
+        referenceNumber: referenceNumber || null,
         allocations: allocationEntries,
       })
-      toast.success('Payment applied')
-      setAmount('')
-      setAllocations({})
-      navigate('/invoices')
+      toast.success('Payment recorded')
+      navigate('/account/view-payments')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     }
@@ -100,27 +135,14 @@ export function CustomerPaymentPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Customer payment"
-        subtitle="Apply one payment across a customer's open invoices"
-        action={
-          <button
-            type="button"
-            onClick={() => navigate('/account/capital-matrix')}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-text"
-          >
-            <ArrowLeft size={16} />
-            Back
-          </button>
-        }
-      />
+      <PageHeader title="Receive payment" subtitle="Record a customer payment against their open invoices" />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Card>
           <CardBody>
             <div className="grid grid-cols-4 gap-4">
               <Select
-                label="Customer"
+                label="Received from"
                 required
                 value={customerId}
                 onChange={(e) => {
@@ -136,13 +158,11 @@ export function CustomerPaymentPage() {
                 ))}
               </Select>
               <Input
-                label="Amount"
-                type="number"
-                min="0"
-                step="0.01"
+                label="Date"
+                type="date"
                 required
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                value={paidAt}
+                onChange={(e) => setPaidAt(e.target.value)}
               />
               <Select
                 label="Payment method"
@@ -155,15 +175,13 @@ export function CustomerPaymentPage() {
                 <option value="other">Other</option>
               </Select>
               <Input
-                label="Date"
-                type="date"
-                required
-                value={paidAt}
-                onChange={(e) => setPaidAt(e.target.value)}
+                label="Reference no."
+                value={referenceNumber}
+                onChange={(e) => setReferenceNumber(e.target.value)}
               />
             </div>
             <div className="mt-4">
-              <Input label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+              <Input label="Memo" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
           </CardBody>
         </Card>
@@ -181,7 +199,7 @@ export function CustomerPaymentPage() {
                   <Th>Invoice #</Th>
                   <Th>Due date</Th>
                   <Th className="text-right">Balance</Th>
-                  <Th className="text-right">Apply</Th>
+                  <Th className="text-right">Amount to pay</Th>
                 </THead>
                 <tbody>
                   {(!outstanding || outstanding.length === 0) && (
@@ -220,13 +238,22 @@ export function CustomerPaymentPage() {
                 </tbody>
               </Table>
             )}
-            <div className="flex items-center justify-end gap-4 border-t border-border p-4 text-sm">
-              <span className="text-text-muted">
-                Allocated {formatMoney(allocatedTotal, currencySymbol)} of {formatMoney(amountNum, currencySymbol)}
+            <div className="flex items-center justify-end gap-3 border-t border-border p-4 text-sm">
+              <span className="text-text-muted">Lump sum (split equally)</span>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                className="w-32"
+                value={lumpSum}
+                onChange={(e) => setLumpSum(e.target.value)}
+              />
+              <Button type="button" variant="secondary" size="sm" onClick={handleSplit}>
+                Split
+              </Button>
+              <span className="ml-4 font-semibold text-text">
+                Total received: {formatMoney(allocatedTotal, currencySymbol)}
               </span>
-              <Badge tone={balanced ? 'success' : 'danger'}>
-                {balanced ? 'Balanced' : `Out by ${formatMoney(Math.abs(outBy), currencySymbol)}`}
-              </Badge>
             </div>
           </CardBody>
         </Card>
@@ -235,7 +262,7 @@ export function CustomerPaymentPage() {
 
         <div className="flex justify-end gap-2">
           <Button type="submit" disabled={applyPayment.isPending}>
-            {applyPayment.isPending ? 'Applying…' : 'Apply payment'}
+            {applyPayment.isPending ? 'Recording…' : 'Receive payment'}
           </Button>
         </div>
       </form>
