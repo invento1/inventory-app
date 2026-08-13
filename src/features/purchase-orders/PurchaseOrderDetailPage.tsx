@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -13,7 +13,13 @@ import { PageSpinner } from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
 import { useLocations } from '../../lib/useLocations'
 import { formatMoney } from '../../lib/currency'
-import { usePurchaseOrder, useReceivePurchaseOrderLine } from './api'
+import { usePurchaseOrder, useReceivePurchaseOrderLine, useConvertPurchaseOrderToBill } from './api'
+
+function defaultDueDate() {
+  const d = new Date()
+  d.setDate(d.getDate() + 30)
+  return d.toISOString().slice(0, 10)
+}
 
 export function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -23,13 +29,31 @@ export function PurchaseOrderDetailPage() {
   const { data, isLoading } = usePurchaseOrder(orgId, id!)
   const { data: locations } = useLocations(orgId)
   const receiveLine = useReceivePurchaseOrderLine(orgId, id!)
+  const convertToBill = useConvertPurchaseOrderToBill(orgId, id!)
 
   const [locationId, setLocationId] = useState('')
   const [receiveQty, setReceiveQty] = useState<Record<string, string>>({})
+  const [dueDate, setDueDate] = useState(defaultDueDate())
 
   if (isLoading || !data) return <PageSpinner />
 
   const { po, lines } = data
+  const anyReceived = lines.some((l) => l.quantity_received > 0)
+  const canConvert = !po.bill_id && !anyReceived
+
+  async function handleConvert() {
+    if (!locationId) {
+      toast.error('Choose a location first.')
+      return
+    }
+    try {
+      const bill = await convertToBill.mutateAsync({ locationId, dueDate, notes: null })
+      toast.success('Converted to supplier bill')
+      navigate(`/supplier-bills/${bill.id}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Something went wrong')
+    }
+  }
 
   async function handleReceive(lineId: string) {
     const qty = Number(receiveQty[lineId])
@@ -81,7 +105,36 @@ export function PurchaseOrderDetailPage() {
             ))}
           </Select>
         </div>
+        {po.bill_id ? (
+          <Link to={`/supplier-bills/${po.bill_id}`} className="text-sm font-medium text-accent-600 hover:underline">
+            View converted bill →
+          </Link>
+        ) : canConvert ? (
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={handleConvert}
+              disabled={convertToBill.isPending}
+            >
+              {convertToBill.isPending ? 'Converting…' : 'Convert to Bill'}
+            </Button>
+          </div>
+        ) : null}
       </div>
+      {canConvert && (
+        <p className="mb-4 text-xs text-text-muted">
+          Receiving here only updates stock, with no financial record. Converting to a Bill receives all
+          remaining quantity at once, records what you owe the supplier (Accounts Payable), and can't be
+          undone or combined with manual receiving on this PO.
+        </p>
+      )}
 
       <Card>
         <CardHeader title="Line items" />

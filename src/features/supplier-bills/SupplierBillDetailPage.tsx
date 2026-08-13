@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -64,6 +64,14 @@ export function SupplierBillDetailPage() {
         <Badge tone={tone}>{label}</Badge>
         <span className="text-sm text-text-muted">Issued {bill.issue_date}</span>
         <span className="text-sm text-text-muted">Due {bill.due_date}</span>
+        {bill.purchase_order_id && (
+          <Link
+            to={`/purchase-orders/${bill.purchase_order_id}`}
+            className="text-sm font-medium text-accent-600 hover:underline"
+          >
+            ← From purchase order
+          </Link>
+        )}
       </div>
 
       <Card>

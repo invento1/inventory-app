@@ -104,6 +104,32 @@ export function useCreatePurchaseOrder(orgId: string) {
   })
 }
 
+export function useConvertPurchaseOrderToBill(orgId: string, poId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { locationId: string; dueDate: string; notes: string | null }) => {
+      const { data, error } = await supabase.rpc('convert_purchase_order_to_bill', {
+        p_po_id: poId,
+        p_location_id: input.locationId,
+        p_due_date: input.dueDate,
+        p_notes: input.notes as unknown as string,
+      })
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchase_order', poId] })
+      queryClient.invalidateQueries({ queryKey: ['purchase_orders', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['supplier_bills', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['stock_levels', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['stock_movements', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['ledger_accounts', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['journal_entries', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', orgId] })
+    },
+  })
+}
+
 export function useReceivePurchaseOrderLine(orgId: string, poId: string) {
   const queryClient = useQueryClient()
   return useMutation({

@@ -1128,6 +1128,7 @@ export type Database = {
       }
       purchase_orders: {
         Row: {
+          bill_id: string | null
           created_at: string
           created_by: string | null
           expected_date: string | null
@@ -1138,6 +1139,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bill_id?: string | null
           created_at?: string
           created_by?: string | null
           expected_date?: string | null
@@ -1148,6 +1150,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bill_id?: string | null
           created_at?: string
           created_by?: string | null
           expected_date?: string | null
@@ -1158,6 +1161,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_orders_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "outstanding_supplier_bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_bills"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_orders_org_id_fkey"
             columns: ["org_id"]
@@ -1732,6 +1749,7 @@ export type Database = {
           issue_date: string
           notes: string | null
           org_id: string
+          purchase_order_id: string | null
           status: string
           subtotal: number
           supplier_id: string
@@ -1748,6 +1766,7 @@ export type Database = {
           issue_date?: string
           notes?: string | null
           org_id: string
+          purchase_order_id?: string | null
           status?: string
           subtotal?: number
           supplier_id: string
@@ -1764,6 +1783,7 @@ export type Database = {
           issue_date?: string
           notes?: string | null
           org_id?: string
+          purchase_order_id?: string | null
           status?: string
           subtotal?: number
           supplier_id?: string
@@ -1776,6 +1796,13 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_bills_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
             referencedColumns: ["id"]
           },
           {
@@ -2040,6 +2067,37 @@ export type Database = {
           p_supplier_id: string
         }
         Returns: undefined
+      }
+      convert_purchase_order_to_bill: {
+        Args: {
+          p_due_date: string
+          p_location_id: string
+          p_notes?: string
+          p_po_id: string
+        }
+        Returns: {
+          amount_paid: number
+          bill_number: string
+          created_at: string
+          created_by: string | null
+          due_date: string
+          id: string
+          issue_date: string
+          notes: string | null
+          org_id: string
+          purchase_order_id: string | null
+          status: string
+          subtotal: number
+          supplier_id: string
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "supplier_bills"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       create_credit_memo: {
         Args: {
@@ -2311,6 +2369,7 @@ export type Database = {
           issue_date: string
           notes: string | null
           org_id: string
+          purchase_order_id: string | null
           status: string
           subtotal: number
           supplier_id: string
@@ -2473,6 +2532,7 @@ export type Database = {
           issue_date: string
           notes: string | null
           org_id: string
+          purchase_order_id: string | null
           status: string
           subtotal: number
           supplier_id: string
@@ -2600,6 +2660,7 @@ export type Database = {
           issue_date: string
           notes: string | null
           org_id: string
+          purchase_order_id: string | null
           status: string
           subtotal: number
           supplier_id: string
