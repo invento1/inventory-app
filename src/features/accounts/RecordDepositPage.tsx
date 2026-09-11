@@ -81,7 +81,7 @@ export function RecordDepositPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Card>
           <CardBody>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Select label="Deposit to" required value={accountId} onChange={(e) => setAccountId(e.target.value)}>
                 <option value="">Select an account…</option>
                 {bankAccounts.map((a) => (

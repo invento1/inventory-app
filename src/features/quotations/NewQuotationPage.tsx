@@ -115,7 +115,7 @@ export function NewQuotationPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Card>
           <CardBody>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Select label="Customer" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
                 <option value="">Walk-in / unspecified</option>
                 {customers?.map((c) => (
@@ -138,6 +138,8 @@ export function NewQuotationPage() {
         <Card>
           <CardBody>
             <div className="flex flex-col gap-3">
+              <div className="overflow-x-auto">
+              <div className="flex min-w-[640px] flex-col gap-3">
               {lines.map((line) => (
                 <div key={line.key} className="grid grid-cols-12 items-end gap-3">
                   <div className="col-span-6">
@@ -186,6 +188,8 @@ export function NewQuotationPage() {
                   </div>
                 </div>
               ))}
+              </div>
+              </div>
               <Button type="button" variant="secondary" className="self-start" onClick={addLine}>
                 <Plus size={16} />
                 Add line

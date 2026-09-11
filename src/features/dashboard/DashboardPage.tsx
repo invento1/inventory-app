@@ -62,7 +62,7 @@ export function DashboardPage() {
       {summaryLoading ? (
         <PageSpinner />
       ) : (
-        <div className="mb-6 grid grid-cols-3 gap-4 lg:grid-cols-6">
+        <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           <StatCard
             label="Active items"
             value={String(summary?.item_count ?? 0)}

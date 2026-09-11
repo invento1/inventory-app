@@ -72,7 +72,7 @@ export function CompanyInfoPage() {
                 onChange={(e) => setForm({ ...form, address: e.target.value || null })}
               />
             </label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
                 label="Phone"
                 disabled={!canEdit}
@@ -87,7 +87,7 @@ export function CompanyInfoPage() {
                 onChange={(e) => setForm({ ...form, email: e.target.value || null })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
                 label="Currency symbol"
                 required

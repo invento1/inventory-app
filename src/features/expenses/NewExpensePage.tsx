@@ -94,7 +94,7 @@ export function NewExpensePage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Card>
           <CardBody className="flex flex-col gap-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Input
                 label="Date"
                 type="date"
@@ -121,7 +121,7 @@ export function NewExpensePage() {
                 onChange={(e) => setPayeeName(e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Select
                 label="Category"
                 required
@@ -155,7 +155,7 @@ export function NewExpensePage() {
                 <option value="other">Other</option>
               </Select>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Select label="Paid from" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
                 <option value="">Default (by payment method)</option>
                 {payAccounts.map((a) => (

@@ -152,7 +152,7 @@ export function NewInvoicePage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Card>
           <CardBody>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <Select
@@ -188,6 +188,8 @@ export function NewInvoicePage() {
         <Card>
           <CardBody>
             <div className="flex flex-col gap-3">
+              <div className="overflow-x-auto">
+              <div className="flex min-w-[640px] flex-col gap-3">
               {lines.map((line) => {
                 const onHand = line.item_id && line.location_id
                   ? (stockByKey.get(`${line.item_id}:${line.location_id}`) ?? 0)
@@ -266,6 +268,8 @@ export function NewInvoicePage() {
                   </div>
                 )
               })}
+              </div>
+              </div>
               <Button type="button" variant="secondary" className="self-start" onClick={addLine}>
                 <Plus size={16} />
                 Add line

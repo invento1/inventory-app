@@ -54,7 +54,7 @@ export function PriceListForm({
   return (
     <Modal title={priceList ? 'Edit price list' : 'New price list'} onClose={onClose}>
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
             label="List date"
             type="date"

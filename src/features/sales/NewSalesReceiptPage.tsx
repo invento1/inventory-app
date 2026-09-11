@@ -132,11 +132,11 @@ export function NewSalesReceiptPage() {
     <div>
       <PageHeader title="New sale" subtitle="Scan or search to add items" />
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 flex flex-col gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="flex flex-col gap-6 lg:col-span-2">
           <Card>
             <CardBody className="flex flex-col gap-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="col-span-1">
                   <Select
                     label="Location"
@@ -221,26 +221,28 @@ export function NewSalesReceiptPage() {
                   Scan or search to add items to this sale.
                 </p>
               ) : (
-                <div className="divide-y divide-border">
-                  {cart.map((line) => (
-                    <SalesReceiptCartLine
-                      key={line.key}
-                      line={line}
-                      locations={locations ?? []}
-                      onChange={(patch) => updateLine(line.key, patch)}
-                      onRemove={() => removeLine(line.key)}
-                      currencySymbol={currencySymbol}
-                      onHand={stockByKey.get(`${line.item_id}:${line.location_id}`) ?? 0}
-                      avgCost={avgCostByItem.get(line.item_id)}
-                    />
-                  ))}
+                <div className="overflow-x-auto">
+                  <div className="min-w-[640px] divide-y divide-border">
+                    {cart.map((line) => (
+                      <SalesReceiptCartLine
+                        key={line.key}
+                        line={line}
+                        locations={locations ?? []}
+                        onChange={(patch) => updateLine(line.key, patch)}
+                        onRemove={() => removeLine(line.key)}
+                        currencySymbol={currencySymbol}
+                        onHand={stockByKey.get(`${line.item_id}:${line.location_id}`) ?? 0}
+                        avgCost={avgCostByItem.get(line.item_id)}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
             </CardBody>
           </Card>
         </div>
 
-        <div className="col-span-1">
+        <div className="lg:col-span-1">
           <Card>
             <CardHeader title="Complete sale" />
             <CardBody className="flex flex-col gap-4">

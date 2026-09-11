@@ -121,7 +121,7 @@ export function ResetDataPage() {
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
                   {group.group}
                 </p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {group.categories.map((cat) => (
                     <label
                       key={cat.key}

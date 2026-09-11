@@ -140,7 +140,7 @@ export function NewSupplierBillPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Card>
           <CardBody>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Select
                 label="Supplier"
                 required
@@ -169,6 +169,8 @@ export function NewSupplierBillPage() {
         <Card>
           <CardBody>
             <div className="flex flex-col gap-3">
+              <div className="overflow-x-auto">
+              <div className="flex min-w-[640px] flex-col gap-3">
               {lines.map((line) => (
                 <div key={line.key} className="grid grid-cols-12 items-end gap-3">
                   <div className="col-span-4">
@@ -231,6 +233,8 @@ export function NewSupplierBillPage() {
                   </div>
                 </div>
               ))}
+              </div>
+              </div>
               <Button type="button" variant="secondary" className="self-start" onClick={addLine}>
                 <Plus size={16} />
                 Add line

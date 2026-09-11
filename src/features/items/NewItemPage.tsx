@@ -94,7 +94,7 @@ export function NewItemPage() {
               value={form.barcode ?? ''}
               onChange={(e) => setForm({ ...form, barcode: e.target.value || null })}
             />
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <Select
@@ -138,7 +138,7 @@ export function NewItemPage() {
                 }
               />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <Select

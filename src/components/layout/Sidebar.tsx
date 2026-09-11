@@ -7,6 +7,7 @@ import {
   Settings,
   Landmark,
   ChevronDown,
+  X,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
@@ -125,7 +126,7 @@ function findActiveSubGroupKey(children: NavChild[], pathname: string): string |
   )?.key
 }
 
-export function Sidebar() {
+export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: () => void }) {
   const location = useLocation()
 
   const activeGroup = navEntries.find(
@@ -158,19 +159,41 @@ export function Sidebar() {
     )
 
   return (
-    <aside className="flex h-svh w-60 shrink-0 flex-col border-r border-border bg-white">
-      <Link
-        to="/"
-        className="flex h-16 items-center gap-2 border-b border-border px-5 transition-colors hover:bg-surface-muted"
-      >
-        <img src={`${import.meta.env.BASE_URL}icon.png`} alt="" className="h-8 w-8 rounded-lg" />
-        <span className="text-sm font-semibold text-text">HashirHub</span>
-      </Link>
+    <aside
+      className={cn(
+        'fixed inset-y-0 left-0 z-40 flex h-svh w-64 shrink-0 flex-col border-r border-border bg-white transition-transform duration-200 lg:static lg:w-60 lg:translate-x-0',
+        open ? 'translate-x-0' : '-translate-x-full',
+      )}
+    >
+      <div className="flex h-16 items-center gap-2 border-b border-border px-5">
+        <Link
+          to="/"
+          onClick={onClose}
+          className="flex flex-1 items-center gap-2 rounded-lg transition-colors hover:bg-surface-muted"
+        >
+          <img src={`${import.meta.env.BASE_URL}icon.png`} alt="" className="h-8 w-8 rounded-lg" />
+          <span className="text-sm font-semibold text-text">HashirHub</span>
+        </Link>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close menu"
+          className="rounded-md p-1.5 text-text-muted hover:bg-surface-muted hover:text-text lg:hidden"
+        >
+          <X size={18} />
+        </button>
+      </div>
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
         {navEntries.map((entry) => {
           if (entry.type === 'leaf') {
             return (
-              <NavLink key={entry.to} to={entry.to} end={entry.end} className={({ isActive }) => leafClass(isActive)}>
+              <NavLink
+                key={entry.to}
+                to={entry.to}
+                end={entry.end}
+                onClick={onClose}
+                className={({ isActive }) => leafClass(isActive)}
+              >
                 <entry.icon size={18} />
                 {entry.label}
               </NavLink>
@@ -204,6 +227,7 @@ export function Sidebar() {
                         <NavLink
                           key={child.to}
                           to={child.to}
+                          onClick={onClose}
                           className={({ isActive }) => childLeafClass(isActive)}
                         >
                           {child.label}
@@ -238,6 +262,7 @@ export function Sidebar() {
                               <NavLink
                                 key={leaf.to}
                                 to={leaf.to}
+                                onClick={onClose}
                                 className={({ isActive }) => childLeafClass(isActive)}
                               >
                                 {leaf.label}

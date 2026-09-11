@@ -85,7 +85,7 @@ export function NewRefundPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Card>
           <CardBody className="flex flex-col gap-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Select
                 label="Customer"
                 required
@@ -116,7 +116,7 @@ export function NewRefundPage() {
                 onChange={(e) => setRefundDate(e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Select
                 label="Payment method"
                 value={paymentMethod}

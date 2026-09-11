@@ -65,7 +65,7 @@ export function NewTransferModal({ orgId, onClose }: { orgId: string; onClose: (
             </option>
           ))}
         </Select>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Select
             label="From location"
             required
@@ -93,7 +93,7 @@ export function NewTransferModal({ orgId, onClose }: { orgId: string; onClose: (
             ))}
           </Select>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
             label="Quantity"
             type="number"

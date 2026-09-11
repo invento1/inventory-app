@@ -76,7 +76,7 @@ export function ItemForm({
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
         />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
             label="SKU"
             required
@@ -89,7 +89,7 @@ export function ItemForm({
             onChange={(e) => setForm({ ...form, barcode: e.target.value || null })}
           />
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="flex items-end gap-2">
             <div className="flex-1">
               <Select
@@ -133,7 +133,7 @@ export function ItemForm({
             }
           />
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="flex items-end gap-2">
             <div className="flex-1">
               <Select
