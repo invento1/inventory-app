@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
@@ -159,12 +159,13 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-svh w-60 shrink-0 flex-col border-r border-border bg-white">
-      <div className="flex h-16 items-center gap-2 border-b border-border px-5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-600 text-sm font-bold text-white">
-          I
-        </div>
-        <span className="text-sm font-semibold text-text">Inventory</span>
-      </div>
+      <Link
+        to="/"
+        className="flex h-16 items-center gap-2 border-b border-border px-5 transition-colors hover:bg-surface-muted"
+      >
+        <img src={`${import.meta.env.BASE_URL}icon.png`} alt="" className="h-8 w-8 rounded-lg" />
+        <span className="text-sm font-semibold text-text">HashirHub</span>
+      </Link>
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
         {navEntries.map((entry) => {
           if (entry.type === 'leaf') {
