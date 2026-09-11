@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   graphql_public: {
     Tables: {
@@ -494,6 +494,134 @@ export type Database = {
             columns: ["payee_supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_adjustment_items: {
+        Row: {
+          adjustment_id: string
+          created_at: string
+          current_value_before: number
+          id: string
+          item_id: string
+          new_qty: number
+          new_value: number
+          qty_on_hand_before: number
+          resulting_avg_cost: number
+          value_diff: number
+        }
+        Insert: {
+          adjustment_id: string
+          created_at?: string
+          current_value_before: number
+          id?: string
+          item_id: string
+          new_qty: number
+          new_value: number
+          qty_on_hand_before: number
+          resulting_avg_cost: number
+          value_diff: number
+        }
+        Update: {
+          adjustment_id?: string
+          created_at?: string
+          current_value_before?: number
+          id?: string
+          item_id?: string
+          new_qty?: number
+          new_value?: number
+          qty_on_hand_before?: number
+          resulting_avg_cost?: number
+          value_diff?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_adjustment_items_adjustment_id_fkey"
+            columns: ["adjustment_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_adjustments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_adjustment_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_adjustments: {
+        Row: {
+          adjustment_account_id: string
+          adjustment_date: string
+          adjustment_number: string
+          adjustment_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          location_id: string
+          org_id: string
+          reference_number: string | null
+          total_value_diff: number
+        }
+        Insert: {
+          adjustment_account_id: string
+          adjustment_date?: string
+          adjustment_number: string
+          adjustment_type: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          location_id: string
+          org_id: string
+          reference_number?: string | null
+          total_value_diff?: number
+        }
+        Update: {
+          adjustment_account_id?: string
+          adjustment_date?: string
+          adjustment_number?: string
+          adjustment_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          location_id?: string
+          org_id?: string
+          reference_number?: string | null
+          total_value_diff?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_adjustments_adjustment_account_id_fkey"
+            columns: ["adjustment_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "inventory_adjustments_adjustment_account_id_fkey"
+            columns: ["adjustment_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_adjustments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_adjustments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
@@ -2182,6 +2310,38 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_inventory_adjustment: {
+        Args: {
+          p_adjustment_account_id: string
+          p_adjustment_date: string
+          p_adjustment_type: string
+          p_description: string
+          p_lines: Json
+          p_location_id: string
+          p_org_id: string
+          p_reference_number: string
+        }
+        Returns: {
+          adjustment_account_id: string
+          adjustment_date: string
+          adjustment_number: string
+          adjustment_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          location_id: string
+          org_id: string
+          reference_number: string | null
+          total_value_diff: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "inventory_adjustments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_invoice: {
         Args: {
           p_customer_id: string
@@ -2687,12 +2847,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2716,11 +2876,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2741,11 +2901,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2766,11 +2926,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2783,11 +2943,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

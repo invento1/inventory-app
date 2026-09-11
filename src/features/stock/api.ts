@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabaseClient'
 
 export interface StockLevelRow {
@@ -86,32 +86,5 @@ export function useItemStockMovements(orgId: string, itemId: string) {
       })) satisfies StockMovementRow[]
     },
     enabled: !!itemId,
-  })
-}
-
-export function useAdjustStock(orgId: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (input: {
-      itemId: string
-      locationId: string
-      quantityDelta: number
-      notes?: string | null
-    }) => {
-      const { error } = await supabase.from('stock_movements').insert({
-        org_id: orgId,
-        item_id: input.itemId,
-        location_id: input.locationId,
-        quantity_delta: input.quantityDelta,
-        reason: 'adjustment',
-        notes: input.notes ?? null,
-      })
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stock_levels', orgId] })
-      queryClient.invalidateQueries({ queryKey: ['stock_movements', orgId] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard', orgId] })
-    },
   })
 }

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, History } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
@@ -9,12 +8,10 @@ import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { useStockLevels } from './api'
-import { AdjustStockModal } from './AdjustStockModal'
 
 export function StockLevelsPage() {
   const { orgId } = useOrg()
   const { data: rows, isLoading } = useStockLevels(orgId)
-  const [adjusting, setAdjusting] = useState(false)
 
   return (
     <div>
@@ -29,10 +26,12 @@ export function StockLevelsPage() {
                 Movement history
               </Button>
             </Link>
-            <Button onClick={() => setAdjusting(true)}>
-              <Plus size={16} />
-              Adjust stock
-            </Button>
+            <Link to="/inventory-adjustments/new">
+              <Button>
+                <Plus size={16} />
+                Adjust stock
+              </Button>
+            </Link>
           </div>
         }
       />
@@ -68,8 +67,6 @@ export function StockLevelsPage() {
           </Table>
         )}
       </Card>
-
-      {adjusting && <AdjustStockModal orgId={orgId} onClose={() => setAdjusting(false)} />}
     </div>
   )
 }

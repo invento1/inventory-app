@@ -46,7 +46,9 @@ import { BankingPage } from './features/accounts/BankingPage'
 import { ProfitLossPage } from './features/accounts/ProfitLossPage'
 import { AllTransactionsPage } from './features/transactions/AllTransactionsPage'
 import { InventoryTransfersPage } from './features/inventory/InventoryTransfersPage'
-import { InventoryAdjustmentsPage } from './features/inventory/InventoryAdjustmentsPage'
+import { InventoryAdjustmentsListPage } from './features/inventory/InventoryAdjustmentsListPage'
+import { NewInventoryAdjustmentPage } from './features/inventory/NewInventoryAdjustmentPage'
+import { InventoryAdjustmentDetailPage } from './features/inventory/InventoryAdjustmentDetailPage'
 import { ExpensesListPage } from './features/expenses/ExpensesListPage'
 import { NewExpensePage } from './features/expenses/NewExpensePage'
 import { QuotationsListPage } from './features/quotations/QuotationsListPage'
@@ -98,7 +100,9 @@ function App() {
 
         <Route path="/transactions" element={<AllTransactionsPage />} />
         <Route path="/inventory-transfers" element={<InventoryTransfersPage />} />
-        <Route path="/inventory-adjustments" element={<InventoryAdjustmentsPage />} />
+        <Route path="/inventory-adjustments" element={<InventoryAdjustmentsListPage />} />
+        <Route path="/inventory-adjustments/new" element={<NewInventoryAdjustmentPage />} />
+        <Route path="/inventory-adjustments/:id" element={<InventoryAdjustmentDetailPage />} />
         <Route path="/expenses" element={<ExpensesListPage />} />
         <Route path="/expenses/new" element={<NewExpensePage />} />
         <Route path="/quotations" element={<QuotationsListPage />} />

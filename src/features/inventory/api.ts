@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabaseClient'
+import type { Database, Json } from '../../types/supabase'
 
 export interface StockTransferRow {
   reference_id: string
@@ -80,37 +81,113 @@ export function useCreateStockTransfer(orgId: string) {
   })
 }
 
-export interface StockAdjustmentRow {
-  id: string
-  created_at: string
-  quantity_delta: number
-  notes: string | null
-  item_name: string
-  item_sku: string
+export type InventoryAdjustment = Database['public']['Tables']['inventory_adjustments']['Row']
+export type InventoryAdjustmentItem = Database['public']['Tables']['inventory_adjustment_items']['Row']
+export type AdjustmentType = 'quantity' | 'value' | 'quantity_and_value'
+
+export interface InventoryAdjustmentListRow extends InventoryAdjustment {
   location_name: string
+  adjustment_account_name: string
 }
 
-export function useStockAdjustments(orgId: string) {
+export function useInventoryAdjustments(orgId: string) {
   return useQuery({
-    queryKey: ['stock_movements', orgId, 'adjustments'],
+    queryKey: ['inventory_adjustments', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('stock_movements')
-        .select('id, created_at, quantity_delta, notes, items(name, sku), locations(name)')
+        .from('inventory_adjustments')
+        .select('*, locations(name), ledger_accounts(name)')
         .eq('org_id', orgId)
-        .eq('reason', 'adjustment')
         .order('created_at', { ascending: false })
-        .limit(200)
       if (error) throw error
       return (data ?? []).map((row) => ({
-        id: row.id,
-        created_at: row.created_at,
-        quantity_delta: row.quantity_delta,
-        notes: row.notes,
-        item_name: row.items?.name ?? '',
-        item_sku: row.items?.sku ?? '',
+        ...row,
         location_name: row.locations?.name ?? '',
-      })) satisfies StockAdjustmentRow[]
+        adjustment_account_name: row.ledger_accounts?.name ?? '',
+      })) satisfies InventoryAdjustmentListRow[]
+    },
+  })
+}
+
+export interface InventoryAdjustmentItemRow extends InventoryAdjustmentItem {
+  item_name: string
+  item_sku: string
+}
+
+export function useInventoryAdjustment(orgId: string, id: string) {
+  return useQuery({
+    queryKey: ['inventory_adjustment', id],
+    queryFn: async () => {
+      const { data: adjustment, error: adjustmentError } = await supabase
+        .from('inventory_adjustments')
+        .select('*, locations(name), ledger_accounts(name)')
+        .eq('id', id)
+        .eq('org_id', orgId)
+        .single()
+      if (adjustmentError) throw adjustmentError
+
+      const { data: lines, error: linesError } = await supabase
+        .from('inventory_adjustment_items')
+        .select('*, items(name, sku)')
+        .eq('adjustment_id', id)
+      if (linesError) throw linesError
+
+      return {
+        adjustment: {
+          ...adjustment,
+          location_name: adjustment.locations?.name ?? '',
+          adjustment_account_name: adjustment.ledger_accounts?.name ?? '',
+        } satisfies InventoryAdjustmentListRow,
+        lines: (lines ?? []).map((l) => ({
+          ...l,
+          item_name: l.items?.name ?? '',
+          item_sku: l.items?.sku ?? '',
+        })) satisfies InventoryAdjustmentItemRow[],
+      }
+    },
+    enabled: !!id,
+  })
+}
+
+export interface NewInventoryAdjustmentLine {
+  item_id: string
+  new_qty: number | null
+  new_value: number | null
+}
+
+export function useCreateInventoryAdjustment(orgId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      locationId: string
+      adjustmentType: AdjustmentType
+      adjustmentAccountId: string
+      adjustmentDate: string
+      referenceNumber: string | null
+      description: string | null
+      lines: NewInventoryAdjustmentLine[]
+    }) => {
+      const { data, error } = await supabase.rpc('create_inventory_adjustment', {
+        p_org_id: orgId,
+        p_location_id: input.locationId,
+        p_adjustment_type: input.adjustmentType,
+        p_adjustment_account_id: input.adjustmentAccountId,
+        p_adjustment_date: input.adjustmentDate,
+        p_reference_number: input.referenceNumber as unknown as string,
+        p_description: input.description as unknown as string,
+        p_lines: input.lines as unknown as Json,
+      })
+      if (error) throw error
+      return data as InventoryAdjustment
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventory_adjustments', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['stock_levels', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['stock_movements', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['items', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['ledger_accounts', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['journal_entries', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', orgId] })
     },
   })
 }
