@@ -21,6 +21,7 @@ import { SalesReceiptDetailPage } from './features/sales/SalesReceiptDetailPage'
 import { InvoicesListPage } from './features/invoices/InvoicesListPage'
 import { NewInvoicePage } from './features/invoices/NewInvoicePage'
 import { InvoiceDetailPage } from './features/invoices/InvoiceDetailPage'
+import { InvoiceBatchPrintPage, InvoicePrintPage, SalesReceiptPrintPage } from './features/printing/PrintPages'
 import { SupplierBillsListPage } from './features/supplier-bills/SupplierBillsListPage'
 import { NewSupplierBillPage } from './features/supplier-bills/NewSupplierBillPage'
 import { SupplierBillDetailPage } from './features/supplier-bills/SupplierBillDetailPage'
@@ -117,9 +118,11 @@ function App() {
         <Route path="/sales" element={<SalesReceiptsListPage />} />
         <Route path="/sales/new" element={<NewSalesReceiptPage />} />
         <Route path="/sales/:id" element={<SalesReceiptDetailPage />} />
+        <Route path="/sales/:id/print" element={<SalesReceiptPrintPage />} />
         <Route path="/invoices" element={<InvoicesListPage />} />
         <Route path="/invoices/new" element={<NewInvoicePage />} />
         <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
+        <Route path="/invoices/:id/print" element={<InvoicePrintPage />} />
         <Route path="/supplier-bills" element={<SupplierBillsListPage />} />
         <Route path="/supplier-bills/new" element={<NewSupplierBillPage />} />
         <Route path="/supplier-bills/:id" element={<SupplierBillDetailPage />} />
@@ -180,6 +183,7 @@ function App() {
         <Route path="/reports/invoices-summary" element={<InvoicesSummaryReport />} />
         <Route path="/reports/invoice-items-summary" element={<InvoiceItemsSummaryReport />} />
         <Route path="/reports/customer-item-sales" element={<CustomerItemSalesReport />} />
+        <Route path="/reports/invoice-batch-print" element={<InvoiceBatchPrintPage />} />
 
         <Route path="/settings" element={<Navigate to="/settings/company-info" replace />} />
         <Route path="/settings/company-info" element={<CompanyInfoPage />} />

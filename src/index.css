@@ -166,6 +166,19 @@ body {
   }
 }
 
+/* Printed invoices/receipts (features/printing): keep badge and band colours
+   in print, and start every document after the first on a new page. */
+.print-doc {
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+@media print {
+  .print-doc + .print-doc {
+    break-before: page;
+  }
+}
+
 /* Native checkboxes/radios pick up the indigo accent everywhere. */
 input[type='checkbox'],
 input[type='radio'] {

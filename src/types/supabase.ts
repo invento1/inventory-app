@@ -2580,6 +2580,24 @@ export type Database = {
           txn_date: string
         }[]
       }
+      daily_activity_summary: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          amount: number
+          day: string
+          metric: string
+        }[]
+      }
+      dashboard_daily_series: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          collections: number
+          day: string
+          gross_profit: number
+          net_income: number
+          sales: number
+        }[]
+      }
       dashboard_summary: {
         Args: { p_org_id: string }
         Returns: {
@@ -2956,6 +2974,13 @@ export type Database = {
           quantity: number
           sku: string
           txn_date: string
+        }[]
+      }
+      sales_totals: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          doc_count: number
+          total: number
         }[]
       }
       supplier_balance_summary: {

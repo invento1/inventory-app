@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Printer } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardHeader, CardBody } from '../../components/ui/Card'
@@ -49,14 +49,20 @@ export function InvoiceDetailPage() {
         title={invoice.invoice_number}
         subtitle={invoice.customers?.name ?? 'Unknown customer'}
         action={
-          <button
-            type="button"
-            onClick={() => navigate('/invoices')}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-text"
-          >
-            <ArrowLeft size={16} />
-            Back
-          </button>
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" size="sm" onClick={() => navigate(`/invoices/${invoice.id}/print`)}>
+              <Printer size={14} />
+              Print
+            </Button>
+            <button
+              type="button"
+              onClick={() => navigate('/invoices')}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-text"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </button>
+          </div>
         }
       />
 

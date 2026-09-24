@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Package, AlertTriangle, Receipt, DollarSign, Plus, FileWarning, Users, TrendingUp, Landmark } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
@@ -8,7 +9,14 @@ import { Button } from '../../components/ui/Button'
 import { CornerWave } from '../../components/ui/CornerWave'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { formatMoney } from '../../lib/currency'
-import { useDashboardSummary, useLowStock } from './api'
+import { useDailySeries, useDashboardSummary, useLowStock } from './api'
+import { TrendChart } from './TrendChart'
+import {
+  AccountBalancesCard,
+  RecentTransactionsCard,
+  WeeklySummaryCard,
+} from './DashboardSections'
+import { ymd } from '../reports/dates'
 
 function StatCard({
   label,
@@ -50,6 +58,13 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const { data: summary, isLoading: summaryLoading } = useDashboardSummary(orgId)
   const { data: lowStock, isLoading: lowStockLoading } = useLowStock(orgId)
+  const chartRange = useMemo(() => {
+    const now = new Date()
+    return { start: ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29)), end: ymd(now) }
+  }, [])
+  const { data: seriesData, isLoading: seriesLoading } = useDailySeries(orgId, chartRange.start, chartRange.end)
+  const series = seriesData ?? []
+  const days = series.map((d) => d.day)
 
   return (
     <div>
@@ -146,6 +161,40 @@ export function DashboardPage() {
           />
         </div>
       )}
+
+      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <TrendChart
+          title="Sales vs collections"
+          subtitle="Last 30 days"
+          days={days}
+          symbol={currencySymbol}
+          isLoading={seriesLoading}
+          series={[
+            { name: 'Sales', color: 'var(--color-accent-600)', values: series.map((d) => d.sales) },
+            { name: 'Collections', color: 'var(--color-success-600)', values: series.map((d) => d.collections) },
+          ]}
+        />
+        <TrendChart
+          title="Gross profit vs net income"
+          subtitle="Last 30 days"
+          days={days}
+          symbol={currencySymbol}
+          isLoading={seriesLoading}
+          series={[
+            { name: 'Gross profit', color: 'var(--color-accent-600)', values: series.map((d) => d.gross_profit) },
+            { name: 'Net income', color: 'var(--color-success-600)', values: series.map((d) => d.net_income) },
+          ]}
+        />
+      </div>
+
+      <div className="mb-6">
+        <WeeklySummaryCard />
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <AccountBalancesCard />
+        <RecentTransactionsCard />
+      </div>
 
       <Card>
         <CardHeader title="Low stock" subtitle="Items at or below their reorder point" />

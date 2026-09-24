@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Printer } from 'lucide-react'
+import { Button } from '../../components/ui/Button'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
@@ -25,14 +26,20 @@ export function SalesReceiptDetailPage() {
         title={receipt.receipt_number}
         subtitle={new Date(receipt.created_at).toLocaleString()}
         action={
-          <button
-            type="button"
-            onClick={() => navigate('/sales')}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-text"
-          >
-            <ArrowLeft size={16} />
-            Back
-          </button>
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" size="sm" onClick={() => navigate(`/sales/${receipt.id}/print`)}>
+              <Printer size={14} />
+              Print
+            </Button>
+            <button
+              type="button"
+              onClick={() => navigate('/sales')}
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-text"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </button>
+          </div>
         }
       />
 

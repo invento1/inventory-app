@@ -58,3 +58,52 @@ export function useLowStock(orgId: string) {
     },
   })
 }
+
+// One row per day (zeros included) for the 30-day trend charts.
+export function useDailySeries(orgId: string, start: string, end: string) {
+  return useQuery({
+    queryKey: ['dashboard', 'daily_series', orgId, start, end],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('dashboard_daily_series', {
+        p_org_id: orgId,
+        p_start_date: start,
+        p_end_date: end,
+      })
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}
+
+// (metric, day, amount) rows for the 7-day Transactions Summary table.
+export function useDailyActivity(orgId: string, start: string, end: string) {
+  return useQuery({
+    queryKey: ['dashboard', 'daily_activity', orgId, start, end],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('daily_activity_summary', {
+        p_org_id: orgId,
+        p_start_date: start,
+        p_end_date: end,
+      })
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}
+
+export function useRecentTransactions(orgId: string, limit = 8) {
+  return useQuery({
+    queryKey: ['dashboard', 'recent_transactions', orgId, limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('all_transactions')
+        .select('doc_type, doc_id, doc_number, txn_date, party_name, total, status')
+        .eq('org_id', orgId)
+        .order('txn_date', { ascending: false })
+        .order('doc_number', { ascending: false })
+        .limit(limit)
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}

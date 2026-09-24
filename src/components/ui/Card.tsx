@@ -30,6 +30,15 @@ export function CardHeader({
   )
 }
 
+// Default p-5, dropped on whichever axis the caller sets its own padding --
+// cn() is plain clsx (no tailwind-merge), so 'p-5' + 'p-0' would otherwise
+// both apply and stylesheet order, not intent, would pick the winner (this is
+// what kept p-0 table cards from going edge-to-edge).
 export function CardBody({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('p-5', className)} {...props} />
+  const cls = className ?? ''
+  const all = /(^|\s)p-/.test(cls)
+  const x = /(^|\s)(px|pl|pr)-/.test(cls)
+  const y = /(^|\s)(py|pt|pb)-/.test(cls)
+  const base = all || (x && y) ? '' : x ? 'py-5' : y ? 'px-5' : 'p-5'
+  return <div className={cn(base, className)} {...props} />
 }
