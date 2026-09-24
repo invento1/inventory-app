@@ -3,6 +3,16 @@
 @theme {
   --font-sans: 'Segoe UI', system-ui, Roboto, sans-serif;
 
+  /* The whole palette lives here -- components only use these tokens
+     (bg-primary, text-accent-700, bg-success-50, ...), never raw Tailwind
+     palette classes, so a theme change is an edit to this block only. */
+
+  /* Primary: deep slate/navy for primary actions. */
+  --color-primary: #0f172a;
+  --color-primary-hover: #1e293b;
+  --color-primary-disabled: #94a3b8;
+
+  /* Accent: indigo for key active highlights -- active nav, links, focus rings. */
   --color-accent-50: #eef2ff;
   --color-accent-100: #e0e7ff;
   --color-accent-200: #c7d2fe;
@@ -14,18 +24,25 @@
   --color-accent-800: #3730a3;
   --color-accent-900: #312e81;
 
+  /* Surfaces: off-white page, crisp white cards, soft slate-200/80 borders. */
   --color-surface: #ffffff;
   --color-surface-muted: #f8fafc;
-  --color-border: #e2e8f0;
+  --color-border: rgb(226 232 240 / 0.8);
   --color-text: #0f172a;
   --color-text-muted: #64748b;
 
-  --color-success-50: #f0fdf4;
-  --color-success-600: #16a34a;
-  --color-warning-50: #fffbeb;
-  --color-warning-600: #d97706;
-  --color-danger-50: #fef2f2;
-  --color-danger-600: #dc2626;
+  /* Semantic: pastel background (-50) + text/icon colour (-600). */
+  --color-success-50: #ecfdf5; /* paid, in stock */
+  --color-success-600: #10b981;
+  --color-warning-50: #fffbeb; /* low stock, pending */
+  --color-warning-600: #f59e0b;
+  --color-danger-50: #fff1f2; /* overdue, unpaid, errors */
+  --color-danger-600: #f43f5e;
+  --color-danger-700: #e11d48;
+  --color-info-50: #f1f5f9; /* neutral, draft */
+  --color-info-600: #64748b;
+
+  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.03);
 }
 
 body {

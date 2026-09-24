@@ -90,7 +90,7 @@ export function CreditMemoDetailPage() {
       </Card>
 
       <div className="mt-4 flex justify-end">
-        <div className="w-64 rounded-xl border border-border bg-white p-4 shadow-sm">
+        <div className="w-64 rounded-xl border border-border bg-surface p-4 shadow-sm">
           <div className="flex justify-between text-base font-semibold text-text">
             <span>Total credit</span>
             <span>{formatMoney(creditMemo.total, currencySymbol)}</span>

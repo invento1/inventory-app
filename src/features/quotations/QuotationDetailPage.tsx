@@ -89,7 +89,7 @@ export function QuotationDetailPage() {
       </Card>
 
       <div className="mt-4 flex justify-end">
-        <div className="w-64 rounded-xl border border-border bg-white p-4 shadow-sm">
+        <div className="w-64 rounded-xl border border-border bg-surface p-4 shadow-sm">
           <div className="flex justify-between text-base font-semibold text-text">
             <span>Total</span>
             <span>{formatMoney(quotation.total, currencySymbol)}</span>

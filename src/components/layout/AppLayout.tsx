@@ -12,17 +12,17 @@ export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex h-svh bg-surface-muted print:block print:h-auto print:bg-white">
+    <div className="flex h-svh bg-surface-muted print:block print:h-auto print:bg-surface">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          className="fixed inset-0 z-30 bg-primary/40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
       )}
       <div className="flex flex-1 flex-col overflow-hidden print:block print:overflow-visible">
-        <header className="flex h-16 shrink-0 print:hidden items-center justify-between gap-2 border-b border-border bg-white px-4 sm:px-6">
+        <header className="flex h-16 shrink-0 print:hidden items-center justify-between gap-2 border-b border-border bg-surface px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"

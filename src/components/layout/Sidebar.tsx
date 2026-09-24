@@ -186,7 +186,7 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-40 flex h-svh w-64 shrink-0 flex-col border-r border-border bg-white transition-transform duration-200 lg:static lg:w-60 lg:translate-x-0 print:hidden',
+        'fixed inset-y-0 left-0 z-40 flex h-svh w-64 shrink-0 flex-col border-r border-border bg-surface transition-transform duration-200 lg:static lg:w-60 lg:translate-x-0 print:hidden',
         open ? 'translate-x-0' : '-translate-x-full',
       )}
     >

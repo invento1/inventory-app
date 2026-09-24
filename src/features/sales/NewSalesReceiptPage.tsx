@@ -164,7 +164,7 @@ export function NewSalesReceiptPage() {
                         onChange={(e) => barcodeInput.setValue(e.target.value)}
                         onKeyDown={barcodeInput.handleKeyDown}
                         placeholder="Scan a barcode…"
-                        className="h-10 w-full rounded-lg border border-border bg-white pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                        className="h-10 w-full rounded-lg border border-border bg-surface pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
                       />
                     </div>
                   </label>
@@ -183,12 +183,12 @@ export function NewSalesReceiptPage() {
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Search items…"
-                      className="h-10 w-full rounded-lg border border-border bg-white pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                      className="h-10 w-full rounded-lg border border-border bg-surface pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
                     />
                   </div>
                 </label>
                 {searchResults.length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-white shadow-lg">
+                  <div className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-surface shadow-lg">
                     {searchResults.map((item) => (
                       <button
                         key={item.id}
