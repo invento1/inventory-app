@@ -11,12 +11,9 @@ import { PageSpinner } from '../../components/ui/Spinner'
 import { formatMoney } from '../../lib/currency'
 import { useDailySeries, useDashboardSummary, useLowStock } from './api'
 import { TrendChart } from './TrendChart'
-import {
-  AccountBalancesCard,
-  RecentTransactionsCard,
-  WeeklySummaryCard,
-} from './DashboardSections'
-import { ymd } from '../reports/dates'
+import { AccountBalancesCard, RecentTransactionsCard } from './DashboardSections'
+import { TransactionsSummaryCard } from './TransactionsSummaryCard'
+import { addDaysYmd, todayYmd } from '../../lib/dates'
 
 function StatCard({
   label,
@@ -58,10 +55,8 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const { data: summary, isLoading: summaryLoading } = useDashboardSummary(orgId)
   const { data: lowStock, isLoading: lowStockLoading } = useLowStock(orgId)
-  const chartRange = useMemo(() => {
-    const now = new Date()
-    return { start: ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29)), end: ymd(now) }
-  }, [])
+  const today = todayYmd()
+  const chartRange = useMemo(() => ({ start: addDaysYmd(-29), end: today }), [today])
   const { data: seriesData, isLoading: seriesLoading } = useDailySeries(orgId, chartRange.start, chartRange.end)
   const series = seriesData ?? []
   const days = series.map((d) => d.day)
@@ -188,7 +183,7 @@ export function DashboardPage() {
       </div>
 
       <div className="mb-6">
-        <WeeklySummaryCard />
+        <TransactionsSummaryCard />
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">

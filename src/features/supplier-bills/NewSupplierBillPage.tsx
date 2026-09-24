@@ -12,6 +12,7 @@ import { useSuppliers } from '../suppliers/api'
 import { useItems } from '../items/api'
 import { useLocations } from '../../lib/useLocations'
 import { useCreateSupplierBill, type SupplierBillLinePayload } from './api'
+import { ymd } from '../../lib/dates'
 
 interface DraftLine {
   key: number
@@ -26,7 +27,7 @@ let nextKey = 1
 function defaultDueDate() {
   const d = new Date()
   d.setDate(d.getDate() + 30)
-  return d.toISOString().slice(0, 10)
+  return ymd(d)
 }
 
 export function NewSupplierBillPage() {

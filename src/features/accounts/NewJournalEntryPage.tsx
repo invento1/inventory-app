@@ -18,6 +18,7 @@ import {
   type JournalEntryLinePayload,
   type LedgerAccountRow,
 } from './api'
+import { ymd } from '../../lib/dates'
 
 interface DraftLine {
   key: number
@@ -35,7 +36,7 @@ function blankLine(): DraftLine {
 }
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  return ymd(new Date())
 }
 
 // Balance-sheet types (asset/liability/equity) get a prominent badge --

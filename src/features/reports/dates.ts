@@ -1,13 +1,9 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-// Reports work in local calendar dates ('YYYY-MM-DD'), never toISOString(),
-// which would shift the day for anyone east or west of UTC around midnight.
-export function ymd(d: Date) {
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${d.getFullYear()}-${m}-${day}`
-}
+import { ymd } from '../../lib/dates'
+
+export { ymd }
 
 function parseYmd(value: string) {
   const [y, m, d] = value.split('-').map(Number)

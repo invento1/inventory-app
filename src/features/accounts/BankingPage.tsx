@@ -10,9 +10,10 @@ import { PageSpinner } from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
 import { formatMoney } from '../../lib/currency'
 import { useLedgerAccounts, useCreateFundTransfer, useFundTransfers, isManuallyPostable } from './api'
+import { ymd } from '../../lib/dates'
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  return ymd(new Date())
 }
 
 export function BankingPage() {

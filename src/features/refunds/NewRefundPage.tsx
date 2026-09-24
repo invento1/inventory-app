@@ -11,9 +11,10 @@ import { useToast } from '../../components/ui/Toast'
 import { useCustomers } from '../customers/api'
 import { useLedgerAccounts } from '../accounts/api'
 import { useCreateRefund } from './api'
+import { ymd } from '../../lib/dates'
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  return ymd(new Date())
 }
 
 export function NewRefundPage() {

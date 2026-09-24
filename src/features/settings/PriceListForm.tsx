@@ -5,9 +5,10 @@ import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
 import { useToast } from '../../components/ui/Toast'
 import { useCreatePriceList, useUpdatePriceList, type PriceList, type PriceListInput } from './api'
+import { ymd } from '../../lib/dates'
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  return ymd(new Date())
 }
 
 function emptyForm(): PriceListInput {

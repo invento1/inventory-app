@@ -11,9 +11,10 @@ import { useToast } from '../../components/ui/Toast'
 import { useSuppliers } from '../suppliers/api'
 import { useLedgerAccounts } from '../accounts/api'
 import { useCreateExpense } from './api'
+import { ymd } from '../../lib/dates'
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  return ymd(new Date())
 }
 
 export function NewExpensePage() {

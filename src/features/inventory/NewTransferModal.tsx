@@ -7,9 +7,10 @@ import { useToast } from '../../components/ui/Toast'
 import { useLocations } from '../../lib/useLocations'
 import { useItems } from '../items/api'
 import { useCreateStockTransfer } from './api'
+import { ymd } from '../../lib/dates'
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  return ymd(new Date())
 }
 
 export function NewTransferModal({ orgId, onClose }: { orgId: string; onClose: () => void }) {

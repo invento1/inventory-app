@@ -2027,6 +2027,44 @@ export type Database = {
           },
         ]
       }
+      user_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          org_id: string
+          updated_at: string
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          org_id: string
+          updated_at?: string
+          user_id?: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          org_id?: string
+          updated_at?: string
+          user_id?: string
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       all_transactions: {
@@ -2581,7 +2619,12 @@ export type Database = {
         }[]
       }
       daily_activity_summary: {
-        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Args: {
+          p_end_date: string
+          p_org_id: string
+          p_start_date: string
+          p_tz?: string
+        }
         Returns: {
           amount: number
           day: string
@@ -2589,7 +2632,12 @@ export type Database = {
         }[]
       }
       dashboard_daily_series: {
-        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Args: {
+          p_end_date: string
+          p_org_id: string
+          p_start_date: string
+          p_tz?: string
+        }
         Returns: {
           collections: number
           day: string
@@ -2599,7 +2647,7 @@ export type Database = {
         }[]
       }
       dashboard_summary: {
-        Args: { p_org_id: string }
+        Args: { p_org_id: string; p_tz?: string }
         Returns: {
           customer_count: number
           item_count: number
@@ -2642,6 +2690,17 @@ export type Database = {
       get_or_create_default_account: {
         Args: { p_account_type: string; p_name: string; p_org_id: string }
         Returns: string
+      }
+      global_search: {
+        Args: { p_limit?: number; p_org_id: string; p_query: string }
+        Returns: {
+          amount: number
+          id: string
+          kind: string
+          subtitle: string
+          title: string
+          txn_date: string
+        }[]
       }
       income_by_customer: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }
@@ -2712,6 +2771,10 @@ export type Database = {
         }[]
       }
       is_org_member: { Args: { target_org: string }; Returns: boolean }
+      journal_entry_is_system_dated: {
+        Args: { p_reference_type: string }
+        Returns: boolean
+      }
       journal_report: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }
         Returns: {
@@ -2730,6 +2793,7 @@ export type Database = {
           reference_type: string
         }[]
       }
+      local_day: { Args: { p_ts: string; p_tz: string }; Returns: string }
       next_document_number: {
         Args: { p_doc_type: string; p_org_id: string; p_prefix: string }
         Returns: string
@@ -2907,6 +2971,7 @@ export type Database = {
         Args: { p_categories: string[]; p_org_id: string }
         Returns: undefined
       }
+      safe_timezone: { Args: { p_tz: string }; Returns: string }
       sales_by_category: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }
         Returns: {
@@ -2974,13 +3039,6 @@ export type Database = {
           quantity: number
           sku: string
           txn_date: string
-        }[]
-      }
-      sales_totals: {
-        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
-        Returns: {
-          doc_count: number
-          total: number
         }[]
       }
       supplier_balance_summary: {

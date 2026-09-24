@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Box } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -22,8 +23,20 @@ const reasonTone: Record<string, 'accent' | 'success' | 'warning' | 'neutral'> =
 export function ItemSearchPage() {
   const { orgId, currencySymbol } = useOrg()
   const { data: items, isLoading } = useItems(orgId)
-  const [search, setSearch] = useState('')
+  const [params] = useSearchParams()
+  const [search, setSearch] = useState(params.get('q') ?? '')
   const [selected, setSelected] = useState<ItemListRow | null>(null)
+
+  // Arriving from the header search (?q=<sku>&item=<id>): pre-fill the search
+  // and open that item. Re-runs if a new search lands while already here.
+  const qParam = params.get('q')
+  const itemParam = params.get('item')
+  useEffect(() => {
+    if (qParam !== null) setSearch(qParam)
+  }, [qParam])
+  useEffect(() => {
+    if (itemParam && items) setSelected(items.find((i) => i.id === itemParam) ?? null)
+  }, [itemParam, items])
 
   const filtered = useMemo(() => {
     if (!items) return []

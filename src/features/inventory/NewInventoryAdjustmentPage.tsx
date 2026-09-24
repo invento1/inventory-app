@@ -15,6 +15,7 @@ import { useStockLevels } from '../stock/api'
 import { useLedgerAccounts, isManuallyPostable } from '../accounts/api'
 import { formatMoney } from '../../lib/currency'
 import { useCreateInventoryAdjustment, type AdjustmentType, type NewInventoryAdjustmentLine } from './api'
+import { ymd } from '../../lib/dates'
 
 interface DraftLine {
   key: number
@@ -30,7 +31,7 @@ function blankLine(): DraftLine {
 }
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  return ymd(new Date())
 }
 
 const TYPE_OPTIONS: { value: AdjustmentType; label: string }[] = [

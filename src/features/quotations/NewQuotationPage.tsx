@@ -11,6 +11,7 @@ import { useToast } from '../../components/ui/Toast'
 import { useCustomers } from '../customers/api'
 import { useItems } from '../items/api'
 import { useCreateQuotation, type QuotationLinePayload } from './api'
+import { ymd } from '../../lib/dates'
 
 interface DraftLine {
   key: number
@@ -24,7 +25,7 @@ let nextKey = 1
 function defaultExpiryDate() {
   const d = new Date()
   d.setDate(d.getDate() + 14)
-  return d.toISOString().slice(0, 10)
+  return ymd(d)
 }
 
 export function NewQuotationPage() {

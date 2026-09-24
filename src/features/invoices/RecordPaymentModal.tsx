@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button'
 import { useToast } from '../../components/ui/Toast'
 import { formatMoney } from '../../lib/currency'
 import { useRecordInvoicePayment } from './api'
+import { ymd } from '../../lib/dates'
 
 export function RecordPaymentModal({
   orgId,
@@ -25,7 +26,7 @@ export function RecordPaymentModal({
 
   const [amount, setAmount] = useState(balance.toFixed(2))
   const [paymentMethod, setPaymentMethod] = useState('cash')
-  const [paidAt, setPaidAt] = useState(new Date().toISOString().slice(0, 10))
+  const [paidAt, setPaidAt] = useState(ymd(new Date()))
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
 

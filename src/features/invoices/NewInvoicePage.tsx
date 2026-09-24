@@ -15,6 +15,7 @@ import { useStockLevels } from '../stock/api'
 import { useLocations } from '../../lib/useLocations'
 import { formatMoney } from '../../lib/currency'
 import { useCreateInvoice, type InvoiceLinePayload } from './api'
+import { ymd } from '../../lib/dates'
 
 interface DraftLine {
   key: number
@@ -29,7 +30,7 @@ let nextKey = 1
 function defaultDueDate() {
   const d = new Date()
   d.setDate(d.getDate() + 30)
-  return d.toISOString().slice(0, 10)
+  return ymd(d)
 }
 
 export function NewInvoicePage() {

@@ -12,9 +12,10 @@ import { useToast } from '../../components/ui/Toast'
 import { formatMoney } from '../../lib/currency'
 import { useCustomers } from '../customers/api'
 import { useOutstandingInvoicesForCustomer, useApplyCustomerPayment } from './api'
+import { ymd } from '../../lib/dates'
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  return ymd(new Date())
 }
 
 // Splits a lump sum equally across every open invoice, capped at each

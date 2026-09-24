@@ -14,11 +14,12 @@ import { useToast } from '../../components/ui/Toast'
 import { useLocations } from '../../lib/useLocations'
 import { formatMoney } from '../../lib/currency'
 import { usePurchaseOrder, useReceivePurchaseOrderLine, useConvertPurchaseOrderToBill } from './api'
+import { ymd } from '../../lib/dates'
 
 function defaultDueDate() {
   const d = new Date()
   d.setDate(d.getDate() + 30)
-  return d.toISOString().slice(0, 10)
+  return ymd(d)
 }
 
 export function PurchaseOrderDetailPage() {

@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import { LogOut, Menu } from 'lucide-react'
 import { Sidebar } from './Sidebar'
 import { WaveBackground } from './WaveBackground'
+import { GlobalSearch } from './GlobalSearch'
 import { useAuth } from '../../auth/AuthProvider'
 import { useOrg } from '../../auth/OrgProvider'
 import { supabase } from '../../lib/supabaseClient'
@@ -37,8 +38,11 @@ export function AppLayout() {
             </button>
             <p className="truncate text-sm font-semibold text-text">{orgName}</p>
           </div>
+          <div className="flex min-w-0 flex-1 justify-end sm:justify-center sm:px-2 lg:px-6">
+            <GlobalSearch />
+          </div>
           <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-            <span className="hidden text-sm text-text-muted sm:inline">{user?.email}</span>
+            <span className="hidden text-sm text-text-muted xl:inline">{user?.email}</span>
             <button
               type="button"
               onClick={() => supabase.auth.signOut()}

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabaseClient'
+import { localTimeZone } from '../../lib/dates'
 
 export interface DashboardSummary {
   item_count: number
@@ -17,9 +18,10 @@ export interface DashboardSummary {
 
 export function useDashboardSummary(orgId: string) {
   return useQuery({
-    queryKey: ['dashboard', orgId],
+    queryKey: ['dashboard', orgId, localTimeZone()],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('dashboard_summary', { p_org_id: orgId })
+      // Today / this week / overdue are worked out in the viewer's timezone.
+      const { data, error } = await supabase.rpc('dashboard_summary', { p_org_id: orgId, p_tz: localTimeZone() })
       if (error) throw error
       const row = Array.isArray(data) ? data[0] : data
       return row as DashboardSummary
@@ -68,6 +70,7 @@ export function useDailySeries(orgId: string, start: string, end: string) {
         p_org_id: orgId,
         p_start_date: start,
         p_end_date: end,
+        p_tz: localTimeZone(),
       })
       if (error) throw error
       return data ?? []
@@ -84,6 +87,7 @@ export function useDailyActivity(orgId: string, start: string, end: string) {
         p_org_id: orgId,
         p_start_date: start,
         p_end_date: end,
+        p_tz: localTimeZone(),
       })
       if (error) throw error
       return data ?? []
