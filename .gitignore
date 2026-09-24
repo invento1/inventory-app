@@ -20,6 +20,9 @@ dist-ssr
 supabase/.temp
 supabase/.branches
 
+# Owner's reference screenshots (scratch drop, cleared after each change)
+new updates/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
