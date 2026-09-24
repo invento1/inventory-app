@@ -45,6 +45,18 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
         path: '/reports/trial-balance',
         status: 'ready',
       },
+      {
+        title: 'Income by Customer',
+        description: 'Sales less credit memos, refunds, and cost of goods sold, per customer',
+        path: '/reports/income-by-customer',
+        status: 'ready',
+      },
+      {
+        title: 'Transactions Summary',
+        description: 'Count and total of every document type in a period',
+        path: '/reports/transactions-summary',
+        status: 'ready',
+      },
     ],
   },
   {
@@ -156,6 +168,153 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
       },
     ],
   },
+  {
+    key: 'purchases',
+    title: 'Purchases',
+    reports: [
+      {
+        title: 'Purchases by Supplier',
+        description: 'Bills, purchase orders, paid, and owed per supplier',
+        path: '/reports/purchases-by-supplier',
+        status: 'ready',
+      },
+    ],
+  },
+  {
+    key: 'sales',
+    title: 'Sales',
+    reports: [
+      {
+        title: 'Sales by Item',
+        description: 'Quantity, sales, cost, and margin per item',
+        path: '/reports/sales-by-item',
+        status: 'ready',
+      },
+      {
+        title: 'Sales by Category',
+        description: 'Quantity, sales, cost, and margin per category',
+        path: '/reports/sales-by-category',
+        status: 'ready',
+      },
+      {
+        title: 'Sales by Customer',
+        description: 'Sales, cost, and margin per customer',
+        path: '/reports/sales-by-customer',
+        status: 'ready',
+      },
+      {
+        title: 'Invoices Summary',
+        description: 'Every invoice and sales receipt with its cost and margin',
+        path: '/reports/invoices-summary',
+        status: 'ready',
+      },
+      {
+        title: 'Invoice Items Summary',
+        description: 'Total quantity per item across a range of invoice numbers',
+        path: '/reports/invoice-items-summary',
+        status: 'ready',
+      },
+      {
+        title: 'Customer Item Sales',
+        description: 'Every item sold, grouped by customer',
+        path: '/reports/customer-item-sales',
+        status: 'ready',
+      },
+      {
+        title: 'Sales by Representative',
+        description: 'Sales per sales representative',
+        path: '/reports/sales-by-rep',
+        status: 'blocked',
+        blockedReason: 'Needs sales representatives on invoices',
+      },
+      {
+        title: 'Return Stock by Representative',
+        description: 'Invoiced vs returned stock per representative',
+        path: '/reports/return-stock-by-rep',
+        status: 'blocked',
+        blockedReason: 'Needs sales representatives, and credit memos linked to invoices',
+      },
+      {
+        title: 'Sales by Salesman',
+        description: 'Sales and commission per salesman',
+        path: '/reports/sales-by-salesman',
+        status: 'blocked',
+        blockedReason: 'Needs salesmen and commission rates',
+      },
+      {
+        title: 'Financial Recovery & Sales Performance',
+        description: 'Sales, recovered credit, and collection efficiency per customer manager',
+        path: '/reports/financial-recovery',
+        status: 'blocked',
+        blockedReason: 'Needs a customer credit manager assigned to each customer',
+      },
+      {
+        title: 'Invoice Batch Print',
+        description: 'Print a range of invoices in one go',
+        path: '/reports/invoice-batch-print',
+        status: 'blocked',
+        blockedReason: 'Needs a printable invoice layout',
+      },
+    ],
+  },
+  {
+    key: 'discounts',
+    title: 'Discounts',
+    reports: [
+      {
+        title: 'Customer Discounts Summary',
+        description: 'Discounts given per customer',
+        path: '/reports/customer-discounts',
+        status: 'blocked',
+        blockedReason: 'Needs line discounts on invoices and sales receipts',
+      },
+      {
+        title: 'Item Discounts Summary',
+        description: 'Discounts given per item',
+        path: '/reports/item-discounts',
+        status: 'blocked',
+        blockedReason: 'Needs line discounts on invoices and sales receipts',
+      },
+    ],
+  },
+  {
+    key: 'sales-orders',
+    title: 'Sales Orders',
+    reports: [
+      {
+        title: 'Sales Orders Summary',
+        description: 'Every sales order in a period',
+        path: '/reports/sales-orders',
+        status: 'blocked',
+        blockedReason: 'Needs a Sales Orders document type',
+      },
+      {
+        title: 'Open Orders Summary',
+        description: 'Sales orders not yet fulfilled',
+        path: '/reports/open-orders',
+        status: 'blocked',
+        blockedReason: 'Needs a Sales Orders document type',
+      },
+    ],
+  },
+  {
+    key: 'misc',
+    title: 'Misc.',
+    reports: [
+      {
+        title: 'Deleted Transactions',
+        description: 'Audit trail of deleted documents',
+        path: '/reports/deleted-transactions',
+        status: 'blocked',
+        blockedReason: 'Needs an audit log (documents are voided, never deleted, today)',
+      },
+      {
+        title: 'Updated Transactions',
+        description: 'Audit trail of edited documents',
+        path: '/reports/updated-transactions',
+        status: 'blocked',
+        blockedReason: 'Needs an audit log of document edits',
+      },
+    ],
+  },
 ]
-
-export const READY_REPORTS = REPORT_CATEGORIES.flatMap((c) => c.reports).filter((r) => r.status === 'ready')

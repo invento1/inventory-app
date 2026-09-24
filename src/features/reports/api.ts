@@ -264,3 +264,46 @@ export function stockStatus(quantity: number, reorderThreshold: number | null) {
   if (quantity <= (reorderThreshold ?? 0)) return { label: 'Low', tone: 'warning' as const }
   return { label: 'OK', tone: 'success' as const }
 }
+
+// Report RPCs whose only arguments are (p_org_id, p_start_date, p_end_date).
+type RangeRpc = {
+  [K in keyof Fns]: Fns[K]['Args'] extends { p_org_id: string; p_start_date: string; p_end_date: string }
+    ? keyof Fns[K]['Args'] extends 'p_org_id' | 'p_start_date' | 'p_end_date'
+      ? K
+      : never
+    : never
+}[keyof Fns]
+
+export type RangeRpcRow<F extends RangeRpc> = Fns[F]['Returns'] extends (infer R)[] ? R : never
+
+export function useRangeReport<F extends RangeRpc>(fn: F, orgId: string, start: string, end: string, enabled = true) {
+  return useQuery({
+    queryKey: ['report', fn, orgId, start, end],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc(fn, {
+        p_org_id: orgId,
+        p_start_date: start,
+        p_end_date: end,
+      } as Fns[F]['Args'])
+      if (error) throw error
+      // supabase-js can't resolve the row type through a generic function name.
+      return (data ?? []) as unknown as RangeRpcRow<F>[]
+    },
+  })
+}
+
+export function useInvoiceItemsSummary(orgId: string, fromNumber: number | null, toNumber: number | null) {
+  return useQuery({
+    queryKey: ['report', 'invoice_items_summary', orgId, fromNumber, toNumber],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('invoice_items_summary', {
+        p_org_id: orgId,
+        ...(fromNumber !== null ? { p_from_number: fromNumber } : {}),
+        ...(toNumber !== null ? { p_to_number: toNumber } : {}),
+      })
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}

@@ -59,6 +59,17 @@ import { InventoryValuationReport } from './features/reports/InventoryValuationR
 import { InventoryMovementReport } from './features/reports/InventoryMovementReport'
 import { StockBySupplierReport } from './features/reports/StockBySupplierReport'
 import { PhysicalInventoryWorksheet } from './features/reports/PhysicalInventoryWorksheet'
+import { SalesByCategoryReport, SalesByCustomerReport, SalesByItemReport } from './features/reports/SalesSummaryReports'
+import {
+  CustomerItemSalesReport,
+  InvoiceItemsSummaryReport,
+  InvoicesSummaryReport,
+} from './features/reports/SalesDocumentReports'
+import {
+  IncomeByCustomerReport,
+  PurchasesBySupplierReport,
+  TransactionsSummaryReport,
+} from './features/reports/CompanyReports'
 import { AllTransactionsPage } from './features/transactions/AllTransactionsPage'
 import { InventoryTransfersPage } from './features/inventory/InventoryTransfersPage'
 import { InventoryAdjustmentsListPage } from './features/inventory/InventoryAdjustmentsListPage'
@@ -160,6 +171,15 @@ function App() {
         <Route path="/reports/inventory-movement" element={<InventoryMovementReport />} />
         <Route path="/reports/stock-by-supplier" element={<StockBySupplierReport />} />
         <Route path="/reports/physical-inventory-worksheet" element={<PhysicalInventoryWorksheet />} />
+        <Route path="/reports/income-by-customer" element={<IncomeByCustomerReport />} />
+        <Route path="/reports/transactions-summary" element={<TransactionsSummaryReport />} />
+        <Route path="/reports/purchases-by-supplier" element={<PurchasesBySupplierReport />} />
+        <Route path="/reports/sales-by-item" element={<SalesByItemReport />} />
+        <Route path="/reports/sales-by-category" element={<SalesByCategoryReport />} />
+        <Route path="/reports/sales-by-customer" element={<SalesByCustomerReport />} />
+        <Route path="/reports/invoices-summary" element={<InvoicesSummaryReport />} />
+        <Route path="/reports/invoice-items-summary" element={<InvoiceItemsSummaryReport />} />
+        <Route path="/reports/customer-item-sales" element={<CustomerItemSalesReport />} />
 
         <Route path="/settings" element={<Navigate to="/settings/company-info" replace />} />
         <Route path="/settings/company-info" element={<CompanyInfoPage />} />

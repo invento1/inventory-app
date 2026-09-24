@@ -2625,6 +2625,20 @@ export type Database = {
         Args: { p_account_type: string; p_name: string; p_org_id: string }
         Returns: string
       }
+      income_by_customer: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          cogs: number
+          cost_missing: boolean
+          credit_memos: number
+          customer_id: string
+          customer_name: string
+          gross_profit: number
+          net_sales: number
+          refunds: number
+          sales: number
+        }[]
+      }
       inventory_movement: {
         Args: {
           p_category_id?: string
@@ -2666,6 +2680,17 @@ export type Database = {
           supplier_name: string
           unit: string
           value: number
+        }[]
+      }
+      invoice_items_summary: {
+        Args: { p_from_number?: number; p_org_id: string; p_to_number?: number }
+        Returns: {
+          amount: number
+          invoice_count: number
+          item_id: string
+          item_name: string
+          quantity: number
+          sku: string
         }[]
       }
       is_org_member: { Args: { target_org: string }; Returns: boolean }
@@ -2742,6 +2767,18 @@ export type Database = {
           account_name: string
           account_type: string
           amount: number
+        }[]
+      }
+      purchases_by_supplier: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          balance: number
+          bill_count: number
+          paid: number
+          po_count: number
+          purchases: number
+          supplier_id: string
+          supplier_name: string
         }[]
       }
       receive_purchase_order_line: {
@@ -2852,6 +2889,75 @@ export type Database = {
         Args: { p_categories: string[]; p_org_id: string }
         Returns: undefined
       }
+      sales_by_category: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          amount: number
+          category_id: string
+          category_name: string
+          cogs: number
+          cost_missing: boolean
+          quantity: number
+        }[]
+      }
+      sales_by_customer: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          amount: number
+          cogs: number
+          cost_missing: boolean
+          customer_id: string
+          customer_name: string
+          doc_count: number
+        }[]
+      }
+      sales_by_item: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          amount: number
+          category_name: string
+          cogs: number
+          cost_missing: boolean
+          item_id: string
+          item_name: string
+          quantity: number
+          sku: string
+        }[]
+      }
+      sales_documents: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          amount: number
+          cogs: number
+          cost_missing: boolean
+          customer_name: string
+          doc_id: string
+          doc_number: string
+          doc_type: string
+          line_count: number
+          quantity: number
+          txn_date: string
+        }[]
+      }
+      sales_lines: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          amount: number
+          category_id: string
+          category_name: string
+          cogs: number
+          customer_id: string
+          customer_name: string
+          doc_id: string
+          doc_number: string
+          doc_type: string
+          item_id: string
+          item_name: string
+          quantity: number
+          sku: string
+          txn_date: string
+        }[]
+      }
       supplier_balance_summary: {
         Args: { p_as_of: string; p_org_id: string }
         Returns: {
@@ -2878,6 +2984,15 @@ export type Database = {
           memo: string
           payment: number
           txn_date: string
+        }[]
+      }
+      transactions_summary: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          doc_count: number
+          doc_type: string
+          total: number
+          void_count: number
         }[]
       }
       trial_balance: {
