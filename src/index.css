@@ -51,6 +51,11 @@
   --color-info-50: #f1f5f9; /* neutral, draft */
   --color-info-600: #475569;
 
+  /* Ambient sea-wave background (WaveBackground.tsx), back to front. */
+  --color-wave-back: rgb(129 140 248 / 0.08); /* light indigo */
+  --color-wave-middle: rgb(203 213 225 / 0.2); /* soft slate */
+  --color-wave-front: rgb(79 70 229 / 0.12); /* translucent indigo */
+
   /* Depth. */
   --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.05);
   --shadow-card-hover: 0 4px 6px -1px rgb(15 23 42 / 0.07), 0 2px 4px -2px rgb(15 23 42 / 0.05);
@@ -92,6 +97,73 @@ body {
 
 #root {
   min-height: 100svh;
+}
+
+/* Ambient sea waves (src/components/layout/WaveBackground.tsx). Each layer is
+   a 200%-wide SVG holding exactly two wave periods, so drifting it by -50%
+   loops seamlessly; an outer wrapper adds a slow vertical swell. Transform-
+   only animation (GPU-composited), staggered 12s/16s/22s with alternating
+   direction so the layers never move in lockstep. */
+@keyframes floatWave {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes waveSwell {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -12px, 0);
+  }
+}
+
+/* Extends 16px below the viewport so the -12px swell never lifts the wave's
+   bottom edge into view; the wrapper's overflow-hidden clips the excess. */
+.hub-wave {
+  position: absolute;
+  inset: 0 0 -16px 0;
+  animation: waveSwell var(--swell-duration) ease-in-out infinite;
+  will-change: transform;
+}
+
+.hub-wave__track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  animation: floatWave var(--float-duration) linear infinite var(--float-direction, normal);
+  will-change: transform;
+}
+
+.hub-wave--back {
+  --float-duration: 22s;
+  --swell-duration: 11s;
+  --float-direction: reverse;
+}
+
+.hub-wave--middle {
+  --float-duration: 16s;
+  --swell-duration: 8s;
+}
+
+.hub-wave--front {
+  --float-duration: 12s;
+  --swell-duration: 6s;
+  --float-direction: reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-wave,
+  .hub-wave__track {
+    animation: none;
+  }
 }
 
 /* Native checkboxes/radios pick up the indigo accent everywhere. */

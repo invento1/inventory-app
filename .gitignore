@@ -33,3 +33,7 @@ new updates/
 *.njsproj
 *.sln
 *.sw?
+
+# Design reference screenshot: shows real account data and the repo is public,
+# so it stays local only (see CLAUDE.md "Visual design reference")
+public/refernce image made by chatgpt.png

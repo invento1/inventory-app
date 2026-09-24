@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { LogOut, Menu } from 'lucide-react'
 import { Sidebar } from './Sidebar'
+import { WaveBackground } from './WaveBackground'
 import { useAuth } from '../../auth/AuthProvider'
 import { useOrg } from '../../auth/OrgProvider'
 import { supabase } from '../../lib/supabaseClient'
@@ -13,6 +14,7 @@ export function AppLayout() {
 
   return (
     <div className="flex h-svh bg-surface-muted print:block print:h-auto print:bg-surface">
+      <WaveBackground />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       {sidebarOpen && (
         <div
@@ -21,7 +23,8 @@ export function AppLayout() {
           aria-hidden="true"
         />
       )}
-      <div className="flex flex-1 flex-col overflow-hidden print:block print:overflow-visible">
+      {/* relative z-10: sidebar and content stack above the fixed WaveBackground (z-0). */}
+      <div className="relative z-10 flex flex-1 flex-col overflow-hidden print:block print:overflow-visible">
         <header className="flex h-16 shrink-0 print:hidden items-center justify-between gap-2 border-b border-border bg-surface px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <button
