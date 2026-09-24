@@ -2551,6 +2551,35 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      customer_balance_summary: {
+        Args: { p_as_of: string; p_org_id: string }
+        Returns: {
+          balance: number
+          credited: number
+          customer_id: string
+          customer_name: string
+          invoiced: number
+          paid: number
+        }[]
+      }
+      customer_statement: {
+        Args: {
+          p_customer_id: string
+          p_end_date: string
+          p_org_id: string
+          p_start_date: string
+        }
+        Returns: {
+          balance: number
+          charge: number
+          doc_id: string
+          doc_number: string
+          doc_type: string
+          memo: string
+          payment: number
+          txn_date: string
+        }[]
+      }
       dashboard_summary: {
         Args: { p_org_id: string }
         Returns: {
@@ -2621,6 +2650,21 @@ export type Database = {
       }
       next_item_sku: { Args: { p_org_id: string }; Returns: string }
       org_role: { Args: { target_org: string }; Returns: string }
+      payment_collection: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          amount: number
+          customer_id: string
+          customer_name: string
+          deposit_number: string
+          invoice_id: string
+          invoice_number: string
+          paid_at: string
+          payment_id: string
+          payment_method: string
+          reference_number: string
+        }[]
+      }
       post_journal_entry: {
         Args: {
           p_entry_date: string
@@ -2764,6 +2808,34 @@ export type Database = {
       reset_org_data: {
         Args: { p_categories: string[]; p_org_id: string }
         Returns: undefined
+      }
+      supplier_balance_summary: {
+        Args: { p_as_of: string; p_org_id: string }
+        Returns: {
+          balance: number
+          billed: number
+          paid: number
+          supplier_id: string
+          supplier_name: string
+        }[]
+      }
+      supplier_statement: {
+        Args: {
+          p_end_date: string
+          p_org_id: string
+          p_start_date: string
+          p_supplier_id: string
+        }
+        Returns: {
+          balance: number
+          charge: number
+          doc_id: string
+          doc_number: string
+          doc_type: string
+          memo: string
+          payment: number
+          txn_date: string
+        }[]
       }
       trial_balance: {
         Args: { p_as_of: string; p_org_id: string }

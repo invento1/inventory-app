@@ -50,6 +50,10 @@ import { TrialBalanceReport } from './features/reports/TrialBalanceReport'
 import { JournalReport } from './features/reports/JournalReport'
 import { GeneralLedgerReport } from './features/reports/GeneralLedgerReport'
 import { AccountStatementReport } from './features/reports/AccountStatementReport'
+import { CustomerBalancesReport } from './features/reports/CustomerBalancesReport'
+import { SupplierBalancesReport } from './features/reports/SupplierBalancesReport'
+import { PartyStatementReport } from './features/reports/PartyStatementReport'
+import { PaymentCollectionReport } from './features/reports/PaymentCollectionReport'
 import { AllTransactionsPage } from './features/transactions/AllTransactionsPage'
 import { InventoryTransfersPage } from './features/inventory/InventoryTransfersPage'
 import { InventoryAdjustmentsListPage } from './features/inventory/InventoryAdjustmentsListPage'
@@ -141,6 +145,11 @@ function App() {
         <Route path="/reports/journal" element={<JournalReport />} />
         <Route path="/reports/general-ledger" element={<GeneralLedgerReport />} />
         <Route path="/reports/account-statement" element={<AccountStatementReport />} />
+        <Route path="/reports/customer-balances" element={<CustomerBalancesReport />} />
+        <Route path="/reports/customer-statement" element={<PartyStatementReport key="customer" kind="customer" />} />
+        <Route path="/reports/payment-collection" element={<PaymentCollectionReport />} />
+        <Route path="/reports/supplier-balances" element={<SupplierBalancesReport />} />
+        <Route path="/reports/supplier-statement" element={<PartyStatementReport key="supplier" kind="supplier" />} />
 
         <Route path="/settings" element={<Navigate to="/settings/company-info" replace />} />
         <Route path="/settings/company-info" element={<CompanyInfoPage />} />

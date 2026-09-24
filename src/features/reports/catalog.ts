@@ -48,6 +48,48 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
     ],
   },
   {
+    key: 'receivables',
+    title: 'Receivables',
+    reports: [
+      {
+        title: 'Customer Balance Summary',
+        description: 'What each customer owes as of a date',
+        path: '/reports/customer-balances',
+        status: 'ready',
+      },
+      {
+        title: 'Customer Statement',
+        description: 'Invoices, payments, and credits for one customer with a running balance',
+        path: '/reports/customer-statement',
+        status: 'ready',
+      },
+      {
+        title: 'Payment Collection Summary',
+        description: 'Customer payments received in a period, by method and deposit',
+        path: '/reports/payment-collection',
+        status: 'ready',
+      },
+    ],
+  },
+  {
+    key: 'payables',
+    title: 'Payables',
+    reports: [
+      {
+        title: 'Supplier Balance Summary',
+        description: 'What you owe each supplier as of a date',
+        path: '/reports/supplier-balances',
+        status: 'ready',
+      },
+      {
+        title: 'Supplier Statement',
+        description: 'Bills and payments for one supplier with a running balance',
+        path: '/reports/supplier-statement',
+        status: 'ready',
+      },
+    ],
+  },
+  {
     key: 'accounts',
     title: 'Accounts',
     reports: [

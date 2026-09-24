@@ -131,3 +131,80 @@ export function groupLedger(rows: GeneralLedgerRow[]): LedgerAccountBlock[] {
   }
   return blocks
 }
+
+export type CustomerBalanceRow = Fns['customer_balance_summary']['Returns'][number]
+export type SupplierBalanceRow = Fns['supplier_balance_summary']['Returns'][number]
+export type StatementRow = Fns['customer_statement']['Returns'][number]
+export type PaymentCollectionRow = Fns['payment_collection']['Returns'][number]
+
+export function useCustomerBalances(orgId: string, asOf: string, enabled = true) {
+  return useQuery({
+    queryKey: ['report', 'customer_balance_summary', orgId, asOf],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('customer_balance_summary', { p_org_id: orgId, p_as_of: asOf })
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}
+
+export function useSupplierBalances(orgId: string, asOf: string, enabled = true) {
+  return useQuery({
+    queryKey: ['report', 'supplier_balance_summary', orgId, asOf],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('supplier_balance_summary', { p_org_id: orgId, p_as_of: asOf })
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}
+
+export function usePartyStatement(
+  kind: 'customer' | 'supplier',
+  orgId: string,
+  partyId: string,
+  start: string,
+  end: string,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ['report', `${kind}_statement`, orgId, partyId, start, end],
+    enabled,
+    queryFn: async () => {
+      const { data, error } =
+        kind === 'customer'
+          ? await supabase.rpc('customer_statement', {
+              p_org_id: orgId,
+              p_customer_id: partyId,
+              p_start_date: start,
+              p_end_date: end,
+            })
+          : await supabase.rpc('supplier_statement', {
+              p_org_id: orgId,
+              p_supplier_id: partyId,
+              p_start_date: start,
+              p_end_date: end,
+            })
+      if (error) throw error
+      return (data ?? []) as StatementRow[]
+    },
+  })
+}
+
+export function usePaymentCollection(orgId: string, start: string, end: string, enabled = true) {
+  return useQuery({
+    queryKey: ['report', 'payment_collection', orgId, start, end],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('payment_collection', {
+        p_org_id: orgId,
+        p_start_date: start,
+        p_end_date: end,
+      })
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}

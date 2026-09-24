@@ -49,3 +49,15 @@ export function referencePath(referenceType: string | null | undefined, referenc
   const base = PATHS[referenceType]
   return base ? `${base}/${referenceId}` : null
 }
+
+const PAYMENT_METHODS: Record<string, string> = {
+  cash: 'Cash',
+  card: 'Card',
+  bank_transfer: 'Bank transfer',
+  other: 'Other',
+}
+
+export function paymentMethodLabel(method: string | null | undefined) {
+  if (!method) return ''
+  return PAYMENT_METHODS[method] ?? method.replace(/_/g, ' ')
+}
