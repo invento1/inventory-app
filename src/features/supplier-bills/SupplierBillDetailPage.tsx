@@ -103,7 +103,7 @@ export function SupplierBillDetailPage() {
       </Card>
 
       <div className="mt-4 flex justify-end">
-        <div className="w-64 rounded-xl border border-border bg-surface p-4 shadow-sm">
+        <div className="w-64 rounded-xl border border-border bg-surface p-4 shadow-card">
           <div className="flex justify-between text-sm text-text-muted">
             <span>Subtotal</span>
             <span>{formatMoney(bill.subtotal, currencySymbol)}</span>

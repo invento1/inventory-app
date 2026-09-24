@@ -55,7 +55,7 @@ export function Cell({
 
 export function HeadCell({ children, right, className }: { children?: ReactNode; right?: boolean; className?: string }) {
   return (
-    <th className={cn('px-4 py-3 font-medium whitespace-nowrap', right && 'text-right', className)}>{children}</th>
+    <th className={cn('px-4 py-3 font-semibold whitespace-nowrap', right && 'text-right', className)}>{children}</th>
   )
 }
 
@@ -64,7 +64,7 @@ export function ReportTable({ head, children }: { head: ReactNode; children: Rea
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-text-muted">
+          <tr className="border-b border-border bg-surface-muted/80 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
             {head}
           </tr>
         </thead>
@@ -75,7 +75,7 @@ export function ReportTable({ head, children }: { head: ReactNode; children: Rea
 }
 
 export function Row({ children, className }: { children: ReactNode; className?: string }) {
-  return <tr className={cn('border-b border-border/60', className)}>{children}</tr>
+  return <tr className={cn('border-b border-divider transition-colors hover:bg-surface-muted/50', className)}>{children}</tr>
 }
 
 // Group heading inside a report table (e.g. "Current Assets", an account name).

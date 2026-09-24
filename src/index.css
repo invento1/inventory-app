@@ -26,23 +26,60 @@
 
   /* Surfaces: off-white page, crisp white cards, soft slate-200/80 borders. */
   --color-surface: #ffffff;
-  --color-surface-muted: #f8fafc;
-  --color-border: rgb(226 232 240 / 0.8);
-  --color-text: #0f172a;
-  --color-text-muted: #64748b;
+  --color-surface-muted: #f8fafc; /* slate-50: page, table headers, hovers */
+  --color-border: rgb(226 232 240 / 0.8); /* slate-200/80: cards, dividers */
+  --color-border-strong: #cbd5e1; /* slate-300: form controls, outline buttons */
+  --color-divider: #f1f5f9; /* slate-100: table row separators */
 
-  /* Semantic: pastel background (-50) + text/icon colour (-600). */
+  /* Text hierarchy. */
+  --color-text: #0f172a; /* slate-900: titles, body */
+  --color-text-secondary: #334155; /* slate-700: outline button labels */
+  --color-text-muted: #64748b; /* slate-500: secondary labels */
+  --color-text-subtle: #94a3b8; /* slate-400: nav icons, placeholders */
+
+  /* Semantic: pastel background (-50) + text/icon colour (-600). The -600
+     text colours are deliberately dark (emerald-700 / amber-700 / rose-600 /
+     slate-600) so badge text, error messages, and negative amounts all
+     clear WCAG AA 4.5:1 on both white and their own pastel background. */
   --color-success-50: #ecfdf5; /* paid, in stock */
-  --color-success-600: #10b981;
+  --color-success-600: #047857;
   --color-warning-50: #fffbeb; /* low stock, pending */
-  --color-warning-600: #f59e0b;
-  --color-danger-50: #fff1f2; /* overdue, unpaid, errors */
-  --color-danger-600: #f43f5e;
-  --color-danger-700: #e11d48;
+  --color-warning-600: #b45309;
+  --color-danger-50: #fff1f2; /* overdue, unpaid, errors, negative values */
+  --color-danger-600: #e11d48;
+  --color-danger-700: #be123c;
   --color-info-50: #f1f5f9; /* neutral, draft */
-  --color-info-600: #64748b;
+  --color-info-600: #475569;
 
-  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.03);
+  /* Depth. */
+  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.05);
+  --shadow-card-hover: 0 4px 6px -1px rgb(15 23 42 / 0.07), 0 2px 4px -2px rgb(15 23 42 / 0.05);
+  --shadow-button: 0 1px 2px 0 rgb(15 23 42 / 0.18), inset 0 1px 0 0 rgb(255 255 255 / 0.08);
+  --shadow-control: inset 0 1px 1px 0 rgb(15 23 42 / 0.04);
+
+  /* Motion (applied through motion-safe: so reduced-motion users get none). */
+  --animate-fade-in: fade-in 150ms ease-out;
+  --animate-modal-in: modal-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes modal-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
 }
 
 body {
@@ -55,6 +92,12 @@ body {
 
 #root {
   min-height: 100svh;
+}
+
+/* Native checkboxes/radios pick up the indigo accent everywhere. */
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--color-accent-600);
 }
 
 @media print {

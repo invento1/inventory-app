@@ -11,13 +11,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    'bg-primary text-white hover:bg-primary-hover focus-visible:outline-accent-600 disabled:bg-primary-disabled',
+    'bg-primary text-white shadow-button hover:bg-primary-hover focus-visible:outline-accent-600 disabled:bg-primary-disabled disabled:shadow-none',
   secondary:
-    'bg-surface text-text border border-border hover:bg-surface-muted focus-visible:outline-accent-600 disabled:text-text-muted',
+    'bg-surface text-text-secondary border border-border-strong shadow-card hover:bg-surface-muted hover:text-text focus-visible:outline-accent-600 disabled:text-text-muted',
   ghost:
     'bg-transparent text-text-muted hover:bg-surface-muted hover:text-text focus-visible:outline-accent-600',
   danger:
-    'bg-danger-600 text-white hover:bg-danger-700 focus-visible:outline-danger-600 disabled:bg-danger-600/50',
+    'bg-danger-600 text-white shadow-button hover:bg-danger-700 focus-visible:outline-danger-600 disabled:bg-danger-600/50 disabled:shadow-none',
 }
 
 const sizeClasses: Record<Size, string> = {
@@ -35,7 +35,8 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center rounded-lg font-medium transition-colors',
+        'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-150',
+        'motion-safe:enabled:active:scale-[0.99]',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
         'disabled:cursor-not-allowed',
         variantClasses[variant],

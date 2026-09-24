@@ -11,6 +11,7 @@ import { Select } from '../../components/ui/Select'
 import { Button } from '../../components/ui/Button'
 import { useToast } from '../../components/ui/Toast'
 import { formatMoney } from '../../lib/currency'
+import { fieldBase } from '../../components/ui/fieldStyles'
 import { SalesReceiptCartLine } from './SalesReceiptCartLine'
 import { CustomerPicker } from './CustomerPicker'
 import { useBarcodeInput } from './useBarcodeInput'
@@ -164,7 +165,7 @@ export function NewSalesReceiptPage() {
                         onChange={(e) => barcodeInput.setValue(e.target.value)}
                         onKeyDown={barcodeInput.handleKeyDown}
                         placeholder="Scan a barcode…"
-                        className="h-10 w-full rounded-lg border border-border bg-surface pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                        className={`h-10 w-full pl-9 pr-3 ${fieldBase}`}
                       />
                     </div>
                   </label>
@@ -183,7 +184,7 @@ export function NewSalesReceiptPage() {
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Search items…"
-                      className="h-10 w-full rounded-lg border border-border bg-surface pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                      className={`h-10 w-full pl-9 pr-3 ${fieldBase}`}
                     />
                   </div>
                 </label>

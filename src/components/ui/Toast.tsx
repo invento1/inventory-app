@@ -39,7 +39,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`flex items-center gap-2 rounded-lg border px-4 py-3 text-sm shadow-lg ${
+            className={`flex items-center gap-2 rounded-lg border px-4 py-3 text-sm shadow-lg motion-safe:animate-modal-in ${
               t.tone === 'success'
                 ? 'border-success-600/20 bg-surface text-success-600'
                 : 'border-danger-600/20 bg-surface text-danger-600'

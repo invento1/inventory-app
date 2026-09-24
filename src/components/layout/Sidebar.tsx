@@ -171,16 +171,38 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
     setOpenSubGroup((current) => (current === key ? undefined : key))
   }
 
+  // Selected top-level item (or a collapsed group containing the current
+  // page): indigo tint plus a small indicator pill on its left edge.
+  const selectedPill =
+    'bg-accent-50 text-accent-700 before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-accent-600'
+  const idle = 'text-text-muted hover:bg-surface-muted hover:text-text'
+
   const leafClass = (isActive: boolean) =>
     cn(
-      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-      isActive ? 'bg-accent-50 text-accent-700' : 'text-text-muted hover:bg-surface-muted hover:text-text',
+      'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150',
+      isActive ? selectedPill : idle,
     )
 
+  // Group header: when expanded, the selected child carries the highlight, so
+  // the header just darkens; when collapsed, it takes the highlight itself.
+  const groupClass = (isActive: boolean, isOpen: boolean, size: 'top' | 'sub') =>
+    cn(
+      'group relative flex w-full items-center rounded-lg text-sm font-medium transition-colors duration-150',
+      size === 'top' ? 'gap-3 px-3 py-2' : 'gap-2 px-3 py-1.5',
+      isActive ? (isOpen ? 'text-text hover:bg-surface-muted' : selectedPill) : idle,
+    )
+
+  const iconClass = (isActive: boolean) =>
+    cn('shrink-0 transition-colors', isActive ? 'text-accent-600' : 'text-text-subtle group-hover:text-text-muted')
+
+  // Nested leaf: indigo tint plus an accent bar drawn over the tree's guide
+  // line (the parent list is border-l + pl-4, hence -left-[17px]).
   const childLeafClass = (isActive: boolean) =>
     cn(
-      'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-      isActive ? 'bg-accent-50 text-accent-700' : 'text-text-muted hover:bg-surface-muted hover:text-text',
+      'relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-150',
+      isActive
+        ? 'bg-accent-50 text-accent-700 before:absolute before:-left-[17px] before:inset-y-1.5 before:w-0.5 before:rounded-full before:bg-accent-600'
+        : idle,
     )
 
   return (
@@ -197,13 +219,13 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
           className="flex flex-1 items-center gap-2 rounded-lg transition-colors hover:bg-surface-muted"
         >
           <img src={`${import.meta.env.BASE_URL}icon.png`} alt="" className="h-8 w-8 rounded-lg" />
-          <span className="text-sm font-semibold text-text">HashirHub</span>
+          <span className="text-sm font-semibold tracking-tight text-text">HashirHub</span>
         </Link>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          className="rounded-md p-1.5 text-text-muted hover:bg-surface-muted hover:text-text lg:hidden"
+          className="rounded-md p-1.5 text-text-subtle transition-colors hover:bg-surface-muted hover:text-text lg:hidden"
         >
           <X size={18} />
         </button>
@@ -219,8 +241,12 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
                 onClick={onClose}
                 className={({ isActive }) => leafClass(isActive)}
               >
-                <entry.icon size={18} />
-                {entry.label}
+                {({ isActive }) => (
+                  <>
+                    <entry.icon size={18} className={iconClass(isActive)} />
+                    {entry.label}
+                  </>
+                )}
               </NavLink>
             )
           }
@@ -233,16 +259,14 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
               <button
                 type="button"
                 onClick={() => toggleGroup(entry.key)}
-                className={cn(
-                  'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  isGroupActive
-                    ? 'bg-accent-50 text-accent-700'
-                    : 'text-text-muted hover:bg-surface-muted hover:text-text',
-                )}
+                className={groupClass(isGroupActive, isOpen, 'top')}
               >
-                <entry.icon size={18} />
+                <entry.icon size={18} className={iconClass(isGroupActive)} />
                 <span className="flex-1 text-left">{entry.label}</span>
-                <ChevronDown size={16} className={cn('transition-transform', isOpen && 'rotate-180')} />
+                <ChevronDown
+                  size={16}
+                  className={cn('text-text-subtle transition-transform duration-200', isOpen && 'rotate-180')}
+                />
               </button>
               {isOpen && (
                 <div className="mt-1 flex flex-col gap-0.5 border-l border-border pl-4">
@@ -269,17 +293,12 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
                         <button
                           type="button"
                           onClick={() => toggleSubGroup(child.key)}
-                          className={cn(
-                            'flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-                            isSubActive
-                              ? 'bg-accent-50 text-accent-700'
-                              : 'text-text-muted hover:bg-surface-muted hover:text-text',
-                          )}
+                          className={groupClass(isSubActive, isSubOpen, 'sub')}
                         >
                           <span className="flex-1 text-left">{child.label}</span>
                           <ChevronDown
                             size={14}
-                            className={cn('transition-transform', isSubOpen && 'rotate-180')}
+                            className={cn('text-text-subtle transition-transform duration-200', isSubOpen && 'rotate-180')}
                           />
                         </button>
                         {isSubOpen && (

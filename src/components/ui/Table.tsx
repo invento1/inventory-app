@@ -11,7 +11,7 @@ export function Table({ children }: { children: ReactNode }) {
 export function THead({ children }: { children: ReactNode }) {
   return (
     <thead>
-      <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-text-muted">
+      <tr className="border-b border-border bg-surface-muted/80 text-left text-[11px] font-semibold uppercase tracking-wider text-text-muted">
         {children}
       </tr>
     </thead>
@@ -19,11 +19,11 @@ export function THead({ children }: { children: ReactNode }) {
 }
 
 export function Th({ children, className = '' }: { children?: ReactNode; className?: string }) {
-  return <th className={`px-4 py-3 font-medium ${className}`}>{children}</th>
+  return <th className={`px-4 py-3 font-semibold ${className}`}>{children}</th>
 }
 
 export function Td({ children, className = '' }: { children?: ReactNode; className?: string }) {
-  return <td className={`px-4 py-3 text-text ${className}`}>{children}</td>
+  return <td className={`px-4 py-3 ${className}`}>{children}</td>
 }
 
 export function Tr({
@@ -38,7 +38,7 @@ export function Tr({
   return (
     <tr
       onClick={onClick}
-      className={`border-b border-border last:border-0 ${onClick ? 'cursor-pointer hover:bg-surface-muted' : ''} ${className}`}
+      className={`border-b border-divider transition-colors last:border-0 ${onClick ? 'cursor-pointer hover:bg-surface-muted' : 'hover:bg-surface-muted/50'} ${className}`}
     >
       {children}
     </tr>

@@ -3,6 +3,7 @@ import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody } from '../../components/ui/Card'
 import { Input } from '../../components/ui/Input'
+import { fieldBase } from '../../components/ui/fieldStyles'
 import { Button } from '../../components/ui/Button'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
@@ -67,7 +68,7 @@ export function CompanyInfoPage() {
               <textarea
                 rows={3}
                 disabled={!canEdit}
-                className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 disabled:bg-surface-muted disabled:text-text-muted"
+                className={`px-3 py-2 ${fieldBase}`}
                 value={form.address ?? ''}
                 onChange={(e) => setForm({ ...form, address: e.target.value || null })}
               />

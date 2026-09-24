@@ -26,15 +26,15 @@ function StatCard({
   return (
     <Card
       onClick={() => navigate(to)}
-      className="cursor-pointer transition-shadow hover:shadow-md"
+      className="cursor-pointer"
     >
       <CardBody className="flex flex-col items-center gap-2 text-center">
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${tone}`}>
           <Icon size={20} />
         </div>
         <div>
-          <p className="text-xs font-medium text-text-muted">{label}</p>
-          <p className="text-xl font-semibold text-text">{value}</p>
+          <p className="text-sm text-text-muted">{label}</p>
+          <p className="mt-0.5 text-xl font-semibold tracking-tight tabular-nums text-text">{value}</p>
         </div>
       </CardBody>
     </Card>

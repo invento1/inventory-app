@@ -16,7 +16,7 @@ export function AppLayout() {
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-primary/40 lg:hidden"
+          className="fixed inset-0 z-30 bg-primary/40 backdrop-blur-sm motion-safe:animate-fade-in lg:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
