@@ -43,7 +43,13 @@ import { ViewDepositsPage } from './features/accounts/ViewDepositsPage'
 import { PayBillsPage } from './features/accounts/PayBillsPage'
 import { ViewPaidBillsPage } from './features/accounts/ViewPaidBillsPage'
 import { BankingPage } from './features/accounts/BankingPage'
-import { ProfitLossPage } from './features/accounts/ProfitLossPage'
+import { ReportsHomePage } from './features/reports/ReportsHomePage'
+import { ProfitLossReport } from './features/reports/ProfitLossReport'
+import { BalanceSheetReport } from './features/reports/BalanceSheetReport'
+import { TrialBalanceReport } from './features/reports/TrialBalanceReport'
+import { JournalReport } from './features/reports/JournalReport'
+import { GeneralLedgerReport } from './features/reports/GeneralLedgerReport'
+import { AccountStatementReport } from './features/reports/AccountStatementReport'
 import { AllTransactionsPage } from './features/transactions/AllTransactionsPage'
 import { InventoryTransfersPage } from './features/inventory/InventoryTransfersPage'
 import { InventoryAdjustmentsListPage } from './features/inventory/InventoryAdjustmentsListPage'
@@ -126,7 +132,15 @@ function App() {
         <Route path="/account/pay-bills" element={<PayBillsPage />} />
         <Route path="/account/view-paid-bills" element={<ViewPaidBillsPage />} />
         <Route path="/account/banking" element={<BankingPage />} />
-        <Route path="/account/profit-loss" element={<ProfitLossPage />} />
+        <Route path="/account/profit-loss" element={<Navigate to="/reports/profit-loss" replace />} />
+
+        <Route path="/reports" element={<ReportsHomePage />} />
+        <Route path="/reports/profit-loss" element={<ProfitLossReport />} />
+        <Route path="/reports/balance-sheet" element={<BalanceSheetReport />} />
+        <Route path="/reports/trial-balance" element={<TrialBalanceReport />} />
+        <Route path="/reports/journal" element={<JournalReport />} />
+        <Route path="/reports/general-ledger" element={<GeneralLedgerReport />} />
+        <Route path="/reports/account-statement" element={<AccountStatementReport />} />
 
         <Route path="/settings" element={<Navigate to="/settings/company-info" replace />} />
         <Route path="/settings/company-info" element={<CompanyInfoPage />} />

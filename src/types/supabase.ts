@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -2156,6 +2156,14 @@ export type Database = {
       }
     }
     Functions: {
+      account_is_credit_normal: {
+        Args: { p_account_type: string }
+        Returns: boolean
+      }
+      account_type_sort_order: {
+        Args: { p_account_type: string }
+        Returns: number
+      }
       apply_customer_payment: {
         Args: {
           p_allocations: Json
@@ -2186,6 +2194,15 @@ export type Database = {
       assert_accounts_not_controlled: {
         Args: { p_account_ids: string[] }
         Returns: undefined
+      }
+      balance_sheet: {
+        Args: { p_as_of: string; p_org_id: string }
+        Returns: {
+          account_id: string
+          account_name: string
+          account_type: string
+          balance: number
+        }[]
       }
       convert_purchase_order_to_bill: {
         Args: {
@@ -2550,11 +2567,54 @@ export type Database = {
           today_sales_total: number
         }[]
       }
+      general_ledger: {
+        Args: {
+          p_account_id?: string
+          p_end_date: string
+          p_org_id: string
+          p_start_date: string
+        }
+        Returns: {
+          account_id: string
+          account_name: string
+          account_type: string
+          credit: number
+          debit: number
+          entry_date: string
+          entry_id: string
+          entry_number: string
+          line_id: string
+          line_name: string
+          memo: string
+          opening_balance: number
+          reference_id: string
+          reference_type: string
+          running_balance: number
+        }[]
+      }
       get_or_create_default_account: {
         Args: { p_account_type: string; p_name: string; p_org_id: string }
         Returns: string
       }
       is_org_member: { Args: { target_org: string }; Returns: boolean }
+      journal_report: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          account_id: string
+          account_name: string
+          credit: number
+          debit: number
+          entry_date: string
+          entry_id: string
+          entry_memo: string
+          entry_number: string
+          line_id: string
+          line_memo: string
+          line_name: string
+          reference_id: string
+          reference_type: string
+        }[]
+      }
       next_document_number: {
         Args: { p_doc_type: string; p_org_id: string; p_prefix: string }
         Returns: string
@@ -2704,6 +2764,16 @@ export type Database = {
       reset_org_data: {
         Args: { p_categories: string[]; p_org_id: string }
         Returns: undefined
+      }
+      trial_balance: {
+        Args: { p_as_of: string; p_org_id: string }
+        Returns: {
+          account_id: string
+          account_name: string
+          account_type: string
+          credit: number
+          debit: number
+        }[]
       }
       void_credit_memo: {
         Args: { p_credit_memo_id: string }

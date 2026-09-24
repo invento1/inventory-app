@@ -39,3 +39,18 @@ body {
 #root {
   min-height: 100svh;
 }
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  /* Report tables: never split a row across pages. */
+  tr {
+    break-inside: avoid;
+  }
+}

@@ -6,13 +6,15 @@ import {
   Briefcase,
   Settings,
   Landmark,
+  BarChart3,
   ChevronDown,
   X,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { REPORT_CATEGORIES } from '../../features/reports/catalog'
 
-type NavLeaf = { type: 'leaf'; to: string; label: string }
+type NavLeaf = { type: 'leaf'; to: string; label: string; end?: boolean }
 type NavChild = NavLeaf | { type: 'group'; key: string; label: string; children: NavLeaf[] }
 
 type NavEntry =
@@ -91,7 +93,26 @@ const navEntries: NavEntry[] = [
         ],
       },
       { type: 'leaf', to: '/account/banking', label: 'Banking' },
-      { type: 'leaf', to: '/account/profit-loss', label: 'Profit & Loss' },
+    ],
+  },
+  // Built from the reports catalog so the directory page and the nav can't drift.
+  {
+    type: 'group',
+    key: 'reports',
+    label: 'Reports',
+    icon: BarChart3,
+    children: [
+      { type: 'leaf', to: '/reports', label: 'All Reports', end: true },
+      ...REPORT_CATEGORIES.map(
+        (category): NavChild => ({
+          type: 'group',
+          key: `reports-${category.key}`,
+          label: category.title,
+          children: category.reports
+            .filter((r) => r.status === 'ready')
+            .map((r): NavLeaf => ({ type: 'leaf', to: r.path, label: r.title })),
+        }),
+      ).filter((group) => group.type === 'group' && group.children.length > 0),
     ],
   },
   {
@@ -113,9 +134,13 @@ const navEntries: NavEntry[] = [
   },
 ]
 
+function leafMatches(leaf: NavLeaf, pathname: string): boolean {
+  return leaf.end ? pathname === leaf.to : pathname.startsWith(leaf.to)
+}
+
 function childMatches(child: NavChild, pathname: string): boolean {
   return child.type === 'leaf'
-    ? pathname.startsWith(child.to)
+    ? leafMatches(child, pathname)
     : child.children.some((leaf) => pathname.startsWith(leaf.to))
 }
 
@@ -161,7 +186,7 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-40 flex h-svh w-64 shrink-0 flex-col border-r border-border bg-white transition-transform duration-200 lg:static lg:w-60 lg:translate-x-0',
+        'fixed inset-y-0 left-0 z-40 flex h-svh w-64 shrink-0 flex-col border-r border-border bg-white transition-transform duration-200 lg:static lg:w-60 lg:translate-x-0 print:hidden',
         open ? 'translate-x-0' : '-translate-x-full',
       )}
     >
@@ -227,6 +252,7 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
                         <NavLink
                           key={child.to}
                           to={child.to}
+                          end={child.end}
                           onClick={onClose}
                           className={({ isActive }) => childLeafClass(isActive)}
                         >
