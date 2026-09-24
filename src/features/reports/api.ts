@@ -208,3 +208,59 @@ export function usePaymentCollection(orgId: string, start: string, end: string, 
     },
   })
 }
+
+export type InventoryStatusRow = Fns['inventory_status']['Returns'][number]
+export type InventoryMovementRow = Fns['inventory_movement']['Returns'][number]
+
+export function useInventoryStatus(
+  orgId: string,
+  filters: { locationId?: string; categoryId?: string; supplierId?: string },
+) {
+  const { locationId, categoryId, supplierId } = filters
+  return useQuery({
+    queryKey: ['report', 'inventory_status', orgId, locationId ?? '', categoryId ?? '', supplierId ?? ''],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('inventory_status', {
+        p_org_id: orgId,
+        ...(locationId ? { p_location_id: locationId } : {}),
+        ...(categoryId ? { p_category_id: categoryId } : {}),
+        ...(supplierId ? { p_supplier_id: supplierId } : {}),
+      })
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}
+
+export function useInventoryMovement(
+  orgId: string,
+  start: string,
+  end: string,
+  filters: { locationId?: string; categoryId?: string },
+  enabled = true,
+) {
+  const { locationId, categoryId } = filters
+  return useQuery({
+    queryKey: ['report', 'inventory_movement', orgId, start, end, locationId ?? '', categoryId ?? ''],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('inventory_movement', {
+        p_org_id: orgId,
+        p_start_date: start,
+        p_end_date: end,
+        ...(locationId ? { p_location_id: locationId } : {}),
+        ...(categoryId ? { p_category_id: categoryId } : {}),
+      })
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}
+
+// Same rule as the low_stock_report view: at or below the reorder threshold
+// (a missing threshold counts as 0) is low; at or below zero is out.
+export function stockStatus(quantity: number, reorderThreshold: number | null) {
+  if (quantity <= 0) return { label: 'Out', tone: 'danger' as const }
+  if (quantity <= (reorderThreshold ?? 0)) return { label: 'Low', tone: 'warning' as const }
+  return { label: 'OK', tone: 'success' as const }
+}

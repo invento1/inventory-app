@@ -113,6 +113,49 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
       },
     ],
   },
+  {
+    key: 'inventory',
+    title: 'Inventory',
+    reports: [
+      {
+        title: 'Quantity On Hand',
+        description: 'Stock per item by location, with reorder status',
+        path: '/reports/quantity-on-hand',
+        status: 'ready',
+      },
+      {
+        title: 'Inventory Valuation',
+        description: 'Stock value at moving average cost',
+        path: '/reports/inventory-valuation',
+        status: 'ready',
+      },
+      {
+        title: 'Inventory Movement',
+        description: 'Opening, purchased, sold, returned, adjusted, and closing quantities',
+        path: '/reports/inventory-movement',
+        status: 'ready',
+      },
+      {
+        title: 'Stock by Supplier',
+        description: "Current stock grouped by each item's supplier",
+        path: '/reports/stock-by-supplier',
+        status: 'ready',
+      },
+      {
+        title: 'Physical Inventory Worksheet',
+        description: 'Printable count sheet for a stock take',
+        path: '/reports/physical-inventory-worksheet',
+        status: 'ready',
+      },
+      {
+        title: 'Damaged / Expired Inventory',
+        description: 'Stock written off as damaged or past expiry',
+        path: '/reports/damaged-expired',
+        status: 'blocked',
+        blockedReason: 'Needs damaged/expired stock tracking (expiry dates, a write-off reason)',
+      },
+    ],
+  },
 ]
 
 export const READY_REPORTS = REPORT_CATEGORIES.flatMap((c) => c.reports).filter((r) => r.status === 'ready')

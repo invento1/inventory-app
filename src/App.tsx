@@ -54,6 +54,11 @@ import { CustomerBalancesReport } from './features/reports/CustomerBalancesRepor
 import { SupplierBalancesReport } from './features/reports/SupplierBalancesReport'
 import { PartyStatementReport } from './features/reports/PartyStatementReport'
 import { PaymentCollectionReport } from './features/reports/PaymentCollectionReport'
+import { QuantityOnHandReport } from './features/reports/QuantityOnHandReport'
+import { InventoryValuationReport } from './features/reports/InventoryValuationReport'
+import { InventoryMovementReport } from './features/reports/InventoryMovementReport'
+import { StockBySupplierReport } from './features/reports/StockBySupplierReport'
+import { PhysicalInventoryWorksheet } from './features/reports/PhysicalInventoryWorksheet'
 import { AllTransactionsPage } from './features/transactions/AllTransactionsPage'
 import { InventoryTransfersPage } from './features/inventory/InventoryTransfersPage'
 import { InventoryAdjustmentsListPage } from './features/inventory/InventoryAdjustmentsListPage'
@@ -150,6 +155,11 @@ function App() {
         <Route path="/reports/payment-collection" element={<PaymentCollectionReport />} />
         <Route path="/reports/supplier-balances" element={<SupplierBalancesReport />} />
         <Route path="/reports/supplier-statement" element={<PartyStatementReport key="supplier" kind="supplier" />} />
+        <Route path="/reports/quantity-on-hand" element={<QuantityOnHandReport />} />
+        <Route path="/reports/inventory-valuation" element={<InventoryValuationReport />} />
+        <Route path="/reports/inventory-movement" element={<InventoryMovementReport />} />
+        <Route path="/reports/stock-by-supplier" element={<StockBySupplierReport />} />
+        <Route path="/reports/physical-inventory-worksheet" element={<PhysicalInventoryWorksheet />} />
 
         <Route path="/settings" element={<Navigate to="/settings/company-info" replace />} />
         <Route path="/settings/company-info" element={<CompanyInfoPage />} />

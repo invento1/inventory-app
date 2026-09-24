@@ -2625,6 +2625,49 @@ export type Database = {
         Args: { p_account_type: string; p_name: string; p_org_id: string }
         Returns: string
       }
+      inventory_movement: {
+        Args: {
+          p_category_id?: string
+          p_end_date: string
+          p_location_id?: string
+          p_org_id: string
+          p_start_date: string
+        }
+        Returns: {
+          adjusted: number
+          category_name: string
+          closing_qty: number
+          item_id: string
+          item_name: string
+          opening_qty: number
+          purchased: number
+          returned: number
+          sku: string
+          sold: number
+          transferred: number
+        }[]
+      }
+      inventory_status: {
+        Args: {
+          p_category_id?: string
+          p_location_id?: string
+          p_org_id: string
+          p_supplier_id?: string
+        }
+        Returns: {
+          avg_cost: number
+          category_name: string
+          item_id: string
+          item_name: string
+          quantity: number
+          reorder_threshold: number
+          sku: string
+          supplier_id: string
+          supplier_name: string
+          unit: string
+          value: number
+        }[]
+      }
       is_org_member: { Args: { target_org: string }; Returns: boolean }
       journal_report: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }
