@@ -6,7 +6,7 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Table, THead, Th, Td, Tr, EmptyState } from '../../components/ui/Table'
 import { Button } from '../../components/ui/Button'
-import { CornerWave } from '../../components/ui/CornerWave'
+import { LiquidFill } from '../../components/ui/LiquidFill'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { formatMoney } from '../../lib/currency'
 import { useDailySeries, useDashboardSummary, useLowStock } from './api'
@@ -29,15 +29,15 @@ function StatCard({
   to: string
 }) {
   const navigate = useNavigate()
-  // The corner wave takes the tile's accent hue (the text-* class in tone).
+  // The liquid takes the tile's accent hue (the text-* class in tone).
   const hue = tone.split(' ').find((c) => c.startsWith('text-'))
   return (
     <Card
       onClick={() => navigate(to)}
       className="relative cursor-pointer overflow-hidden"
     >
-      <CornerWave className={hue} />
-      <CardBody className="relative flex flex-col items-center gap-2 text-center">
+      <LiquidFill className={hue} />
+      <CardBody className="relative z-10 flex flex-col items-center gap-2 text-center">
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${tone}`}>
           <Icon size={20} />
         </div>
