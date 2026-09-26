@@ -410,6 +410,27 @@ inventory_adjustment_items -- adjustment_id, item_id, qty_on_hand_before, curren
 
 **Item SKUs are always system-assigned**, never typed by hand: `next_item_sku(org_id)` reuses the same `doc_number_counters` mechanism as `next_document_number` but is seeded to start at `100001` and returns a bare number with no prefix (`100001`, `100002`, ...). Unlike `next_document_number` (revoked from clients), it's called directly by the client (item creation is a plain insert, not a SECURITY DEFINER RPC), so it does its own `is_org_member` check and is left executable by authenticated clients (no `revoke`).
 
+**Item CSV import** (Items → Import Items, `/items/import`; `src/features/items/ImportItemsPage.tsx`, `itemImport.ts`, `src/lib/csvParse.ts`, migration `20260820000000_import_items.sql`; needs `items.create`).
+- **Template:** the "Download template" dialog asks which existing items to include as worked examples. It pre-selects the 3 most filled-in active items, and more can be added by search. The CSV has a UTF-8 BOM (for Excel) and the columns `SKU, Name*, Barcode, Description, Unit, Selling Price*, Reorder Level, Category, Brand, Supplier, Active`. Categories are written as `Parent > Child` paths. `IMPORT_COLUMNS` is the single source for headings, accepted aliases and the in-app column guide.
+- **Examples keep their SKU:** any row whose SKU matches an existing item is **skipped**, so examples can stay in the file. For new rows the SKU is left blank; a SKU that doesn't exist is ignored with a note, and one is assigned.
+- **Upload and preview:**
+  - `parseCsv` handles quotes, embedded commas and newlines, the BOM, and `;`/tab-delimited files (Excel in comma-decimal locales).
+  - `parseItemImport` maps headers case- and space-insensitively and checks every row the way the RPC will:
+    - name required and unique; an existing name is **skipped**, so re-uploading the same file never duplicates items;
+    - a duplicate name within the file is an error;
+    - a price is required and must be ≥ 0; `Rs 1,250` and `1,250.50` are accepted;
+    - the barcode must be unused and not repeated in the file, and Excel's `8.9E+12` scientific notation is caught with a fix-it message;
+    - Active must be yes/no;
+    - an ambiguous single category name is an error (use the path).
+  - Rows show Ready / Ready (note) / Skipped / Error with the reason. Error rows are left out; the rest import.
+- **Unknown names:** a category, brand, unit or supplier that doesn't exist is an error, unless "Create the … that don't exist yet" is ticked. That option is available only with `settings.master_data` (categories, brands, units) or `suppliers.create` (suppliers), and the RPC asserts the same permissions.
+- **Saving:** `import_items(org, rows jsonb, create_missing)` is SECURITY DEFINER with `assert_permission('items.create')`.
+  - It re-validates every row server-side and raises `Row N: …`, **all or nothing**.
+  - It resolves units by abbreviation or name (stored as `abbreviation || name`, like New Item) and categories via `import_resolve_category` (a unique name at any level, or a path; creates missing path segments).
+  - It assigns SKUs with `next_item_sku`, and is limited to 2,000 rows.
+  - The result screen lists the new SKUs, with a CSV download.
+- **Stock isn't part of the import:** items start at zero, and opening stock goes through a supplier bill or an inventory adjustment, so costing and the ledger stay correct.
+
 **Supplier Bills (Phase 4 Stage 2)** is the exact AP mirror of Invoicing: `create_supplier_bill(org_id, supplier_id, due_date, lines jsonb, notes)`, `record_supplier_bill_payment(bill_id, amount, payment_method, paid_at, notes)`, `void_supplier_bill(bill_id)` — same validation/status-machine/void-blocked-once-paid shape as their invoice counterparts, with one deliberate difference: bill line items *increase* stock on creation (`reason='receive'`, same direction as `receive_purchase_order_line`) since a bill represents goods received, not sold. `outstanding_supplier_bills` is the AP mirror of `outstanding_invoices`.
 
 **The double-entry ledger is now fully auto-posting (Phase 4 Stage 2)**. `create_journal_entry(org_id, entry_date, memo, lines jsonb, reference_type default 'manual', reference_id default null)` — the client-facing RPC Fiscal Daybook calls — remains owner/admin-only exactly as in Stage 1; it did **not** get a conditional role check, because doing so would have let any staff member call it directly from the browser console with a fabricated `reference_type` to bypass the admin gate. Instead its validation/insert logic was extracted verbatim into a private `post_journal_entry(org_id, entry_date, memo, lines jsonb, reference_type, reference_id)` with **no role check at all** (the caller's responsibility) and `revoke execute ... from public, authenticated, anon` — same technique as `next_document_number` — so it's only reachable as a plain SQL call from inside another `SECURITY DEFINER` function, never via `supabase.rpc()`. `create_journal_entry` itself is now a thin wrapper: check owner/admin, then call `post_journal_entry`.
@@ -542,7 +563,7 @@ where sl.quantity <= coalesce(i.reorder_threshold, 0);
 │   ├── auth/                      -- AuthProvider, OrgProvider (+ can/useCan), ProtectedRoute, LoginPage,
 │   │                                 SetPasswordPage, permissions.ts (PERMISSIONS, ROUTE_RULES, canAccessPath)
 │   ├── features/
-│   │   ├── items/                 -- Item List / New Item / Search Item / Price Manager
+│   │   ├── items/                 -- Item List / New Item / Import Items (CSV) / Search Item / Price Manager
 │   │   ├── stock/
 │   │   ├── suppliers/
 │   │   ├── purchase-orders/
@@ -689,6 +710,7 @@ The sidebar header is the HashirHub icon + name and links to `/` (Dashboard). It
   All of them offer CSV export and Print, and drill down to statements and source documents. The same pass fixed a pre-existing **security leak**: all five views were readable across orgs with the public anon key (§4 views rule).
 - **Printing + dashboard insights** (shipped): Print for invoices and sales receipts, Invoice Batch Print (one of the 12 previously-blocked reports — now 26 of the old app's 37 reports exist), and the dashboard's trend charts, 7-day summary, account balances, and recent transactions (§4). Also fixed `CardBody`'s `p-0` override silently losing to its own default `p-5` across 21 table cards.
 - **Dashboard edit table + local timezone + header search** (shipped): a customizable Transactions Summary (Edit table, saved per user), all dashboard date logic in the viewer's timezone, the 16 form date defaults switched from UTC to local, and the global header search (§4).
+- **Item CSV import** (shipped): Items → Import Items. The downloadable template includes chosen existing items as worked examples; the upload preview checks every row; the import is one all-or-nothing RPC, with optional creation of missing categories, brands, units and suppliers (§4 Item CSV import).
 - **Tenant provisioning + global-change framework** (shipped):
   - `provision_org()` creates a business and its owner in one call;
   - the `orgs_initialize` trigger seeds required defaults (Security Groups, the 9 system ledger accounts) plus starter data (first location, starter chart);

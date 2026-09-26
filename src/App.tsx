@@ -7,6 +7,7 @@ import { AppLayout } from './components/layout/AppLayout'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { ItemsListPage } from './features/items/ItemsListPage'
 import { NewItemPage } from './features/items/NewItemPage'
+import { ImportItemsPage } from './features/items/ImportItemsPage'
 import { ItemSearchPage } from './features/items/ItemSearchPage'
 import { PriceManagerPage } from './features/items/PriceManagerPage'
 import { StockLevelsPage } from './features/stock/StockLevelsPage'
@@ -109,6 +110,7 @@ function App() {
         <Route path="/items" element={<Navigate to="/items/list" replace />} />
         <Route path="/items/list" element={<ItemsListPage />} />
         <Route path="/items/new" element={<NewItemPage />} />
+        <Route path="/items/import" element={<ImportItemsPage />} />
         <Route path="/items/search" element={<ItemSearchPage />} />
         <Route path="/items/price-manager" element={<PriceManagerPage />} />
 

@@ -102,6 +102,7 @@ export const DOC_TYPE_PERMISSION: Record<string, Permission> = {
 const ROUTE_RULES: [string, Requirement][] = [
   ['/items/list', 'items.view'],
   ['/items/new', 'items.create'],
+  ['/items/import', 'items.create'],
   ['/items/search', 'items.view'],
   ['/items/price-manager', 'items.prices'],
   ['/stock/*', 'items.view'],

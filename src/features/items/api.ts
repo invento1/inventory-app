@@ -89,3 +89,39 @@ export function useUpdateItem(orgId: string) {
     },
   })
 }
+
+export interface ImportItemRow {
+  row: number
+  name: string
+  barcode: string
+  description: string
+  unit: string
+  unit_price: string
+  reorder_threshold: string
+  category: string
+  brand: string
+  supplier: string
+  is_active: string
+}
+
+// Items -> Import Items. One RPC call: every row is re-validated server-side
+// and created in one transaction (all or nothing), SKUs assigned as usual.
+export function useImportItems(orgId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ rows, createMissing }: { rows: ImportItemRow[]; createMissing: boolean }) => {
+      const { data, error } = await supabase.rpc('import_items', {
+        p_org_id: orgId,
+        p_rows: rows as unknown as Database['public']['Functions']['import_items']['Args']['p_rows'],
+        p_create_missing: createMissing,
+      })
+      if (error) throw error
+      return data ?? []
+    },
+    onSuccess: () => {
+      for (const key of ['items', 'categories', 'brands', 'units_of_measure', 'suppliers']) {
+        queryClient.invalidateQueries({ queryKey: [key, orgId] })
+      }
+    },
+  })
+}

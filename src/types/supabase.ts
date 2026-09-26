@@ -2878,6 +2878,24 @@ export type Database = {
         Args: { p_org_id: string; p_permission: string }
         Returns: boolean
       }
+      import_items: {
+        Args: { p_create_missing?: boolean; p_org_id: string; p_rows: Json }
+        Returns: {
+          item_name: string
+          new_item_id: string
+          new_sku: string
+          row_no: number
+        }[]
+      }
+      import_resolve_category: {
+        Args: {
+          p_create: boolean
+          p_org_id: string
+          p_path: string
+          p_row: number
+        }
+        Returns: string
+      }
       income_by_customer: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }
         Returns: {
@@ -3279,6 +3297,10 @@ export type Database = {
       seed_default_roles: { Args: { p_org_id: string }; Returns: undefined }
       seed_org_starter_data: { Args: { p_org_id: string }; Returns: undefined }
       seed_system_accounts: { Args: { p_org_id: string }; Returns: undefined }
+      set_login_password: {
+        Args: { p_email: string; p_password: string }
+        Returns: string
+      }
       supplier_balance_summary: {
         Args: { p_as_of: string; p_org_id: string }
         Returns: {

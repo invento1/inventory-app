@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus } from 'lucide-react'
+import { Plus, Upload } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card } from '../../components/ui/Card'
@@ -39,10 +39,16 @@ export function ItemsListPage() {
         subtitle="Your product catalog"
         action={
           can('items.create') && (
-            <Button onClick={() => navigate('/items/new')}>
-              <Plus size={16} />
-              New item
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={() => navigate('/items/import')}>
+                <Upload size={16} />
+                Import
+              </Button>
+              <Button onClick={() => navigate('/items/new')}>
+                <Plus size={16} />
+                New item
+              </Button>
+            </div>
           )
         }
       />

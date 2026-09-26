@@ -33,6 +33,7 @@ const navEntries: NavEntry[] = [
     children: [
       { type: 'leaf', to: '/items/list', label: 'Item List' },
       { type: 'leaf', to: '/items/new', label: 'New Item' },
+      { type: 'leaf', to: '/items/import', label: 'Import Items' },
       { type: 'leaf', to: '/items/search', label: 'Search Item' },
       { type: 'leaf', to: '/items/price-manager', label: 'Price Manager' },
     ],
