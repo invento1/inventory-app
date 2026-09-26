@@ -117,6 +117,62 @@ This isn't the default — every other table still gets its own `org_id` column 
 - Use `is_org_member(org_id)` for select policies and `has_permission(org_id, '<key>')` for write policies; never inline the membership subquery repeatedly across tables.
 - Client-side queries must still filter by `org_id` explicitly (`.eq('org_id', currentOrgId)`) even though RLS enforces it server-side too. This is defense-in-depth and a performance convention — don't rely on RLS alone to scope results, since an unfiltered query still forces Postgres to scan across all orgs' rows before RLS excludes them.
 - The `service_role` key is never used client-side, never checked into the repo, and never referenced from the frontend. It only belongs in server-side contexts (Supabase Edge Functions, CI secrets) if and when the project needs one.
+- **Revoke SECURITY DEFINER helpers from `public, authenticated, anon`, never just `public`.** Supabase grants EXECUTE on new `public` functions to `anon` and `authenticated` directly, so `revoke ... from public` alone leaves them callable. `next_document_number` and `recompute_item_avg_cost` were callable by any signed-in user until `20260818000000` for exactly this reason.
+
+### Global changes: every migration applies to every tenant
+
+All tenants share one schema, so a migration is automatically live for every existing and future org. Nothing is ever migrated per org. Hard rules for every migration and feature:
+
+1. **Schema lives in `public`, once.** New tables, columns, indexes, functions, triggers and views are created in `public`. There are no per-org schemas, tables, or copies of functions, and no per-org SQL steps in a runbook.
+2. **Every new tenant table has `org_id uuid not null references orgs(id) on delete cascade`, RLS enabled, and policies from the start.** Select uses `is_org_member(org_id)`; writes use `has_permission(org_id, '<key>')` (or go through a SECURITY DEFINER RPC that calls `assert_permission`). Line-item children follow the §3 exception. Views are `security_invoker = true`.
+3. **Per-org defaults are data, created by code, for everyone.** If a feature needs default rows per org (roles, permissions, accounts, posting rules, tax types, settings...):
+   - write an idempotent, **non-destructive** `seed_<feature>(org_id)`. It only inserts what's missing, never updates or re-grants, so it can't undo an owner's customisations;
+   - call it from `apply_org_defaults()`, so the `orgs_initialize` trigger gives every **new** org the latest defaults;
+   - backfill **existing** orgs in the same migration: `select apply_org_defaults(id) from orgs;`.
+   - Starter data that only makes sense for a brand-new org (a first location, a starter chart) goes in `seed_org_starter_data()` instead, which is never re-run.
+4. **New permissions reach existing orgs explicitly.** Insert the `app_permissions` row, add it to `seed_default_roles` (new orgs), and grant it to existing orgs' built-in roles with `select grant_permission_to_role_everywhere('<key>', 'admin');` (once per role that should have it). Existing roles are never re-seeded, so this grant is the only way they get it.
+5. **Run the audit after every migration:** `npx supabase db query --linked "select * from tenant_schema_audit()"`. It must return no `error` rows. It checks:
+   - RLS on every public table;
+   - `org_id` (or a parent-scoped policy) on every tenant table;
+   - that every policy is org-scoped;
+   - `security_invoker` on views;
+   - SECURITY DEFINER functions callable by users without a membership/permission check;
+   - every org having its roles, system accounts, an active owner and a location.
+
+   When you add a deliberate exception (a global table, a system table, an intentionally open function), add it to the allowlist arrays at the top of the function, in a migration, with a comment saying why.
+
+### Tenant provisioning (creating a new business)
+
+A business is created by the platform operator (you), not by end users: there's no signup or "create business" screen. One call does everything; the step-by-step for a non-developer is `docs/onboarding-new-client.md`.
+
+1. **Owner login.** Supabase Dashboard → Authentication → Users → **Invite user** (their email). This creates the `auth.users` row and emails a link to the app's set-password screen (`main.tsx` handles the callback).
+2. **Provision:**
+   ```sql
+   select * from provision_org(
+     p_name => 'Adil''s Store', p_slug => 'adils-store', p_owner_email => 'owner@example.com',
+     p_currency_symbol => 'Rs', p_currency_code => 'PKR', p_timezone => 'Asia/Karachi',
+     p_location_name => 'Main Store');   -- all but the first three are optional
+   ```
+   Run it in the SQL Editor, or with `npx supabase db query --linked "..."`. Only the database owner can run it; app users can't. It validates the slug (lowercase, hyphens, unique) and refuses an email with no login.
+3. **What gets created.** The insert into `orgs` fires the `orgs_initialize` trigger, which calls `initialize_new_org()`:
+   | Table | What | From |
+   |---|---|---|
+   | `orgs` | name, slug, currency, timezone | `provision_org` |
+   | `org_members` | the owner (role `owner`, status `active`, name from their invite metadata) | `provision_org` |
+   | `org_roles` + `role_permissions` | Owner, Administrator, Manager, Accountant, Cashier with default grants (136 rows) | `seed_default_roles` (required) |
+   | `ledger_accounts` | the 9 system accounts the auto-posting RPCs use (Cash, Bank, Undeposited Funds, Accounts Receivable, Inventory, Accounts Payable, Sales Income, Cost of Goods Sold, Purchases). Inventory and Undeposited Funds are flagged as control accounts by their trigger | `seed_system_accounts` (required) |
+   | `ledger_accounts` | starter accounts: Owner's Equity, General Expenses, Rent, Salaries & Wages, Utilities | `seed_org_starter_data` (new orgs only) |
+   | `locations` | one store (default "Main Store", renamed by `p_location_name`) | `seed_org_starter_data` (new orgs only) |
+4. **Created lazily, not at provisioning:**
+   - `doc_number_counters`: the first document of each type;
+   - `user_preferences`: the first customisation;
+   - `stock_levels`: the first stock movement.
+
+   **Tax types don't exist yet.** When they're built, their defaults go in a `seed_tax_types` called from `apply_org_defaults` (rule 3 above).
+5. **Everything after that happens in the app.** The owner adds users in Settings → Users (the `manage-users` Edge Function), and sets up company info, more locations and master data in Settings.
+6. **Check:** `select * from tenant_schema_audit()` should still return no errors.
+
+**Sessions and org selection.** Auth is Supabase Auth (JWT in the browser; `detectSessionInUrl` off, see §9). Tenancy is **never** in the JWT: every request is scoped by RLS lookups against `org_members` (`is_org_member`, `has_permission`), so role changes and deactivation apply on the next request. `OrgProvider` loads the user's memberships oldest-first and uses the first *active* one (a user can belong to several orgs; there's no switcher yet). It exposes `orgId`, `role`, `can()`, and the org's currency. A user with only deactivated memberships gets a "Your access is turned off" screen.
 
 ## 4. Schema Conventions
 
@@ -352,7 +408,7 @@ inventory_adjustment_items -- adjustment_id, item_id, qty_on_hand_before, curren
   - Printing: `AppLayout` and `Sidebar` carry `print:` classes that hide the app chrome and un-clip the scroll container, and `ReportShell` hides its own controls. `window.print()` therefore prints just the report document.
   - P&L moved from Account to Reports; `/account/profit-loss` redirects.
 
-**Item SKUs are always system-assigned**, never typed by hand: `next_item_sku(org_id)` reuses the same `doc_number_counters` mechanism as `next_document_number` but is seeded to start at `100001` and returns a bare number with no prefix (`100001`, `100002`, ...). Unlike `next_document_number`, it's called directly by the client (item creation is a plain insert, not a SECURITY DEFINER RPC), so it does its own `is_org_member` check and is left executable by authenticated clients (no `revoke`).
+**Item SKUs are always system-assigned**, never typed by hand: `next_item_sku(org_id)` reuses the same `doc_number_counters` mechanism as `next_document_number` but is seeded to start at `100001` and returns a bare number with no prefix (`100001`, `100002`, ...). Unlike `next_document_number` (revoked from clients), it's called directly by the client (item creation is a plain insert, not a SECURITY DEFINER RPC), so it does its own `is_org_member` check and is left executable by authenticated clients (no `revoke`).
 
 **Supplier Bills (Phase 4 Stage 2)** is the exact AP mirror of Invoicing: `create_supplier_bill(org_id, supplier_id, due_date, lines jsonb, notes)`, `record_supplier_bill_payment(bill_id, amount, payment_method, paid_at, notes)`, `void_supplier_bill(bill_id)` — same validation/status-machine/void-blocked-once-paid shape as their invoice counterparts, with one deliberate difference: bill line items *increase* stock on creation (`reason='receive'`, same direction as `receive_purchase_order_line`) since a bill represents goods received, not sold. `outstanding_supplier_bills` is the AP mirror of `outstanding_invoices`.
 
@@ -413,7 +469,7 @@ This directly extends the MAC replay rather than inventing a parallel mechanism:
 Both the Stock page's old quick-adjust shortcut and the Business Hub tab now go through this one document (`/inventory-adjustments/new`) — there is no separate fast/no-accounting path anymore, per explicit instruction to retire it rather than keep two divergent tools.
 
 **Users & Security Groups** (Settings → Users, Settings → Security Groups; `src/features/users/`, `supabase/functions/manage-users/`, migrations `20260817000000`–`20260817000200`). Access control has two layers, both built on the §3 Permissions (RBAC) model:
-- **Roles.** Every org starts with Owner, Administrator, Manager, Accountant and Cashier (`seed_default_roles`, re-run by the `orgs_seed_default_roles` trigger for new orgs). The owner can rename built-in roles and change their permissions, but not delete them. The owner can also add custom roles (`create_org_role`, optionally copying another role's permissions) and delete them once nobody holds them. The former `staff` role was migrated to `manager`.
+- **Roles.** Every org starts with Owner, Administrator, Manager, Accountant and Cashier (`seed_default_roles`, called for new orgs by the `orgs_initialize` trigger through `apply_org_defaults`; it only grants defaults to a role it just created, so it never re-grants a permission the owner removed). The owner can rename built-in roles and change their permissions, but not delete them. The owner can also add custom roles (`create_org_role`, optionally copying another role's permissions) and delete them once nobody holds them. The former `staff` role was migrated to `manager`.
 - **Security Groups matrix.** Rows are `app_permissions` grouped by module, columns are roles. Only the owner can save it (`save_role_permissions(org, role, keys[])` replaces a role's whole set); everyone else with `users.manage` sees it read-only. `app_permissions.requires` lists dependencies (Create invoices needs View invoices). The UI ticks and unticks them automatically (`togglePermission` in `users/api.ts`), and the RPC rejects any set that misses one.
 - **Adding users** goes through the `manage-users` Edge Function, the only code holding the service-role key (auto-provided by Supabase, never in the repo):
   - It authorizes by calling `assert_can_assign_role` as the caller, then either sends an invite (`inviteUserByEmail`) or creates the login with a password the admin typed (`createUser`, `email_confirm: true`, no email sent).
@@ -535,6 +591,8 @@ The sidebar header is the HashirHub icon + name and links to `/` (Dashboard). It
 - `supabase migration new <name>` — new migration
 - `supabase db push` — apply migrations to the linked project
 - `supabase gen types typescript --project-id <id> > src/types/supabase.ts` — regenerate types after every migration; never let them drift
+- `npx supabase db query --linked "select * from tenant_schema_audit()"`: the multi-tenancy check (§3 Global changes). Run it after every `db push`; it must return no `error` rows.
+- `npx supabase db query --linked "select * from provision_org(...)"`: create a new business (§3 Tenant provisioning).
 - `npx supabase functions deploy manage-users --use-api --project-ref qkxquryxqpwsckdezxjh`: deploy the Edge Function without Docker (`--use-api` bundles server-side). The function's env (`SUPABASE_URL`, anon and service-role keys) is provided by Supabase automatically.
 - `supabase db query --linked "<sql>"` (or `-f <file>.sql`) — run SQL directly against the live linked project without opening the Dashboard SQL editor; useful for verifying an RPC/migration from the terminal. To exercise RLS as a specific member instead of the raw connection role, prefix with `select set_config('request.jwt.claims', json_build_object('sub','<user-uuid>','role','authenticated')::text, false); select set_config('role','authenticated', false);` in the same script/file.
 - If `supabase`/`npm`/`node` aren't found in a given shell, they're very likely installed but PATH wasn't reloaded into that shell session — open a fresh terminal before assuming something is missing. On the owner's laptop the bare `supabase` command isn't on PATH for automated shells at all; **`npx supabase ...` always works** — use that for every command above.
@@ -620,6 +678,13 @@ The sidebar header is the HashirHub icon + name and links to `/` (Dashboard). It
   All of them offer CSV export and Print, and drill down to statements and source documents. The same pass fixed a pre-existing **security leak**: all five views were readable across orgs with the public anon key (§4 views rule).
 - **Printing + dashboard insights** (shipped): Print for invoices and sales receipts, Invoice Batch Print (one of the 12 previously-blocked reports — now 26 of the old app's 37 reports exist), and the dashboard's trend charts, 7-day summary, account balances, and recent transactions (§4). Also fixed `CardBody`'s `p-0` override silently losing to its own default `p-5` across 21 table cards.
 - **Dashboard edit table + local timezone + header search** (shipped): a customizable Transactions Summary (Edit table, saved per user), all dashboard date logic in the viewer's timezone, the 16 form date defaults switched from UTC to local, and the global header search (§4).
+- **Tenant provisioning + global-change framework** (shipped):
+  - `provision_org()` creates a business and its owner in one call;
+  - the `orgs_initialize` trigger seeds required defaults (Security Groups, the 9 system ledger accounts) plus starter data (first location, starter chart);
+  - `apply_org_defaults()` backfills defaults for existing orgs without touching owner customisations;
+  - `tenant_schema_audit()` checks the multi-tenancy rules. Its first run found `next_document_number`/`recompute_item_avg_cost` callable by any signed-in user, now revoked.
+
+  See §3 Global changes and Tenant provisioning.
 - **User management + Security Groups (RBAC)** (shipped): Settings → Users (invite by email or create with a password, change role, deactivate, remove, resend invite, password reset), Settings → Security Groups (owner-edited role × permission matrix, 50 permissions in 15 modules, custom roles), and permission checks in every write RPC and write policy, plus ledger reads. The sidebar, pages, buttons and search follow the same permissions (§3 Permissions, §4 Users & Security Groups). The same pass repaired this file: an earlier scripted edit had duplicated §4–§10, because `'$'` in a JS replace string meant "rest of the file".
 - **Camera barcode scanning + fast invoice entry** (shipped): Scan buttons on New/Edit Item, and New Invoice's customer/item autocomplete, scan-or-search bar (quantity auto-increment for repeat scans), and camera scanning (§4). This closes the old "camera-based barcode scanning" deferral for items and invoices; New Sale still uses its original USB-scanner input.
 - **Org timezone + supplier-filtered item pickers** (shipped): documents, sales receipts, auto-posted journal entries, and the timestamp-based reports/views are dated in the org's timezone (Company Info), and the Purchase Order / Supplier Bill item dropdowns follow the chosen supplier (§4). This resolves the follow-up below once an org's timezone is set; orgs that haven't set one keep UTC dating.

@@ -58,6 +58,9 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         .from('org_members')
         .select('org_id, role, status, orgs(id, name, currency_symbol, currency_code)')
         .eq('user_id', user!.id)
+        // Oldest membership first, so a user in several orgs always lands in
+        // the same one (there's no org switcher yet).
+        .order('created_at')
       if (error) throw error
       return (data ?? []).map((row) => ({
         orgId: row.org_id,

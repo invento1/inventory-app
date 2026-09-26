@@ -2347,6 +2347,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      apply_org_defaults: { Args: { p_org_id: string }; Returns: undefined }
       apply_supplier_payment: {
         Args: {
           p_account_id?: string
@@ -2869,6 +2870,10 @@ export type Database = {
           txn_date: string
         }[]
       }
+      grant_permission_to_role_everywhere: {
+        Args: { p_permission: string; p_role_key: string }
+        Returns: number
+      }
       has_permission: {
         Args: { p_org_id: string; p_permission: string }
         Returns: boolean
@@ -3045,6 +3050,28 @@ export type Database = {
           account_name: string
           account_type: string
           amount: number
+        }[]
+      }
+      provision_org: {
+        Args: {
+          p_currency_code?: string
+          p_currency_symbol?: string
+          p_location_name?: string
+          p_name: string
+          p_owner_email: string
+          p_owner_name?: string
+          p_slug: string
+          p_timezone?: string
+        }
+        Returns: {
+          ledger_accounts: number
+          locations: number
+          org_id: string
+          org_name: string
+          owner_email: string
+          owner_user_id: string
+          roles: number
+          slug: string
         }[]
       }
       purchases_by_supplier: {
@@ -3250,6 +3277,8 @@ export type Database = {
         Returns: undefined
       }
       seed_default_roles: { Args: { p_org_id: string }; Returns: undefined }
+      seed_org_starter_data: { Args: { p_org_id: string }; Returns: undefined }
+      seed_system_accounts: { Args: { p_org_id: string }; Returns: undefined }
       supplier_balance_summary: {
         Args: { p_as_of: string; p_org_id: string }
         Returns: {
@@ -3276,6 +3305,15 @@ export type Database = {
           memo: string
           payment: number
           txn_date: string
+        }[]
+      }
+      tenant_schema_audit: {
+        Args: never
+        Returns: {
+          check_name: string
+          detail: string
+          object: string
+          severity: string
         }[]
       }
       transactions_summary: {
