@@ -15,7 +15,7 @@ import { RecordBillPaymentModal } from './RecordBillPaymentModal'
 
 export function SupplierBillDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { orgId, role, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isLoading } = useSupplierBill(orgId, id!)
@@ -30,8 +30,9 @@ export function SupplierBillDetailPage() {
   const balance = bill.total - bill.amount_paid
   const { tone, label } = billStatusTone(bill)
 
-  const canRecordPayment = bill.status !== 'paid' && bill.status !== 'void'
-  const canVoid = role !== 'staff' && bill.amount_paid === 0 && bill.status !== 'void'
+  const canRecordPayment =
+    can('supplier_payments.create') && bill.status !== 'paid' && bill.status !== 'void'
+  const canVoid = can('supplier_bills.void') && bill.amount_paid === 0 && bill.status !== 'void'
 
   async function handleVoid() {
     try {

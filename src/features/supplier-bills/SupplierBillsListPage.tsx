@@ -11,7 +11,7 @@ import { formatMoney } from '../../lib/currency'
 import { useSupplierBills, billStatusTone } from './api'
 
 export function SupplierBillsListPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const { data: bills, isLoading } = useSupplierBills(orgId)
   const navigate = useNavigate()
 
@@ -21,10 +21,12 @@ export function SupplierBillsListPage() {
         title="Supplier bills"
         subtitle="Goods received and accounts payable"
         action={
-          <Button onClick={() => navigate('/supplier-bills/new')}>
-            <Plus size={16} />
-            New bill
-          </Button>
+          can('supplier_bills.create') && (
+            <Button onClick={() => navigate('/supplier-bills/new')}>
+              <Plus size={16} />
+              New bill
+            </Button>
+          )
         }
       />
 

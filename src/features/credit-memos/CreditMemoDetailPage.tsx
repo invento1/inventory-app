@@ -14,7 +14,7 @@ import { useCreditMemo, useVoidCreditMemo } from './api'
 
 export function CreditMemoDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { orgId, role, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isLoading } = useCreditMemo(orgId, id!)
@@ -25,7 +25,7 @@ export function CreditMemoDetailPage() {
   if (isLoading || !data) return <PageSpinner />
 
   const { creditMemo, lines } = data
-  const canVoid = role !== 'staff' && creditMemo.status !== 'void'
+  const canVoid = can('credit_memos.void') && creditMemo.status !== 'void'
 
   async function handleVoid() {
     try {

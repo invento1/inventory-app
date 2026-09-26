@@ -30,7 +30,7 @@ const emptyForm: Omit<ItemInput, 'sku'> = {
 }
 
 export function NewItemPage() {
-  const { orgId } = useOrg()
+  const { orgId, can } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const [form, setForm] = useState<Omit<ItemInput, 'sku'>>(emptyForm)
@@ -108,9 +108,11 @@ export function NewItemPage() {
                     ))}
                   </Select>
                 </div>
-                <Button type="button" variant="secondary" size="sm" onClick={() => setAddingUnit(true)}>
-                  <Plus size={14} />
-                </Button>
+                {can('settings.master_data') && (
+                  <Button type="button" variant="secondary" size="sm" onClick={() => setAddingUnit(true)}>
+                    <Plus size={14} />
+                  </Button>
+                )}
               </div>
               <Input
                 label="Price"
@@ -151,9 +153,11 @@ export function NewItemPage() {
                     ))}
                   </Select>
                 </div>
-                <Button type="button" variant="secondary" size="sm" onClick={() => setAddingCategory(true)}>
-                  <Plus size={14} />
-                </Button>
+                {can('settings.master_data') && (
+                  <Button type="button" variant="secondary" size="sm" onClick={() => setAddingCategory(true)}>
+                    <Plus size={14} />
+                  </Button>
+                )}
               </div>
               <div className="flex items-end gap-2">
                 <div className="flex-1">
@@ -170,9 +174,11 @@ export function NewItemPage() {
                     ))}
                   </Select>
                 </div>
-                <Button type="button" variant="secondary" size="sm" onClick={() => setAddingBrand(true)}>
-                  <Plus size={14} />
-                </Button>
+                {can('settings.master_data') && (
+                  <Button type="button" variant="secondary" size="sm" onClick={() => setAddingBrand(true)}>
+                    <Plus size={14} />
+                  </Button>
+                )}
               </div>
               <div className="flex items-end gap-2">
                 <div className="flex-1">
@@ -189,9 +195,11 @@ export function NewItemPage() {
                     ))}
                   </Select>
                 </div>
-                <Button type="button" variant="secondary" size="sm" onClick={() => setAddingSupplier(true)}>
-                  <Plus size={14} />
-                </Button>
+                {can('suppliers.create') && (
+                  <Button type="button" variant="secondary" size="sm" onClick={() => setAddingSupplier(true)}>
+                    <Plus size={14} />
+                  </Button>
+                )}
               </div>
             </div>
             <Input

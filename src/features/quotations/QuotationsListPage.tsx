@@ -11,7 +11,7 @@ import { formatMoney } from '../../lib/currency'
 import { useQuotations } from './api'
 
 export function QuotationsListPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const { data: quotations, isLoading } = useQuotations(orgId)
   const navigate = useNavigate()
 
@@ -21,10 +21,12 @@ export function QuotationsListPage() {
         title="Quotations"
         subtitle="Estimates for customers — don't affect stock or the ledger"
         action={
-          <Button onClick={() => navigate('/quotations/new')}>
-            <Plus size={16} />
-            New quotation
-          </Button>
+          can('quotations.create') && (
+            <Button onClick={() => navigate('/quotations/new')}>
+              <Plus size={16} />
+              New quotation
+            </Button>
+          )
         }
       />
 

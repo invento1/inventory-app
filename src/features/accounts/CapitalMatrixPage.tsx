@@ -13,7 +13,7 @@ import { useLedgerAccounts, accountTypeLabel, type LedgerAccountRow } from './ap
 import { LedgerAccountForm } from './LedgerAccountForm'
 
 export function CapitalMatrixPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const { data: accounts, isLoading } = useLedgerAccounts(orgId)
   const [editing, setEditing] = useState<LedgerAccountRow | null | undefined>(undefined)
@@ -24,10 +24,12 @@ export function CapitalMatrixPage() {
         title="Capital Matrix"
         subtitle="Chart of accounts"
         action={
-          <Button onClick={() => setEditing(null)}>
-            <Plus size={16} />
-            New account
-          </Button>
+          can('accounts.manage') && (
+            <Button onClick={() => setEditing(null)}>
+              <Plus size={16} />
+              New account
+            </Button>
+          )
         }
       />
 

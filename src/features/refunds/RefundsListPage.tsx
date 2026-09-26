@@ -11,7 +11,7 @@ import { formatMoney } from '../../lib/currency'
 import { useRefunds } from './api'
 
 export function RefundsListPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const { data: refunds, isLoading } = useRefunds(orgId)
 
@@ -21,10 +21,12 @@ export function RefundsListPage() {
         title="Refunds"
         subtitle="Cash paid back to customers"
         action={
-          <Button onClick={() => navigate('/refunds/new')}>
-            <Plus size={16} />
-            New refund
-          </Button>
+          can('refunds.create') && (
+            <Button onClick={() => navigate('/refunds/new')}>
+              <Plus size={16} />
+              New refund
+            </Button>
+          )
         }
       />
 

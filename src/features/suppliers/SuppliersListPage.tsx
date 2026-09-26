@@ -10,7 +10,7 @@ import { useSuppliers, type Supplier } from './api'
 import { SupplierForm } from './SupplierForm'
 
 export function SuppliersListPage() {
-  const { orgId } = useOrg()
+  const { orgId, can } = useOrg()
   const { data: suppliers, isLoading } = useSuppliers(orgId)
   const [editing, setEditing] = useState<Supplier | null | undefined>(undefined)
 
@@ -20,10 +20,12 @@ export function SuppliersListPage() {
         title="Suppliers"
         subtitle="Who you buy stock from"
         action={
-          <Button onClick={() => setEditing(null)}>
-            <Plus size={16} />
-            New supplier
-          </Button>
+          can('suppliers.create') && (
+            <Button onClick={() => setEditing(null)}>
+              <Plus size={16} />
+              New supplier
+            </Button>
+          )
         }
       />
 
@@ -41,7 +43,7 @@ export function SuppliersListPage() {
             <tbody>
               {(!suppliers || suppliers.length === 0) && <EmptyState message="No suppliers yet." />}
               {suppliers?.map((s) => (
-                <Tr key={s.id} onClick={() => setEditing(s)}>
+                <Tr key={s.id} onClick={can('suppliers.edit') ? () => setEditing(s) : undefined}>
                   <Td className="font-medium">{s.name}</Td>
                   <Td>{s.contact_name || '—'}</Td>
                   <Td>{s.contact_email || '—'}</Td>

@@ -8,17 +8,23 @@
 //                log, damaged/expired stock tracking); shown greyed out with
 //                the reason, never linked
 
+import type { Permission } from '../../auth/permissions'
+
 export interface ReportDef {
   title: string
   description: string
   path: string
   status: 'ready' | 'blocked'
   blockedReason?: string
+  // Overrides the category's permission.
+  permission?: Permission
 }
 
 export interface ReportCategory {
   key: string
   title: string
+  // Needed to open this category's reports (see src/auth/permissions.ts).
+  permission: Permission
   reports: ReportDef[]
 }
 
@@ -26,6 +32,7 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
   {
     key: 'company-financial',
     title: 'Company & Financial',
+    permission: 'reports.financial',
     reports: [
       {
         title: 'Profit & Loss',
@@ -49,12 +56,16 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
         title: 'Income by Customer',
         description: 'Sales less credit memos, refunds, and cost of goods sold, per customer',
         path: '/reports/income-by-customer',
+        // Built from documents, not the ledger.
+        permission: 'reports.sales_purchases',
         status: 'ready',
       },
       {
         title: 'Transactions Summary',
         description: 'Count and total of every document type in a period',
         path: '/reports/transactions-summary',
+        // Built from documents, not the ledger.
+        permission: 'reports.sales_purchases',
         status: 'ready',
       },
     ],
@@ -62,6 +73,7 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
   {
     key: 'receivables',
     title: 'Receivables',
+    permission: 'reports.receivables_payables',
     reports: [
       {
         title: 'Customer Balance Summary',
@@ -86,6 +98,7 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
   {
     key: 'payables',
     title: 'Payables',
+    permission: 'reports.receivables_payables',
     reports: [
       {
         title: 'Supplier Balance Summary',
@@ -104,6 +117,7 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
   {
     key: 'accounts',
     title: 'Accounts',
+    permission: 'reports.financial',
     reports: [
       {
         title: 'Journal',
@@ -128,6 +142,7 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
   {
     key: 'inventory',
     title: 'Inventory',
+    permission: 'reports.inventory',
     reports: [
       {
         title: 'Quantity On Hand',
@@ -171,6 +186,7 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
   {
     key: 'purchases',
     title: 'Purchases',
+    permission: 'reports.sales_purchases',
     reports: [
       {
         title: 'Purchases by Supplier',
@@ -183,6 +199,7 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
   {
     key: 'sales',
     title: 'Sales',
+    permission: 'reports.sales_purchases',
     reports: [
       {
         title: 'Sales by Item',
@@ -259,6 +276,7 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
   {
     key: 'discounts',
     title: 'Discounts',
+    permission: 'reports.sales_purchases',
     reports: [
       {
         title: 'Customer Discounts Summary',
@@ -279,6 +297,7 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
   {
     key: 'sales-orders',
     title: 'Sales Orders',
+    permission: 'reports.sales_purchases',
     reports: [
       {
         title: 'Sales Orders Summary',
@@ -299,6 +318,7 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
   {
     key: 'misc',
     title: 'Misc.',
+    permission: 'reports.financial',
     reports: [
       {
         title: 'Deleted Transactions',

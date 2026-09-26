@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -13,6 +13,8 @@ import {
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { REPORT_CATEGORIES } from '../../features/reports/catalog'
+import { useOrg } from '../../auth/OrgProvider'
+import { canAccessPath } from '../../auth/permissions'
 
 type NavLeaf = { type: 'leaf'; to: string; label: string; end?: boolean }
 type NavChild = NavLeaf | { type: 'group'; key: string; label: string; children: NavLeaf[] }
@@ -129,10 +131,26 @@ const navEntries: NavEntry[] = [
       { type: 'leaf', to: '/settings/brands', label: 'Brands' },
       { type: 'leaf', to: '/settings/units', label: 'Units' },
       { type: 'leaf', to: '/settings/areas', label: 'Regions & Areas' },
+      { type: 'leaf', to: '/settings/users', label: 'Users' },
+      { type: 'leaf', to: '/settings/security-groups', label: 'Security Groups' },
       { type: 'leaf', to: '/settings/reset-data', label: 'Reset Data' },
     ],
   },
 ]
+
+// Drops links the user's security group can't open (same rules as the route
+// guard), then any group left empty.
+function filterNav(entries: NavEntry[], allowed: (path: string) => boolean): NavEntry[] {
+  return entries.flatMap((entry): NavEntry[] => {
+    if (entry.type === 'leaf') return allowed(entry.to) ? [entry] : []
+    const children = entry.children.flatMap((child): NavChild[] => {
+      if (child.type === 'leaf') return allowed(child.to) ? [child] : []
+      const leaves = child.children.filter((leaf) => allowed(leaf.to))
+      return leaves.length ? [{ ...child, children: leaves }] : []
+    })
+    return children.length ? [{ ...entry, children }] : []
+  })
+}
 
 function leafMatches(leaf: NavLeaf, pathname: string): boolean {
   return leaf.end ? pathname === leaf.to : pathname.startsWith(leaf.to)
@@ -153,8 +171,13 @@ function findActiveSubGroupKey(children: NavChild[], pathname: string): string |
 
 export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: () => void }) {
   const location = useLocation()
+  const { can, isOwner } = useOrg()
+  const entries = useMemo(
+    () => filterNav(navEntries, (path) => canAccessPath(path, can, isOwner)),
+    [can, isOwner],
+  )
 
-  const activeGroup = navEntries.find(
+  const activeGroup = entries.find(
     (entry): entry is Extract<NavEntry, { type: 'group' }> =>
       entry.type === 'group' && entry.children.some((c) => childMatches(c, location.pathname)),
   )
@@ -231,7 +254,7 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
         </button>
       </div>
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-        {navEntries.map((entry) => {
+        {entries.map((entry) => {
           if (entry.type === 'leaf') {
             return (
               <NavLink

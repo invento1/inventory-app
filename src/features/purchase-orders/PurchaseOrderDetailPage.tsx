@@ -24,7 +24,7 @@ function defaultDueDate() {
 
 export function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isLoading } = usePurchaseOrder(orgId, id!)
@@ -40,7 +40,8 @@ export function PurchaseOrderDetailPage() {
 
   const { po, lines } = data
   const anyReceived = lines.some((l) => l.quantity_received > 0)
-  const canConvert = !po.bill_id && !anyReceived
+  const canConvert =
+    can('purchase_orders.receive') && can('supplier_bills.create') && !po.bill_id && !anyReceived
 
   async function handleConvert() {
     if (!locationId) {
@@ -164,6 +165,8 @@ export function PurchaseOrderDetailPage() {
                     <Td>
                       {remaining <= 0 ? (
                         <span className="text-xs text-text-muted">Fully received</span>
+                      ) : !can('purchase_orders.receive') ? (
+                        <span className="text-xs text-text-muted">{remaining} to receive</span>
                       ) : (
                         <div className="flex items-center gap-2">
                           <div className="w-24">

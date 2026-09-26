@@ -11,7 +11,7 @@ import { formatMoney } from '../../lib/currency'
 import { useSupplierBillPayments } from './api'
 
 export function ViewPaidBillsPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const { data: payments, isLoading } = useSupplierBillPayments(orgId)
 
@@ -21,10 +21,12 @@ export function ViewPaidBillsPage() {
         title="View paid bills"
         subtitle="Every supplier bill payment made"
         action={
-          <Button onClick={() => navigate('/account/pay-bills')}>
-            <Plus size={16} />
-            Pay bills
-          </Button>
+          can('supplier_payments.create') && (
+            <Button onClick={() => navigate('/account/pay-bills')}>
+              <Plus size={16} />
+              Pay bills
+            </Button>
+          )
         }
       />
 

@@ -11,7 +11,7 @@ import { formatMoney } from '../../lib/currency'
 import { useCreditMemos } from './api'
 
 export function CreditMemosListPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const { data: creditMemos, isLoading } = useCreditMemos(orgId)
   const navigate = useNavigate()
 
@@ -21,10 +21,12 @@ export function CreditMemosListPage() {
         title="Credit memos"
         subtitle="Customer returns and billing credits"
         action={
-          <Button onClick={() => navigate('/credit-memos/new')}>
-            <Plus size={16} />
-            New credit memo
-          </Button>
+          can('credit_memos.create') && (
+            <Button onClick={() => navigate('/credit-memos/new')}>
+              <Plus size={16} />
+              New credit memo
+            </Button>
+          )
         }
       />
 

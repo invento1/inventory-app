@@ -67,13 +67,21 @@ You should see one row with their email and role `owner`.
 
 They click the invite email link → land on the app already signed in → set a password → from then on they log in normally at your app's URL with their email + that password.
 
-## Adding a second staff member to an existing client
+Creating the business also gives it five default roles (Owner, Administrator, Manager, Accountant, Cashier) with sensible starting permissions — nothing to set up.
 
-Same as steps 1–2 (invite + copy UID), then just:
+## Adding more users to an existing client
 
-```sql
-insert into public.org_members (org_id, user_id, role)
-select id, '<pasted-user-uuid>', 'staff' from public.orgs where slug = 'client-slug';
+No SQL needed any more. The client's owner (or an admin) does it inside the app: **Settings → Users → Add user**, with their name, email and role. They choose either:
+
+- **Email them an invite**: the person gets a link and picks their own password; or
+- **Set a password now**: no email is sent; the owner tells the person their password.
+
+Supabase's built-in email only sends a few messages per hour. If invites stop arriving, use "Set a password now" (or set up custom SMTP in the Supabase Dashboard).
+
+What each role can do is set in **Settings → Security Groups** (owner only). Deactivating or removing someone in Settings → Users locks them out straight away.
+
+Adding users runs through a Supabase Edge Function called `manage-users` (it's the only thing that can create logins). It's already deployed. If it ever needs redeploying:
+
 ```
-
-Use `role` = `'staff'` for regular employees, `'admin'` for someone who should be able to manage other users, or `'owner'` for a business co-owner.
+npx supabase functions deploy manage-users --use-api --project-ref qkxquryxqpwsckdezxjh
+```

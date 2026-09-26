@@ -12,11 +12,11 @@ import { localTimeZone } from '../../lib/dates'
 import { useOrgDetails, useUpdateOrgDetails, type OrgDetailsInput } from './api'
 
 export function CompanyInfoPage() {
-  const { orgId, role } = useOrg()
+  const { orgId, can } = useOrg()
   const toast = useToast()
   const { data: org, isLoading } = useOrgDetails(orgId)
   const updateOrg = useUpdateOrgDetails(orgId)
-  const canEdit = role !== 'staff'
+  const canEdit = can('settings.company')
 
   const [form, setForm] = useState<OrgDetailsInput | null>(null)
   const [error, setError] = useState<string | null>(null)

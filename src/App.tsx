@@ -33,6 +33,8 @@ import { BrandsPage } from './features/settings/BrandsPage'
 import { UnitsPage } from './features/settings/UnitsPage'
 import { AreasPage } from './features/settings/AreasPage'
 import { ResetDataPage } from './features/settings/ResetDataPage'
+import { UsersPage } from './features/users/UsersPage'
+import { SecurityGroupsPage } from './features/users/SecurityGroupsPage'
 import { CapitalMatrixPage } from './features/accounts/CapitalMatrixPage'
 import { AccountLedgerPage } from './features/accounts/AccountLedgerPage'
 import { FiscalDaybookPage } from './features/accounts/FiscalDaybookPage'
@@ -209,6 +211,8 @@ function App() {
         <Route path="/settings/brands" element={<BrandsPage />} />
         <Route path="/settings/units" element={<UnitsPage />} />
         <Route path="/settings/areas" element={<AreasPage />} />
+        <Route path="/settings/users" element={<UsersPage />} />
+        <Route path="/settings/security-groups" element={<SecurityGroupsPage />} />
         <Route path="/settings/reset-data" element={<ResetDataPage />} />
       </Route>
     </Routes>

@@ -1,16 +1,36 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
-import { LogOut, Menu } from 'lucide-react'
+import { Link, Outlet, useLocation } from 'react-router-dom'
+import { LogOut, Menu, ShieldOff } from 'lucide-react'
 import { Sidebar } from './Sidebar'
 import { WaveBackground } from './WaveBackground'
 import { GlobalSearch } from './GlobalSearch'
 import { useAuth } from '../../auth/AuthProvider'
 import { useOrg } from '../../auth/OrgProvider'
 import { supabase } from '../../lib/supabaseClient'
+import { canAccessPath } from '../../auth/permissions'
+
+// Shown instead of a page the user's security group doesn't include. The
+// database refuses the same actions; this just says so up front.
+function NoAccess() {
+  return (
+    <div className="mx-auto mt-16 max-w-md rounded-xl border border-border bg-surface p-6 text-center shadow-card">
+      <ShieldOff size={28} className="mx-auto text-text-subtle" />
+      <h1 className="mt-3 text-base font-semibold text-text">You don't have access to this page</h1>
+      <p className="mt-2 text-sm text-text-muted">
+        Your security group doesn't include it. Ask an owner to change your permissions in Settings → Security
+        Groups.
+      </p>
+      <Link to="/" className="mt-4 inline-block text-sm font-medium text-accent-600 hover:text-accent-700">
+        Back to dashboard
+      </Link>
+    </div>
+  )
+}
 
 export function AppLayout() {
   const { user } = useAuth()
-  const { orgName } = useOrg()
+  const { orgName, can, isOwner } = useOrg()
+  const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
@@ -54,7 +74,7 @@ export function AppLayout() {
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 print:overflow-visible print:p-0">
-          <Outlet />
+          {canAccessPath(location.pathname, can, isOwner) ? <Outlet /> : <NoAccess />}
         </main>
       </div>
     </div>

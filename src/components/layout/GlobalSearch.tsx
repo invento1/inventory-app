@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Search, X } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
+import { canAccessPath } from '../../auth/permissions'
 import { supabase } from '../../lib/supabaseClient'
 import { formatMoney } from '../../lib/currency'
 import { cn } from '../../lib/cn'
@@ -63,7 +64,7 @@ function shortDate(value: string) {
 }
 
 export function GlobalSearch() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can, isOwner } = useOrg()
   const navigate = useNavigate()
   const listboxId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -92,7 +93,11 @@ export function GlobalSearch() {
       return (data ?? []) as SearchRow[]
     },
   })
-  const rows = (enabled && debounced === query ? data : undefined) ?? []
+  // Only results whose page this user's security group can open.
+  const rows = ((enabled && debounced === query ? data : undefined) ?? []).filter((row) => {
+    const kind = KINDS[row.kind as Kind]
+    return !!kind && canAccessPath(kind.href(row).split('?')[0], can, isOwner)
+  })
   const searching = query.length >= MIN_CHARS && (debounced !== query || isFetching)
 
   useEffect(() => setActive(0), [debounced])

@@ -11,7 +11,7 @@ import { formatMoney } from '../../lib/currency'
 import { useInvoices, invoiceStatusTone } from './api'
 
 export function InvoicesListPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const { data: invoices, isLoading } = useInvoices(orgId)
   const navigate = useNavigate()
 
@@ -21,10 +21,12 @@ export function InvoicesListPage() {
         title="Invoices"
         subtitle="Credit sales and accounts receivable"
         action={
-          <Button onClick={() => navigate('/invoices/new')}>
-            <Plus size={16} />
-            New invoice
-          </Button>
+          can('invoices.create') && (
+            <Button onClick={() => navigate('/invoices/new')}>
+              <Plus size={16} />
+              New invoice
+            </Button>
+          )
         }
       />
 

@@ -10,7 +10,7 @@ import { PageSpinner } from '../../components/ui/Spinner'
 import { useStockLevels } from './api'
 
 export function StockLevelsPage() {
-  const { orgId } = useOrg()
+  const { orgId, can } = useOrg()
   const { data: rows, isLoading } = useStockLevels(orgId)
 
   return (
@@ -26,12 +26,14 @@ export function StockLevelsPage() {
                 Movement history
               </Button>
             </Link>
-            <Link to="/inventory-adjustments/new">
-              <Button>
-                <Plus size={16} />
-                Adjust stock
-              </Button>
-            </Link>
+            {can('inventory.adjust') && (
+              <Link to="/inventory-adjustments/new">
+                <Button>
+                  <Plus size={16} />
+                  Adjust stock
+                </Button>
+              </Link>
+            )}
           </div>
         }
       />

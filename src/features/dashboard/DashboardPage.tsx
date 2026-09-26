@@ -51,7 +51,9 @@ function StatCard({
 }
 
 export function DashboardPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
+  // The profit chart and account balances come from the ledger, which needs accounts.view.
+  const seesLedger = can('accounts.view')
   const navigate = useNavigate()
   const { data: summary, isLoading: summaryLoading } = useDashboardSummary(orgId)
   const { data: lowStock, isLoading: lowStockLoading } = useLowStock(orgId)
@@ -66,10 +68,12 @@ export function DashboardPage() {
       <PageHeader
         title="Dashboard"
         action={
-          <Button onClick={() => navigate('/sales/new')}>
-            <Plus size={16} />
-            New sale
-          </Button>
+          can('sales.create') && (
+            <Button onClick={() => navigate('/sales/new')}>
+              <Plus size={16} />
+              New sale
+            </Button>
+          )
         }
       />
 
@@ -157,7 +161,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className={seesLedger ? 'mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2' : 'mb-6'}>
         <TrendChart
           title="Sales vs collections"
           subtitle="Last 30 days"
@@ -169,25 +173,27 @@ export function DashboardPage() {
             { name: 'Collections', color: 'var(--color-success-600)', values: series.map((d) => d.collections) },
           ]}
         />
-        <TrendChart
-          title="Gross profit vs net income"
-          subtitle="Last 30 days"
-          days={days}
-          symbol={currencySymbol}
-          isLoading={seriesLoading}
-          series={[
-            { name: 'Gross profit', color: 'var(--color-accent-600)', values: series.map((d) => d.gross_profit) },
-            { name: 'Net income', color: 'var(--color-success-600)', values: series.map((d) => d.net_income) },
-          ]}
-        />
+        {seesLedger && (
+          <TrendChart
+            title="Gross profit vs net income"
+            subtitle="Last 30 days"
+            days={days}
+            symbol={currencySymbol}
+            isLoading={seriesLoading}
+            series={[
+              { name: 'Gross profit', color: 'var(--color-accent-600)', values: series.map((d) => d.gross_profit) },
+              { name: 'Net income', color: 'var(--color-success-600)', values: series.map((d) => d.net_income) },
+            ]}
+          />
+        )}
       </div>
 
       <div className="mb-6">
         <TransactionsSummaryCard />
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <AccountBalancesCard />
+      <div className={seesLedger ? 'mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2' : 'mb-6'}>
+        {seesLedger && <AccountBalancesCard />}
         <RecentTransactionsCard />
       </div>
 

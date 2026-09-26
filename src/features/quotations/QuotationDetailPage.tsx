@@ -14,7 +14,7 @@ import { useQuotation, useVoidQuotation } from './api'
 
 export function QuotationDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { orgId, role, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isLoading } = useQuotation(orgId, id!)
@@ -25,7 +25,7 @@ export function QuotationDetailPage() {
   if (isLoading || !data) return <PageSpinner />
 
   const { quotation, lines } = data
-  const canVoid = role !== 'staff' && quotation.status !== 'void'
+  const canVoid = can('quotations.void') && quotation.status !== 'void'
 
   async function handleVoid() {
     try {

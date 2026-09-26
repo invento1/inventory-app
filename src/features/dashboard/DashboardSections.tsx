@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
+import { DOC_TYPE_PERMISSION } from '../../auth/permissions'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Table, THead, Th, Td, Tr, EmptyState } from '../../components/ui/Table'
 import { Badge } from '../../components/ui/Badge'
@@ -175,8 +176,13 @@ const DOC_TYPES: Record<string, { label: string; path: string; detail: boolean }
 }
 
 export function RecentTransactionsCard() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const { data, isLoading } = useRecentTransactions(orgId)
+  // Only documents this user's security group lets them open.
+  const rows = (data ?? []).filter((t) => {
+    const permission = DOC_TYPE_PERMISSION[t.doc_type ?? '']
+    return !permission || can(permission)
+  })
 
   return (
     <Card>
@@ -200,8 +206,8 @@ export function RecentTransactionsCard() {
               <Th className="text-right">Amount</Th>
             </THead>
             <tbody>
-              {(data ?? []).length === 0 && <EmptyState message="No transactions yet." />}
-              {(data ?? []).map((t) => {
+              {rows.length === 0 && <EmptyState message="No transactions yet." />}
+              {rows.map((t) => {
                 const type = DOC_TYPES[t.doc_type ?? '']
                 const to = type ? (type.detail ? `${type.path}/${t.doc_id}` : type.path) : '/transactions'
                 return (

@@ -11,7 +11,7 @@ import { formatMoney } from '../../lib/currency'
 import { useSalesReceipts } from './api'
 
 export function SalesReceiptsListPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const { data: receipts, isLoading } = useSalesReceipts(orgId)
   const navigate = useNavigate()
 
@@ -21,10 +21,12 @@ export function SalesReceiptsListPage() {
         title="Sales"
         subtitle="Completed sales receipts"
         action={
-          <Button onClick={() => navigate('/sales/new')}>
-            <Plus size={16} />
-            New sale
-          </Button>
+          can('sales.create') && (
+            <Button onClick={() => navigate('/sales/new')}>
+              <Plus size={16} />
+              New sale
+            </Button>
+          )
         }
       />
 

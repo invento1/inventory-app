@@ -17,7 +17,7 @@ const TYPE_LABELS: Record<AdjustmentType, string> = {
 }
 
 export function InventoryAdjustmentsListPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const { data: adjustments, isLoading } = useInventoryAdjustments(orgId)
 
@@ -27,12 +27,14 @@ export function InventoryAdjustmentsListPage() {
         title="Inventory adjustments"
         subtitle="Quantity and value corrections, posted to the ledger"
         action={
-          <Link to="/inventory-adjustments/new">
-            <Button>
-              <Plus size={16} />
-              New adjustment
-            </Button>
-          </Link>
+          can('inventory.adjust') && (
+            <Link to="/inventory-adjustments/new">
+              <Button>
+                <Plus size={16} />
+                New adjustment
+              </Button>
+            </Link>
+          )
         }
       />
 

@@ -10,7 +10,7 @@ import { formatMoney } from '../../lib/currency'
 import { useJournalEntries } from './api'
 
 export function FiscalDaybookPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const { data: lines, isLoading } = useJournalEntries(orgId)
 
@@ -20,10 +20,12 @@ export function FiscalDaybookPage() {
         title="Fiscal Daybook"
         subtitle="General journal"
         action={
-          <Button onClick={() => navigate('/account/fiscal-daybook/new')}>
-            <Plus size={16} />
-            New entry
-          </Button>
+          can('journal.create') && (
+            <Button onClick={() => navigate('/account/fiscal-daybook/new')}>
+              <Plus size={16} />
+              New entry
+            </Button>
+          )
         }
       />
 

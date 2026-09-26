@@ -13,7 +13,7 @@ import { LedgerAccountForm } from './LedgerAccountForm'
 
 export function AccountLedgerPage() {
   const { id } = useParams<{ id: string }>()
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const { data, isLoading } = useAccountLedger(orgId, id!)
   const [editing, setEditing] = useState(false)
@@ -32,10 +32,12 @@ export function AccountLedgerPage() {
         )}`}
         action={
           <div className="flex items-center gap-3">
-            <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
-              <Pencil size={14} />
-              Edit
-            </Button>
+            {can('accounts.manage') && (
+              <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
+                <Pencil size={14} />
+                Edit
+              </Button>
+            )}
             <button
               type="button"
               onClick={() => navigate('/account/capital-matrix')}

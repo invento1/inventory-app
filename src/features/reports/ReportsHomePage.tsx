@@ -3,13 +3,21 @@ import { ChevronRight } from 'lucide-react'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardHeader } from '../../components/ui/Card'
 import { REPORT_CATEGORIES } from './catalog'
+import { useOrg } from '../../auth/OrgProvider'
 
 export function ReportsHomePage() {
+  const { can } = useOrg()
+  // Hide reports (and whole categories) this user's security group can't open.
+  const categories = REPORT_CATEGORIES.map((category) => ({
+    ...category,
+    reports: category.reports.filter((r) => can(r.permission ?? category.permission)),
+  })).filter((category) => category.reports.length > 0)
+
   return (
     <div>
       <PageHeader title="All Reports" subtitle="Financial, receivables, payables, inventory, and sales reports" />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {REPORT_CATEGORIES.map((category) => (
+        {categories.map((category) => (
           <Card key={category.key}>
             <CardHeader title={category.title} />
             <ul className="divide-y divide-border">

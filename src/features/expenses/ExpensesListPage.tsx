@@ -12,7 +12,7 @@ import { formatMoney } from '../../lib/currency'
 import { useExpenses, useVoidExpense } from './api'
 
 export function ExpensesListPage() {
-  const { orgId, role, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const { data: expenses, isLoading } = useExpenses(orgId)
@@ -33,10 +33,12 @@ export function ExpensesListPage() {
         title="Expenses"
         subtitle="Non-inventory business expenses, paid immediately"
         action={
-          <Button onClick={() => navigate('/expenses/new')}>
-            <Plus size={16} />
-            New expense
-          </Button>
+          can('expenses.create') && (
+            <Button onClick={() => navigate('/expenses/new')}>
+              <Plus size={16} />
+              New expense
+            </Button>
+          )
         }
       />
 
@@ -71,7 +73,7 @@ export function ExpensesListPage() {
                     </Badge>
                   </Td>
                   <Td>
-                    {role !== 'staff' && e.status !== 'void' && (
+                    {can('expenses.void') && e.status !== 'void' && (
                       <Button variant="ghost" size="sm" onClick={() => handleVoid(e.id)}>
                         Void
                       </Button>

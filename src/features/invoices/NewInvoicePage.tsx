@@ -42,7 +42,7 @@ const itemLabel = (i: Item) => `${i.name} (${i.sku})`
 const itemSearchText = (i: Item) => `${i.name} ${i.sku} ${i.barcode ?? ''}`
 
 export function NewInvoicePage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const { data: customers } = useCustomers(orgId)
@@ -247,16 +247,18 @@ export function NewInvoicePage() {
                     emptyText="No customers match"
                   />
                 </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="mb-1"
-                  aria-label="Add customer"
-                  onClick={() => setAddingCustomer(true)}
-                >
-                  <Plus size={14} />
-                </Button>
+                {can('customers.create') && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="mb-1"
+                    aria-label="Add customer"
+                    onClick={() => setAddingCustomer(true)}
+                  >
+                    <Plus size={14} />
+                  </Button>
+                )}
               </div>
               <Input
                 label="Due date"

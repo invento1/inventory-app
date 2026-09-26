@@ -10,7 +10,7 @@ import { useStockTransfers } from './api'
 import { NewTransferModal } from './NewTransferModal'
 
 export function InventoryTransfersPage() {
-  const { orgId } = useOrg()
+  const { orgId, can } = useOrg()
   const { data: transfers, isLoading } = useStockTransfers(orgId)
   const [creating, setCreating] = useState(false)
 
@@ -20,10 +20,12 @@ export function InventoryTransfersPage() {
         title="Inventory transfer"
         subtitle="Move stock between locations"
         action={
-          <Button onClick={() => setCreating(true)}>
-            <Plus size={16} />
-            New transfer
-          </Button>
+          can('inventory.transfer') && (
+            <Button onClick={() => setCreating(true)}>
+              <Plus size={16} />
+              New transfer
+            </Button>
+          )
         }
       />
 

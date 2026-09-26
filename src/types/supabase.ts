@@ -39,6 +39,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_permissions: {
+        Row: {
+          description: string | null
+          key: string
+          label: string
+          module: string
+          module_label: string
+          module_order: number
+          requires: string[]
+          sort_order: number
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          label: string
+          module: string
+          module_label: string
+          module_order: number
+          requires?: string[]
+          sort_order: number
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          label?: string
+          module?: string
+          module_label?: string
+          module_order?: number
+          requires?: string[]
+          sort_order?: number
+        }
+        Relationships: []
+      }
       areas: {
         Row: {
           created_at: string
@@ -1118,25 +1151,85 @@ export type Database = {
       org_members: {
         Row: {
           created_at: string
+          full_name: string | null
+          invited_by: string | null
           org_id: string
           role: string
+          status: string
+          updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          full_name?: string | null
+          invited_by?: string | null
           org_id: string
           role: string
+          status?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          full_name?: string | null
+          invited_by?: string | null
           org_id?: string
           role?: string
+          status?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_members_role_fkey"
+            columns: ["org_id", "role"]
+            isOneToOne: false
+            referencedRelation: "org_roles"
+            referencedColumns: ["org_id", "key"]
+          },
+        ]
+      }
+      org_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          is_system: boolean
+          key: string
+          name: string
+          org_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          is_system?: boolean
+          key: string
+          name: string
+          org_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          is_system?: boolean
+          key?: string
+          name?: string
+          org_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_roles_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "orgs"
@@ -1510,6 +1603,39 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orgs"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      role_permissions: {
+        Row: {
+          org_id: string
+          permission_key: string
+          role_key: string
+        }
+        Insert: {
+          org_id: string
+          permission_key: string
+          role_key: string
+        }
+        Update: {
+          org_id?: string
+          permission_key?: string
+          role_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_org_id_role_key_fkey"
+            columns: ["org_id", "role_key"]
+            isOneToOne: false
+            referencedRelation: "org_roles"
+            referencedColumns: ["org_id", "key"]
+          },
+          {
+            foreignKeyName: "role_permissions_permission_key_fkey"
+            columns: ["permission_key"]
+            isOneToOne: false
+            referencedRelation: "app_permissions"
+            referencedColumns: ["key"]
           },
         ]
       }
@@ -2239,6 +2365,19 @@ export type Database = {
         Args: { p_account_ids: string[] }
         Returns: undefined
       }
+      assert_can_assign_role: {
+        Args: { p_org_id: string; p_role_key: string }
+        Returns: undefined
+      }
+      assert_can_manage_member: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      assert_owner: { Args: { p_org_id: string }; Returns: undefined }
+      assert_permission: {
+        Args: { p_org_id: string; p_permission: string }
+        Returns: undefined
+      }
       balance_sheet: {
         Args: { p_as_of: string; p_org_id: string }
         Returns: {
@@ -2461,6 +2600,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_org_role: {
+        Args: {
+          p_copy_from?: string
+          p_description?: string
+          p_name: string
+          p_org_id: string
+        }
+        Returns: string
+      }
       create_quotation: {
         Args: {
           p_customer_id: string
@@ -2669,6 +2817,18 @@ export type Database = {
           today_sales_total: number
         }[]
       }
+      delete_org_role: {
+        Args: { p_org_id: string; p_role_key: string }
+        Returns: undefined
+      }
+      find_auth_user_by_email: {
+        Args: { p_email: string }
+        Returns: {
+          last_sign_in_at: string
+          other_org_count: number
+          user_id: string
+        }[]
+      }
       general_ledger: {
         Args: {
           p_account_id?: string
@@ -2708,6 +2868,10 @@ export type Database = {
           title: string
           txn_date: string
         }[]
+      }
+      has_permission: {
+        Args: { p_org_id: string; p_permission: string }
+        Returns: boolean
       }
       income_by_customer: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }
@@ -2800,7 +2964,22 @@ export type Database = {
           reference_type: string
         }[]
       }
+      list_org_members: {
+        Args: { p_org_id: string }
+        Returns: {
+          email: string
+          full_name: string
+          invited_at: string
+          is_you: boolean
+          joined_at: string
+          last_sign_in_at: string
+          role: string
+          status: string
+          user_id: string
+        }[]
+      }
       local_day: { Args: { p_ts: string; p_tz: string }; Returns: string }
+      my_permissions: { Args: { p_org_id: string }; Returns: string[] }
       next_document_number: {
         Args: { p_doc_type: string; p_org_id: string; p_prefix: string }
         Returns: string
@@ -2813,6 +2992,10 @@ export type Database = {
       org_role: { Args: { target_org: string }; Returns: string }
       org_timezone: { Args: { p_org_id: string }; Returns: string }
       org_today: { Args: { p_org_id: string }; Returns: string }
+      other_active_owner_count: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: number
+      }
       payment_collection: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }
         Returns: {
@@ -2980,9 +3163,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      remove_org_member: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: undefined
+      }
       reset_org_data: {
         Args: { p_categories: string[]; p_org_id: string }
         Returns: undefined
+      }
+      role_permission_keys: {
+        Args: { p_org_id: string; p_role_key: string }
+        Returns: string[]
       }
       safe_timezone: { Args: { p_tz: string }; Returns: string }
       sales_by_category: {
@@ -3054,6 +3245,11 @@ export type Database = {
           txn_date: string
         }[]
       }
+      save_role_permissions: {
+        Args: { p_org_id: string; p_permissions: string[]; p_role_key: string }
+        Returns: undefined
+      }
+      seed_default_roles: { Args: { p_org_id: string }; Returns: undefined }
       supplier_balance_summary: {
         Args: { p_as_of: string; p_org_id: string }
         Returns: {
@@ -3100,6 +3296,25 @@ export type Database = {
           credit: number
           debit: number
         }[]
+      }
+      update_org_member: {
+        Args: {
+          p_full_name: string
+          p_org_id: string
+          p_role: string
+          p_status: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      update_org_role: {
+        Args: {
+          p_description: string
+          p_name: string
+          p_org_id: string
+          p_role_key: string
+        }
+        Returns: undefined
       }
       void_credit_memo: {
         Args: { p_credit_memo_id: string }

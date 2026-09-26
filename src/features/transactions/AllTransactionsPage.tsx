@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useOrg } from '../../auth/OrgProvider'
+import { DOC_TYPE_PERMISSION } from '../../auth/permissions'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card } from '../../components/ui/Card'
 import { Table, THead, Th, Td, Tr, EmptyState } from '../../components/ui/Table'
@@ -9,9 +10,14 @@ import { formatMoney } from '../../lib/currency'
 import { useAllTransactions, DOC_TYPE_LABELS, DOC_TYPE_ROUTES } from './api'
 
 export function AllTransactionsPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
-  const { data: transactions, isLoading } = useAllTransactions(orgId)
+  const { data: allTransactions, isLoading } = useAllTransactions(orgId)
+  // Only document types this user's security group can view.
+  const transactions = allTransactions?.filter((t) => {
+    const permission = DOC_TYPE_PERMISSION[t.doc_type ?? '']
+    return !permission || can(permission)
+  })
 
   return (
     <div>

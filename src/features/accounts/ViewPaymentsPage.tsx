@@ -11,7 +11,7 @@ import { formatMoney } from '../../lib/currency'
 import { useInvoicePayments } from './api'
 
 export function ViewPaymentsPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const { data: payments, isLoading } = useInvoicePayments(orgId)
 
@@ -21,10 +21,12 @@ export function ViewPaymentsPage() {
         title="View payments"
         subtitle="Every customer payment received"
         action={
-          <Button onClick={() => navigate('/account/receive-payment')}>
-            <Plus size={16} />
-            Receive payment
-          </Button>
+          can('customer_payments.receive') && (
+            <Button onClick={() => navigate('/account/receive-payment')}>
+              <Plus size={16} />
+              Receive payment
+            </Button>
+          )
         }
       />
 

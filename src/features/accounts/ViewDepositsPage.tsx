@@ -51,7 +51,7 @@ function DepositDetailModal({ orgId, depositId, onClose }: { orgId: string; depo
 }
 
 export function ViewDepositsPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const { data: deposits, isLoading } = useDeposits(orgId)
   const [viewingId, setViewingId] = useState<string | null>(null)
@@ -62,10 +62,12 @@ export function ViewDepositsPage() {
         title="View deposits"
         subtitle="Payments that have been deposited into a bank account"
         action={
-          <Button onClick={() => navigate('/account/record-deposit')}>
-            <Plus size={16} />
-            Record deposit
-          </Button>
+          can('customer_payments.deposit') && (
+            <Button onClick={() => navigate('/account/record-deposit')}>
+              <Plus size={16} />
+              Record deposit
+            </Button>
+          )
         }
       />
 

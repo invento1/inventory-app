@@ -14,7 +14,7 @@ import { useItems, type ItemListRow } from './api'
 import { ItemForm } from './ItemForm'
 
 export function ItemsListPage() {
-  const { orgId, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const { data: items, isLoading } = useItems(orgId)
   const [search, setSearch] = useState('')
@@ -38,10 +38,12 @@ export function ItemsListPage() {
         title="Items"
         subtitle="Your product catalog"
         action={
-          <Button onClick={() => navigate('/items/new')}>
-            <Plus size={16} />
-            New item
-          </Button>
+          can('items.create') && (
+            <Button onClick={() => navigate('/items/new')}>
+              <Plus size={16} />
+              New item
+            </Button>
+          )
         }
       />
 
@@ -75,7 +77,7 @@ export function ItemsListPage() {
               {filtered.map((item) => {
                 const low = item.reorder_threshold != null && item.on_hand <= item.reorder_threshold
                 return (
-                  <Tr key={item.id} onClick={() => setEditing(item)}>
+                  <Tr key={item.id} onClick={can('items.edit') ? () => setEditing(item) : undefined}>
                     <Td className="font-medium">{item.name}</Td>
                     <Td>{item.sku}</Td>
                     <Td>{item.barcode || '—'}</Td>

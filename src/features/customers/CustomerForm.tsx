@@ -8,6 +8,7 @@ import { useToast } from '../../components/ui/Toast'
 import { useAreas } from '../settings/api'
 import { AreaForm } from '../settings/AreaForm'
 import { useCreateCustomer, useUpdateCustomer, type Customer, type CustomerInput } from './api'
+import { useOrg } from '../../auth/OrgProvider'
 
 const emptyForm: CustomerInput = { name: '', phone: '', email: '', address: '', area_id: null }
 
@@ -22,6 +23,7 @@ export function CustomerForm({
   onClose: () => void
   onCreated?: (customer: Customer) => void
 }) {
+  const { can } = useOrg()
   const [form, setForm] = useState<CustomerInput>(
     customer
       ? {
@@ -101,9 +103,11 @@ export function CustomerForm({
               ))}
             </Select>
           </div>
-          <Button type="button" variant="secondary" size="sm" onClick={() => setAddingArea(true)}>
-            <Plus size={14} />
-          </Button>
+          {can('settings.master_data') && (
+            <Button type="button" variant="secondary" size="sm" onClick={() => setAddingArea(true)}>
+              <Plus size={14} />
+            </Button>
+          )}
         </div>
         {error && <p className="text-sm text-danger-600">{error}</p>}
         <div className="mt-2 flex justify-end gap-2">

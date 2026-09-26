@@ -18,7 +18,7 @@ const statusTone: Record<string, 'neutral' | 'accent' | 'warning' | 'success' | 
 }
 
 export function PurchaseOrdersListPage() {
-  const { orgId } = useOrg()
+  const { orgId, can } = useOrg()
   const { data: orders, isLoading } = usePurchaseOrders(orgId)
   const navigate = useNavigate()
 
@@ -28,10 +28,12 @@ export function PurchaseOrdersListPage() {
         title="Purchase Orders"
         subtitle="Orders placed with your suppliers"
         action={
-          <Button onClick={() => navigate('/purchase-orders/new')}>
-            <Plus size={16} />
-            New purchase order
-          </Button>
+          can('purchase_orders.create') && (
+            <Button onClick={() => navigate('/purchase-orders/new')}>
+              <Plus size={16} />
+              New purchase order
+            </Button>
+          )
         }
       />
 

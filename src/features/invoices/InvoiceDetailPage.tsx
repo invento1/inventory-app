@@ -15,7 +15,7 @@ import { RecordPaymentModal } from './RecordPaymentModal'
 
 export function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { orgId, role, currencySymbol } = useOrg()
+  const { orgId, currencySymbol, can } = useOrg()
   const navigate = useNavigate()
   const toast = useToast()
   const { data, isLoading } = useInvoice(orgId, id!)
@@ -30,8 +30,9 @@ export function InvoiceDetailPage() {
   const balance = invoice.total - invoice.amount_paid
   const { tone, label } = invoiceStatusTone(invoice)
 
-  const canRecordPayment = invoice.status !== 'paid' && invoice.status !== 'void'
-  const canVoid = role !== 'staff' && invoice.amount_paid === 0 && invoice.status !== 'void'
+  const canRecordPayment =
+    can('customer_payments.receive') && invoice.status !== 'paid' && invoice.status !== 'void'
+  const canVoid = can('invoices.void') && invoice.amount_paid === 0 && invoice.status !== 'void'
 
   async function handleVoid() {
     try {

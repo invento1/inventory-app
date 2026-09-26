@@ -10,7 +10,7 @@ import { useCustomers, type CustomerListRow } from './api'
 import { CustomerForm } from './CustomerForm'
 
 export function CustomersListPage() {
-  const { orgId } = useOrg()
+  const { orgId, can } = useOrg()
   const { data: customers, isLoading } = useCustomers(orgId)
   const [editing, setEditing] = useState<CustomerListRow | null | undefined>(undefined)
 
@@ -20,10 +20,12 @@ export function CustomersListPage() {
         title="Customers"
         subtitle="Who you sell to"
         action={
-          <Button onClick={() => setEditing(null)}>
-            <Plus size={16} />
-            New customer
-          </Button>
+          can('customers.create') && (
+            <Button onClick={() => setEditing(null)}>
+              <Plus size={16} />
+              New customer
+            </Button>
+          )
         }
       />
 
@@ -42,7 +44,7 @@ export function CustomersListPage() {
             <tbody>
               {(!customers || customers.length === 0) && <EmptyState message="No customers yet." />}
               {customers?.map((c) => (
-                <Tr key={c.id} onClick={() => setEditing(c)}>
+                <Tr key={c.id} onClick={can('customers.edit') ? () => setEditing(c) : undefined}>
                   <Td className="font-medium">{c.name}</Td>
                   <Td>{c.phone || '—'}</Td>
                   <Td>{c.email || '—'}</Td>
