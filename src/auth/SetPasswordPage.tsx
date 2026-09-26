@@ -19,7 +19,7 @@ export function SetPasswordPage() {
 
   if (!session) {
     return (
-      <div className="flex min-h-svh items-center justify-center bg-surface-muted px-4 text-center">
+      <div className="flex min-h-svh items-center justify-center bg-canvas app-canvas px-4 text-center">
         <div className="max-w-sm">
           <p className="text-sm text-text-muted">
             You're not signed in, so there's no account to set a password for. The link may have expired or already
@@ -55,7 +55,7 @@ export function SetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-surface-muted px-4">
+    <div className="flex min-h-svh items-center justify-center bg-canvas app-canvas px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-semibold text-text">Welcome</h1>

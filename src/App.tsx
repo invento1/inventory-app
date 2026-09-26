@@ -28,6 +28,7 @@ import { SupplierBillsListPage } from './features/supplier-bills/SupplierBillsLi
 import { NewSupplierBillPage } from './features/supplier-bills/NewSupplierBillPage'
 import { SupplierBillDetailPage } from './features/supplier-bills/SupplierBillDetailPage'
 import { CompanyInfoPage } from './features/settings/CompanyInfoPage'
+import { AppearancePage } from './features/settings/AppearancePage'
 import { LocationsSettingsPage } from './features/settings/LocationsSettingsPage'
 import { PriceListsPage } from './features/settings/PriceListsPage'
 import { CategoriesPage } from './features/settings/CategoriesPage'
@@ -191,7 +192,8 @@ function App() {
         <Route path="/reports/customer-item-sales" element={<CustomerItemSalesReport />} />
         <Route path="/reports/invoice-batch-print" element={<InvoiceBatchPrintPage />} />
 
-        <Route path="/settings" element={<Navigate to="/settings/company-info" replace />} />
+        <Route path="/settings" element={<Navigate to="/settings/appearance" replace />} />
+        <Route path="/settings/appearance" element={<AppearancePage />} />
         <Route path="/settings/company-info" element={<CompanyInfoPage />} />
         <Route
           path="/settings/stores"

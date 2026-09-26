@@ -63,8 +63,10 @@ export type Permission = (typeof PERMISSIONS)[number]
 export type Can = (permission: Permission) => boolean
 
 // What a page needs. `any`: at least one of the listed permissions.
-// `owner`: owner role only (Reset Data). No entry = open to every member.
-type Requirement = Permission | { any: Permission[] } | { owner: true }
+// `owner`: owner role only (Reset Data). `open`: every member (personal
+// settings such as Appearance, carved out of a stricter parent rule).
+// No entry = open to every member.
+type Requirement = Permission | { any: Permission[] } | { owner: true } | { open: true }
 
 export const REPORT_PERMISSIONS: Permission[] = [
   'reports.financial',
@@ -146,6 +148,7 @@ const ROUTE_RULES: [string, Requirement][] = [
   ),
   ['/reports', { any: REPORT_PERMISSIONS }],
 
+  ['/settings/appearance', { open: true }],
   ['/settings/company-info', 'settings.company'],
   ['/settings/users', 'users.manage'],
   ['/settings/security-groups', 'users.manage'],
@@ -156,6 +159,7 @@ const ROUTE_RULES: [string, Requirement][] = [
 function meets(requirement: Requirement, can: Can, isOwner: boolean): boolean {
   if (typeof requirement === 'string') return can(requirement)
   if ('owner' in requirement) return isOwner
+  if ('open' in requirement) return true
   return requirement.any.some(can)
 }
 

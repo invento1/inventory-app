@@ -105,11 +105,11 @@ export function CameraScanner({
           {status === 'scanning' && (
             // Viewfinder guide.
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="h-2/5 w-4/5 rounded-lg border-2 border-surface/80 shadow-[0_0_0_9999px_rgb(15_23_42/0.35)]" />
+              <div className="h-2/5 w-4/5 rounded-lg border-2 border-white/80 shadow-[0_0_0_9999px_rgb(15_23_42/0.35)]" />
             </div>
           )}
           {status === 'starting' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-surface/90">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-white/90">
               <Camera size={28} />
               Starting camera…
             </div>

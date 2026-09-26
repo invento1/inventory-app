@@ -9,6 +9,16 @@
     <meta name="theme-color" content="#0f172a" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HashirHub</title>
+    <!-- Apply the saved theme before the first paint, so a dark-theme user
+         never sees a white flash (src/lib/theme.ts owns the key). -->
+    <script>
+      try {
+        if (localStorage.getItem('hashirhub:theme') === 'dark') {
+          document.documentElement.dataset.theme = 'dark'
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#080c18')
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

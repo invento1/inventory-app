@@ -11,7 +11,7 @@ export function AuthLinkProblemPage() {
   const expired = code === 'otp_expired' || /expired|invalid/i.test(description ?? '')
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-surface-muted px-4">
+    <div className="flex min-h-svh items-center justify-center bg-canvas app-canvas px-4">
       <div className="w-full max-w-md">
         <Card>
           <CardBody className="flex flex-col items-center gap-3 text-center">

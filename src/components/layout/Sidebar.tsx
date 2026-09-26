@@ -124,6 +124,7 @@ const navEntries: NavEntry[] = [
     label: 'Settings',
     icon: Settings,
     children: [
+      { type: 'leaf', to: '/settings/appearance', label: 'Appearance' },
       { type: 'leaf', to: '/settings/company-info', label: 'Company Info' },
       { type: 'leaf', to: '/settings/stores', label: 'Stores' },
       { type: 'leaf', to: '/settings/warehouses', label: 'Warehouses' },

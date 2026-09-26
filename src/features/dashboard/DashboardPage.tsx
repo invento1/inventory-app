@@ -43,7 +43,7 @@ function StatCard({
         </div>
         <div>
           <p className="text-sm text-text-muted">{label}</p>
-          <p className="mt-0.5 text-xl font-semibold tracking-tight tabular-nums text-text">{value}</p>
+          <p className="liquid-text mt-0.5 text-xl font-semibold tracking-tight tabular-nums text-text">{value}</p>
         </div>
       </CardBody>
     </Card>

@@ -13,7 +13,7 @@ export function Modal({
   width?: string
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/40 p-4 backdrop-blur-sm motion-safe:animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim p-4 backdrop-blur-sm motion-safe:animate-fade-in">
       <div className={`w-full ${width} rounded-xl border border-border bg-surface shadow-xl motion-safe:animate-modal-in`}>
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2 className="text-base font-semibold tracking-tight text-text">{title}</h2>

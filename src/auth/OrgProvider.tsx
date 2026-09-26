@@ -32,7 +32,7 @@ const OrgContext = createContext<OrgContextValue | null>(null)
 
 function LockedOut({ title, message }: { title: string; message: string }) {
   return (
-    <div className="flex h-svh items-center justify-center bg-surface-muted px-4">
+    <div className="flex h-svh items-center justify-center bg-canvas app-canvas px-4">
       <div className="max-w-sm rounded-xl border border-border bg-surface p-6 text-center shadow-sm">
         <h1 className="text-base font-semibold text-text">{title}</h1>
         <p className="mt-2 text-sm text-text-muted">{message}</p>

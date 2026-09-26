@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { LogOut, Menu, ShieldOff } from 'lucide-react'
 import { Sidebar } from './Sidebar'
@@ -8,6 +8,19 @@ import { useAuth } from '../../auth/AuthProvider'
 import { useOrg } from '../../auth/OrgProvider'
 import { supabase } from '../../lib/supabaseClient'
 import { canAccessPath } from '../../auth/permissions'
+import { useUserPreference } from '../../lib/userPreferences'
+import { applyTheme, THEME_PREFERENCE_KEY, type Theme } from '../../lib/theme'
+
+// Applies the theme saved to the user's account (Settings -> Appearance), so
+// it follows them to other devices. index.html has already applied the
+// locally cached one before the first paint.
+function ThemeSync() {
+  const { value } = useUserPreference<Theme>(THEME_PREFERENCE_KEY)
+  useEffect(() => {
+    if (value === 'light' || value === 'dark') applyTheme(value)
+  }, [value])
+  return null
+}
 
 // Shown instead of a page the user's security group doesn't include. The
 // database refuses the same actions; this just says so up front.
@@ -34,12 +47,13 @@ export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex h-svh bg-surface-muted print:block print:h-auto print:bg-surface">
+    <div className="app-canvas flex h-svh bg-canvas print:block print:h-auto print:bg-surface">
+      <ThemeSync />
       <WaveBackground />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-primary/40 backdrop-blur-sm motion-safe:animate-fade-in lg:hidden"
+          className="fixed inset-0 z-30 bg-scrim backdrop-blur-sm motion-safe:animate-fade-in lg:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />

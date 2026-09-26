@@ -24,7 +24,14 @@
   --color-accent-800: #3730a3;
   --color-accent-900: #312e81;
 
-  /* Surfaces: off-white page, crisp white cards, soft slate-200/80 borders. */
+  /* Surfaces: off-white page, crisp white cards, soft slate-200/80 borders.
+     canvas = the page behind everything; surface = cards and panels;
+     surface-muted = table headers, hovers, chips; field = inputs. In light
+     canvas and surface-muted are the same slate-50; the dark theme splits
+     them into proper elevation steps. */
+  --color-canvas: #f8fafc;
+  --color-field: #ffffff;
+  --color-scrim: rgb(15 23 42 / 0.4); /* behind modals and the mobile drawer */
   --color-surface: #ffffff;
   --color-surface-muted: #f8fafc; /* slate-50: page, table headers, hovers */
   --color-border: rgb(226 232 240 / 0.8); /* slate-200/80: cards, dividers */
@@ -48,6 +55,10 @@
   --color-danger-50: #fff1f2; /* overdue, unpaid, errors, negative values */
   --color-danger-600: #e11d48;
   --color-danger-700: #be123c;
+  /* Filled danger buttons (white label). Separate from danger-600, which is
+     a text colour and turns light pink in the dark theme. */
+  --color-danger-solid: #e11d48;
+  --color-danger-solid-hover: #be123c;
   --color-info-50: #f1f5f9; /* neutral, draft */
   --color-info-600: #475569;
 
@@ -87,9 +98,171 @@
   }
 }
 
+:root {
+  color-scheme: light;
+}
+
+/* =====================================================================
+   Dark theme: "Midnight Harbour" (Settings -> Appearance).
+   The light theme's sea at night: deep ink-navy surfaces that get
+   lighter as they come forward (canvas < surface < surface-muted), indigo
+   that glows instead of printing flat, bioluminescent waves, and a faint
+   moonlight wash at the top of the page. Every component already uses the
+   tokens, so the whole theme is this token swap plus a few effects below.
+
+   Rules the values follow:
+   * text colours clear WCAG AA (4.5:1) on surface and on their own -50 tint;
+   * -50 tints are translucent, so badges sit *in* the panel, not on it;
+   * -600 flips to the light end of each hue (it's a text colour);
+   * filled buttons keep a white label (primary = indigo-600, danger-solid).
+   Screen only: printing always uses the light tokens. .theme-dark scopes the
+   same palette to one element (the Appearance previews).
+   ===================================================================== */
+@media screen {
+  :root[data-theme='dark'],
+  .theme-dark {
+    color-scheme: dark;
+
+    --color-primary: #4f46e5;
+    --color-primary-hover: #5d55ee;
+    --color-primary-disabled: rgb(79 70 229 / 0.35);
+
+    --color-accent-50: rgb(129 140 248 / 0.12);
+    --color-accent-100: rgb(129 140 248 / 0.2);
+    --color-accent-200: rgb(129 140 248 / 0.3);
+    --color-accent-300: #c7d2fe;
+    --color-accent-400: #a5b4fc;
+    --color-accent-500: #8b93f8;
+    --color-accent-600: #818cf8;
+    --color-accent-700: #a5b4fc;
+    --color-accent-800: #c7d2fe;
+    --color-accent-900: #e0e7ff;
+
+    --color-canvas: #080c18;
+    --color-surface: #10172a;
+    --color-surface-muted: #172036;
+    --color-field: #0b1122;
+    --color-scrim: rgb(2 4 12 / 0.72);
+    --color-border: rgb(148 163 184 / 0.13);
+    --color-border-strong: rgb(148 163 184 / 0.26);
+    --color-divider: rgb(148 163 184 / 0.08);
+
+    --color-text: #e7ecf6;
+    --color-text-secondary: #c2cadb;
+    --color-text-muted: #8e9ab5;
+    --color-text-subtle: #5f6b88;
+
+    --color-success-50: rgb(16 185 129 / 0.13);
+    --color-success-600: #34d399;
+    --color-warning-50: rgb(245 158 11 / 0.13);
+    --color-warning-600: #fbbf24;
+    --color-danger-50: rgb(244 63 94 / 0.13);
+    --color-danger-600: #fb7185;
+    --color-danger-700: #fda4af;
+    --color-danger-solid: #e11d48;
+    --color-danger-solid-hover: #f43f5e;
+    --color-info-50: rgb(148 163 184 / 0.13);
+    --color-info-600: #b4bfd4;
+
+    /* Bioluminescent sea: indigo swells with a cyan thread through the middle. */
+    --color-wave-back: rgb(99 102 241 / 0.1);
+    --color-wave-middle: rgb(34 211 238 / 0.05);
+    --color-wave-front: rgb(129 140 248 / 0.14);
+
+    /* Depth in the dark comes from light, not shadow alone: a hairline top
+       highlight on every card, and an indigo halo when one lifts. */
+    --shadow-card: inset 0 1px 0 0 rgb(255 255 255 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.45);
+    --shadow-card-hover:
+      inset 0 1px 0 0 rgb(255 255 255 / 0.04), 0 10px 30px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(129 140 248 / 0.14);
+    --shadow-button:
+      0 0 0 1px rgb(129 140 248 / 0.3), 0 4px 14px -4px rgb(99 102 241 / 0.55), inset 0 1px 0 0 rgb(255 255 255 / 0.12);
+    --shadow-control: inset 0 1px 2px 0 rgb(0 0 0 / 0.35);
+  }
+
+  /* Moonlight over the harbour: a soft indigo glow at the top of the app. */
+  :root[data-theme='dark'] .app-canvas,
+  .theme-dark.app-canvas,
+  .theme-dark .app-canvas {
+    background-image:
+      radial-gradient(1100px 520px at 88% -12%, rgb(99 102 241 / 0.12), transparent 62%),
+      radial-gradient(700px 380px at -8% 8%, rgb(34 211 238 / 0.04), transparent 60%);
+  }
+
+  /* Tile numbers sit over the glowing liquid line: a soft halo in the card's
+     own colour keeps the glyphs crisp above it. */
+  :root[data-theme='dark'] .liquid-text,
+  .theme-dark .liquid-text {
+    text-shadow: 0 0 2px var(--color-surface), 0 1px 10px var(--color-surface);
+  }
+
+  :root[data-theme='dark'] ::selection {
+    background: rgb(129 140 248 / 0.35);
+  }
+}
+
+/* The light palette scoped to one element: printable documents stay white
+   paper even in the dark theme, and the Appearance page previews light.
+   Keep these values in step with the @theme block above. */
+.theme-light {
+  color-scheme: light;
+
+  --color-primary: #0f172a;
+  --color-primary-hover: #1e293b;
+  --color-primary-disabled: #94a3b8;
+  --color-accent-50: #eef2ff;
+  --color-accent-100: #e0e7ff;
+  --color-accent-200: #c7d2fe;
+  --color-accent-300: #a5b4fc;
+  --color-accent-400: #818cf8;
+  --color-accent-500: #6366f1;
+  --color-accent-600: #4f46e5;
+  --color-accent-700: #4338ca;
+  --color-accent-800: #3730a3;
+  --color-accent-900: #312e81;
+  --color-canvas: #f8fafc;
+  --color-field: #ffffff;
+  --color-scrim: rgb(15 23 42 / 0.4);
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-border: rgb(226 232 240 / 0.8);
+  --color-border-strong: #cbd5e1;
+  --color-divider: #f1f5f9;
+  --color-text: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-text-subtle: #94a3b8;
+  --color-success-50: #ecfdf5;
+  --color-success-600: #047857;
+  --color-warning-50: #fffbeb;
+  --color-warning-600: #b45309;
+  --color-danger-50: #fff1f2;
+  --color-danger-600: #e11d48;
+  --color-danger-700: #be123c;
+  --color-danger-solid: #e11d48;
+  --color-danger-solid-hover: #be123c;
+  --color-info-50: #f1f5f9;
+  --color-info-600: #475569;
+  --color-wave-back: rgb(129 140 248 / 0.08);
+  --color-wave-middle: rgb(203 213 225 / 0.2);
+  --color-wave-front: rgb(79 70 229 / 0.12);
+  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.05);
+  --shadow-card-hover: 0 4px 6px -1px rgb(15 23 42 / 0.07), 0 2px 4px -2px rgb(15 23 42 / 0.05);
+  --shadow-button: 0 1px 2px 0 rgb(15 23 42 / 0.18), inset 0 1px 0 0 rgb(255 255 255 / 0.08);
+  --shadow-control: inset 0 1px 1px 0 rgb(15 23 42 / 0.04);
+}
+
+/* Switching themes: a circular reveal from where you clicked (View
+   Transitions API, see lib/theme.ts). The default cross-fade is turned off
+   so only the reveal animates. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
 body {
   margin: 0;
-  background: var(--color-surface-muted);
+  background: var(--color-canvas);
   color: var(--color-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

@@ -17,7 +17,7 @@ const variantClasses: Record<Variant, string> = {
   ghost:
     'bg-transparent text-text-muted hover:bg-surface-muted hover:text-text focus-visible:outline-accent-600',
   danger:
-    'bg-danger-600 text-white shadow-button hover:bg-danger-700 focus-visible:outline-danger-600 disabled:bg-danger-600/50 disabled:shadow-none',
+    'bg-danger-solid text-white shadow-button hover:bg-danger-solid-hover focus-visible:outline-danger-600 disabled:bg-danger-solid/50 disabled:shadow-none',
 }
 
 const sizeClasses: Record<Size, string> = {

@@ -35,7 +35,7 @@ export function PrintableDocument({
   const contact = [org?.phone, org?.email].filter(Boolean).join(' · ')
 
   return (
-    <article className="print-doc relative mx-auto w-full max-w-[210mm] overflow-hidden rounded-xl border border-border bg-surface p-6 shadow-card sm:p-10 print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
+    <article className="print-doc theme-light relative text-text mx-auto w-full max-w-[210mm] overflow-hidden rounded-xl border border-border bg-surface p-6 shadow-card sm:p-10 print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
       {doc.isVoid && (
         <div
           aria-hidden="true"

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { cn } from '../../lib/cn'
+import { currentTheme, onThemeChange } from '../../lib/theme'
 
 // A pool of tinted "liquid" along the bottom of a card (the dashboard stat
 // tiles). At rest the surface ripples gently; hovering, moving across, or
@@ -59,8 +60,19 @@ export function LiquidFill({ className }: { className?: string }) {
     if (!canvas || !card || !ctx) return
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const [r, g, b] = toRgb(getComputedStyle(canvas).color)
-    const rgba = (a: number) => `rgba(${r}, ${g}, ${b}, ${a})`
+    // Colour comes from the card's text colour, re-read when the theme
+    // changes (the dark theme swaps every token to its light end).
+    let rgb: [number, number, number] = [100, 116, 139]
+    let dark = false
+    function readColour() {
+      rgb = toRgb(getComputedStyle(canvas!).color)
+      // A .theme-dark / .theme-light wrapper (the Appearance previews) wins
+      // over the app's theme.
+      const scope = canvas!.closest('.theme-dark, .theme-light')
+      dark = scope ? scope.classList.contains('theme-dark') : currentTheme() === 'dark'
+    }
+    readColour()
+    const rgba = (a: number) => `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${a})`
 
     const tilt: Spring = { p: 0, v: 0 }
     const centre: Spring = { p: 0, v: 0 }
@@ -118,14 +130,16 @@ export function LiquidFill({ className }: { className?: string }) {
 
       // Back layer: a flat, faint wash.
       fillLayer(1)
-      ctx!.fillStyle = rgba(0.07)
+      ctx!.fillStyle = rgba(dark ? 0.06 : 0.07)
       ctx!.fill()
 
       // Front layer: deeper towards the bottom, like looking into water.
       const top = LEVEL * height - TILT_HEIGHT * height
       const gradient = ctx!.createLinearGradient(0, top, 0, height)
-      gradient.addColorStop(0, rgba(0.2))
-      gradient.addColorStop(1, rgba(0.09))
+      // Light: deeper towards the bottom, like water in a glass. Dark: the
+      // surface glows and fades into the deep, like bioluminescence.
+      gradient.addColorStop(0, rgba(dark ? 0.17 : 0.2))
+      gradient.addColorStop(1, rgba(dark ? 0.03 : 0.09))
       fillLayer(0)
       ctx!.fillStyle = gradient
       ctx!.fill()
@@ -139,9 +153,14 @@ export function LiquidFill({ className }: { className?: string }) {
         if (i === 0) ctx!.moveTo(0, y)
         else ctx!.lineTo(u * width, y)
       }
-      ctx!.strokeStyle = rgba(0.32)
+      ctx!.strokeStyle = rgba(dark ? 0.42 : 0.32)
       ctx!.lineWidth = 1.25
+      if (dark) {
+        ctx!.shadowColor = rgba(0.55)
+        ctx!.shadowBlur = 6
+      }
       ctx!.stroke()
+      ctx!.shadowBlur = 0
     }
 
     function tick(now: number) {
@@ -208,10 +227,16 @@ export function LiquidFill({ className }: { className?: string }) {
     })
     intersectionObserver.observe(canvas)
 
+    const stopThemeWatch = onThemeChange(() => {
+      readColour()
+      draw()
+    })
+
     resize()
     start()
 
     return () => {
+      stopThemeWatch()
       if (frame) cancelAnimationFrame(frame)
       resizeObserver.disconnect()
       intersectionObserver.disconnect()

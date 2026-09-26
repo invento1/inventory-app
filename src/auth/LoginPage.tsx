@@ -58,7 +58,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-surface-muted px-4">
+    <div className="flex min-h-svh items-center justify-center bg-canvas app-canvas px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-semibold text-text">HashirHub</h1>
