@@ -13,6 +13,7 @@ import { useSuppliers } from '../suppliers/api'
 import { CategoryForm } from '../settings/CategoryForm'
 import { BrandForm } from '../settings/BrandForm'
 import { UnitForm } from '../settings/UnitForm'
+import { BarcodeField } from './BarcodeField'
 import { SupplierForm } from '../suppliers/SupplierForm'
 import { useCreateItem, type ItemInput } from './api'
 
@@ -89,11 +90,7 @@ export function NewItemPage() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
-            <Input
-              label="Barcode"
-              value={form.barcode ?? ''}
-              onChange={(e) => setForm({ ...form, barcode: e.target.value || null })}
-            />
+            <BarcodeField value={form.barcode ?? ''} onChange={(barcode) => setForm({ ...form, barcode })} />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="flex items-end gap-2">
                 <div className="flex-1">

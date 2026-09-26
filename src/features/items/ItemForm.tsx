@@ -12,6 +12,7 @@ import { BrandForm } from '../settings/BrandForm'
 import { UnitForm } from '../settings/UnitForm'
 import { SupplierForm } from '../suppliers/SupplierForm'
 import { useUpdateItem, type Item, type ItemInput } from './api'
+import { BarcodeField } from './BarcodeField'
 
 export function ItemForm({
   orgId,
@@ -83,11 +84,7 @@ export function ItemForm({
             value={form.sku}
             onChange={(e) => setForm({ ...form, sku: e.target.value })}
           />
-          <Input
-            label="Barcode"
-            value={form.barcode ?? ''}
-            onChange={(e) => setForm({ ...form, barcode: e.target.value || null })}
-          />
+          <BarcodeField value={form.barcode ?? ''} onChange={(barcode) => setForm({ ...form, barcode })} />
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="flex items-end gap-2">

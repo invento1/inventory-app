@@ -1,19 +1,22 @@
-import { useState, type FormEvent } from 'react'
+import { useCallback, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, ScanLine, Trash2 } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
+import { Autocomplete, type AutocompleteHandle } from '../../components/ui/Autocomplete'
+import { CameraScanner } from '../../components/ui/CameraScanner'
 import { useToast } from '../../components/ui/Toast'
 import { useCustomers } from '../customers/api'
 import { CustomerForm } from '../customers/CustomerForm'
-import { useItems } from '../items/api'
+import { useItems, type Item } from '../items/api'
 import { useStockLevels } from '../stock/api'
 import { useLocations } from '../../lib/useLocations'
 import { formatMoney } from '../../lib/currency'
+import { primeBeep } from '../../lib/beep'
 import { useCreateInvoice, type InvoiceLinePayload } from './api'
 import { ymd } from '../../lib/dates'
 
@@ -32,6 +35,11 @@ function defaultDueDate() {
   d.setDate(d.getDate() + 30)
   return ymd(d)
 }
+
+// Autocomplete accessors (stable references, shared by the pickers below).
+const itemKey = (i: Item) => i.id
+const itemLabel = (i: Item) => `${i.name} (${i.sku})`
+const itemSearchText = (i: Item) => `${i.name} ${i.sku} ${i.barcode ?? ''}`
 
 export function NewInvoicePage() {
   const { orgId, currencySymbol } = useOrg()
@@ -55,6 +63,17 @@ export function NewInvoicePage() {
   ])
   const [error, setError] = useState<string | null>(null)
 
+  // Fast entry: scan or search to add items.
+  const quickAddRef = useRef<AutocompleteHandle>(null)
+  const [newLineLocationId, setNewLineLocationId] = useState('')
+  const [lastAdded, setLastAdded] = useState<{ text: string; tone: 'ok' | 'miss' } | null>(null)
+  const [cameraOpen, setCameraOpen] = useState(false)
+  const defaultLocationId = newLineLocationId || locations?.[0]?.id || ''
+
+  type Customer = NonNullable<typeof customers>[number]
+  const customerKey = useCallback((c: Customer) => c.id, [])
+  const customerLabel = useCallback((c: Customer) => c.name, [])
+
   function updateLine(key: number, patch: Partial<DraftLine>) {
     setLines((current) => current.map((l) => (l.key === key ? { ...l, ...patch } : l)))
   }
@@ -72,10 +91,68 @@ export function NewInvoicePage() {
 
   function selectItem(key: number, itemId: string) {
     const item = items?.find((i) => i.id === itemId)
-    updateLine(key, {
-      item_id: itemId,
-      unit_price: item ? String(item.unit_price) : '',
-    })
+    setLines((current) =>
+      current.map((l) =>
+        l.key === key
+          ? {
+              ...l,
+              item_id: itemId,
+              unit_price: item ? String(item.unit_price) : '',
+              // Picking an item on a fresh line also gives it the default location.
+              location_id: l.location_id || (item ? defaultLocationId : ''),
+              quantity: l.quantity || (item ? '1' : ''),
+            }
+          : l,
+      ),
+    )
+  }
+
+  // Exact barcode/SKU match (case-insensitive) -- what a scan resolves to.
+  const findByCode = useCallback(
+    (code: string) => {
+      const c = code.trim().toLowerCase()
+      if (!c) return undefined
+      return (
+        items?.find((i) => i.barcode?.trim().toLowerCase() === c) ??
+        items?.find((i) => i.sku.trim().toLowerCase() === c)
+      )
+    },
+    [items],
+  )
+
+  // Scanned/picked item: bump its quantity if it's already on the invoice,
+  // otherwise fill the first empty line or append a new one with qty 1.
+  function addItem(item: Item) {
+    const existing = lines.find((l) => l.item_id === item.id)
+    if (existing) {
+      const qty = (Number(existing.quantity) || 0) + 1
+      updateLine(existing.key, { quantity: String(qty) })
+      setLastAdded({ text: `${item.name}: quantity now ${qty}`, tone: 'ok' })
+    } else {
+      const filled = {
+        item_id: item.id,
+        quantity: '1',
+        unit_price: String(item.unit_price),
+      }
+      setLines((current) => {
+        const blank = current.find((l) => !l.item_id)
+        if (blank) {
+          return current.map((l) =>
+            l.key === blank.key ? { ...l, ...filled, location_id: l.location_id || defaultLocationId } : l,
+          )
+        }
+        return [...current, { key: nextKey++, ...filled, location_id: defaultLocationId }]
+      })
+      setLastAdded({ text: `Added ${item.name}`, tone: 'ok' })
+    }
+    // Ready for the next scan.
+    requestAnimationFrame(() => quickAddRef.current?.focus())
+  }
+
+  function noMatch(code: string) {
+    setLastAdded({ text: `No item matches "${code}"`, tone: 'miss' })
+    quickAddRef.current?.clear()
+    quickAddRef.current?.focus()
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -155,22 +232,29 @@ export function NewInvoicePage() {
           <CardBody>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <Select
+                <div className="min-w-0 flex-1">
+                  <Autocomplete
                     label="Customer"
                     required
+                    items={customers ?? []}
+                    getKey={customerKey}
+                    getLabel={customerLabel}
+                    getDescription={(c) => c.phone ?? c.email ?? undefined}
+                    getSearchText={customerLabel}
                     value={customerId}
-                    onChange={(e) => setCustomerId(e.target.value)}
-                  >
-                    <option value="">Select a customer…</option>
-                    {customers?.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </Select>
+                    onChange={(id) => setCustomerId(id)}
+                    placeholder="Type to search customers…"
+                    emptyText="No customers match"
+                  />
                 </div>
-                <Button type="button" variant="secondary" size="sm" onClick={() => setAddingCustomer(true)}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="mb-1"
+                  aria-label="Add customer"
+                  onClick={() => setAddingCustomer(true)}
+                >
                   <Plus size={14} />
                 </Button>
               </div>
@@ -187,7 +271,65 @@ export function NewInvoicePage() {
         </Card>
 
         <Card>
-          <CardBody>
+          <CardBody className="flex flex-col gap-4">
+            {/* Fast entry: scan (USB scanner or camera) or search to add items. */}
+            <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface-muted/60 p-3 sm:flex-row sm:items-end">
+              <div className="min-w-0 flex-1">
+                <Autocomplete
+                  ref={quickAddRef}
+                  label="Scan or search to add items"
+                  items={items ?? []}
+                  getKey={itemKey}
+                  getLabel={itemLabel}
+                  getDescription={(i) =>
+                    [i.barcode, formatMoney(i.unit_price, currencySymbol)].filter(Boolean).join(' · ')
+                  }
+                  getSearchText={itemSearchText}
+                  clearOnPick
+                  onPick={addItem}
+                  resolveExact={findByCode}
+                  onNoMatch={noMatch}
+                  showSearchIcon
+                  placeholder="Scan a barcode, or type a name / SKU…"
+                  emptyText="No items match"
+                />
+              </div>
+              <div className="w-full sm:w-48">
+                <Select
+                  label="Location for new lines"
+                  value={defaultLocationId}
+                  onChange={(e) => setNewLineLocationId(e.target.value)}
+                >
+                  {locations?.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="shrink-0"
+                onClick={() => {
+                  primeBeep()
+                  setCameraOpen(true)
+                }}
+              >
+                <ScanLine size={16} />
+                Camera
+              </Button>
+            </div>
+            {lastAdded && (
+              <p
+                className={`-mt-2 text-xs font-medium ${lastAdded.tone === 'ok' ? 'text-success-600' : 'text-warning-600'}`}
+                role="status"
+                aria-live="polite"
+              >
+                {lastAdded.text}
+              </p>
+            )}
+
             <div className="flex flex-col gap-3">
               <div className="overflow-x-auto">
               <div className="flex min-w-[640px] flex-col gap-3">
@@ -203,18 +345,18 @@ export function NewInvoicePage() {
                 return (
                   <div key={line.key} className="grid grid-cols-12 items-end gap-3">
                     <div className="col-span-4">
-                      <Select
+                      <Autocomplete
                         label="Item"
+                        items={items ?? []}
+                        getKey={itemKey}
+                        getLabel={itemLabel}
+                        getDescription={(i) => i.barcode ?? undefined}
+                        getSearchText={itemSearchText}
                         value={line.item_id}
-                        onChange={(e) => selectItem(line.key, e.target.value)}
-                      >
-                        <option value="">Select an item…</option>
-                        {items?.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name} ({item.sku})
-                          </option>
-                        ))}
-                      </Select>
+                        onChange={(id) => selectItem(line.key, id)}
+                        placeholder="Search name, SKU, barcode…"
+                        emptyText="No items match"
+                      />
                       {onHand !== null && (
                         <p className={`mt-1 text-xs ${onHand <= 0 ? 'text-danger-600' : 'text-text-muted'}`}>
                           On hand: {onHand}
@@ -262,6 +404,7 @@ export function NewInvoicePage() {
                         variant="ghost"
                         onClick={() => removeLine(line.key)}
                         disabled={lines.length === 1}
+                        aria-label="Remove line"
                       >
                         <Trash2 size={16} />
                       </Button>
@@ -296,6 +439,19 @@ export function NewInvoicePage() {
           orgId={orgId}
           onClose={() => setAddingCustomer(false)}
           onCreated={(created) => setCustomerId(created.id)}
+        />
+      )}
+
+      {cameraOpen && (
+        <CameraScanner
+          title="Scan item barcode"
+          onDetected={(code) => {
+            setCameraOpen(false)
+            const item = findByCode(code)
+            if (item) addItem(item)
+            else noMatch(code)
+          }}
+          onClose={() => setCameraOpen(false)}
         />
       )}
     </div>
