@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from './AuthProvider'
 import { Button } from '../components/ui/Button'
@@ -20,9 +20,15 @@ export function SetPasswordPage() {
   if (!session) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-surface-muted px-4 text-center">
-        <p className="text-sm text-text-muted">
-          This link has expired or is invalid. Ask the app owner to resend your invite.
-        </p>
+        <div className="max-w-sm">
+          <p className="text-sm text-text-muted">
+            You're not signed in, so there's no account to set a password for. The link may have expired or already
+            been used.
+          </p>
+          <Link to="/login" className="mt-3 inline-block text-sm font-medium text-accent-600 hover:text-accent-700">
+            Go to sign in (use Forgot password? for a new link)
+          </Link>
+        </div>
       </div>
     )
   }
@@ -30,8 +36,8 @@ export function SetPasswordPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.')
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.')
       return
     }
     if (password !== confirm) {
@@ -53,7 +59,10 @@ export function SetPasswordPage() {
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-semibold text-text">Welcome</h1>
-          <p className="mt-1 text-sm text-text-muted">Set a password to finish creating your account</p>
+          <p className="mt-1 text-sm text-text-muted">Choose a password for</p>
+          {/* A browser holds one sign-in at a time, and an email link replaces
+              whoever was signed in. Show whose password this sets. */}
+          <p className="mt-0.5 break-all text-sm font-semibold text-text">{session.user.email}</p>
         </div>
         <Card>
           <CardBody>
@@ -81,6 +90,16 @@ export function SetPasswordPage() {
             </form>
           </CardBody>
         </Card>
+        <p className="mt-4 text-center text-xs text-text-muted">
+          Not you?{' '}
+          <button
+            type="button"
+            onClick={() => supabase.auth.signOut().then(() => navigate('/login', { replace: true }))}
+            className="font-medium text-accent-600 hover:text-accent-700"
+          >
+            Sign out
+          </button>
+        </p>
       </div>
     </div>
   )

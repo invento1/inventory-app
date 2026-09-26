@@ -48,6 +48,18 @@ If something's wrong it stops and says why (for example, "No login for …" mean
 
 They click the invite email link → land on the app already signed in → set a password → from then on they log in normally at your app's URL with their email + that password. They can fill in their address and phone in **Settings → Company Info**, rename the store or add more in **Settings → Stores / Warehouses**, and add accounts in **Capital Matrix**.
 
+### If the invite link doesn't work
+
+- **"This link has expired or was already used"**: each link works once and expires after 24 hours; opening it twice or opening an older email shows this. Get a fresh one with **Forgot password?** on the sign-in page, or send a new invite.
+- **Test invites in a private/incognito window.** A browser holds one sign-in at a time, so opening someone else's invite link where you're signed in replaces your session. The Set password page shows which account it's for.
+- **"email rate limit exceeded"**: Supabase's built-in email sends only a few emails per hour. Instead of waiting, set the owner's password yourself in the SQL Editor and tell them what it is (they can change it later with Forgot password?):
+
+  ```sql
+  select set_login_password('owner@example.com', 'a-temporary-password');
+  ```
+
+  For anyone else in a business, the owner or an admin can do the same inside the app: **Settings → Users →** click the person **→ Set a new password**.
+
 ### 4. (Optional) Health check
 
 ```sql

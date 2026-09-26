@@ -638,6 +638,17 @@ The sidebar header is the HashirHub icon + name and links to `/` (Dashboard). It
   - The sidebar is an off-canvas drawer below `lg` (§5). New nav links must pass `onClick={onClose}` like the existing ones, or they'll navigate without closing the drawer on mobile.
 - **Asset paths under the GitHub Pages base**: the app is served from `/inventory-app/`, not `/`. Tags in `index.html` can use root paths (`/favicon.ico`) — Vite rewrites them at build time. But anything referenced from TSX (e.g. an `<img src>` for a file in `public/`) must be `` `${import.meta.env.BASE_URL}file.png` ``; a bare `/file.png` works in `npm run dev` and breaks on the deployed site.
 - **Auth callback / HashRouter gotcha**: Supabase's default invite/recovery email links return the session as `#access_token=...` in the URL hash, which collides with `HashRouter`'s own use of `#` for routing. `main.tsx` consumes that callback itself (parses the hash, calls `supabase.auth.setSession`, rewrites the URL to a clean `#/...` route) *before* `HashRouter` ever mounts, and `supabaseClient.ts` sets `detectSessionInUrl: false` so supabase-js doesn't race it. Don't re-enable `detectSessionInUrl` or move auth-callback handling into a component that mounts after the router without re-reading that code path first.
+  - **Link shapes:** `consumeAuthCallback` handles three shapes:
+    - `#access_token=…&refresh_token=…&type=invite|recovery` goes to `#/set-password`;
+    - `#error=…&error_code=otp_expired…`, which Supabase sends for an expired or already-used link (every link works once), goes to `#/auth-link`. That's `AuthLinkProblemPage`, which explains the problem and what to do. Before this fix it was a **blank page**;
+    - a PKCE `?code=` is exchanged, in case that flow is ever enabled.
+  - **Failures:** a failed `setSession` also goes to `#/auth-link`.
+  - **Already-open tabs:** a `hashchange` listener reloads the page when such a fragment arrives in a tab where the app is already running. That's a hash-only change, which `main.tsx` would otherwise never see, and the user would stay signed in as whoever was there before.
+  - **One session per browser:** localStorage holds one session per origin, so an email link replaces whoever was signed in. The set-password page therefore names the account it's for and offers "Not you? Sign out". When you test an invite yourself, use a private window.
+  - **Forgot password:** the login page has **Forgot password?**, which calls `resetPasswordForEmail` with `redirectTo` = the app URL. Supabase's built-in SMTP allows only a few emails per hour, and a 429 shows a plain explanation.
+  - **When email can't be used:**
+    - in the app, an owner/admin uses Settings → Users → Set a new password;
+    - for an org owner nobody else can manage, the operator runs `select set_login_password('email', 'password')`. This SQL is DB-owner only; it writes a bcrypt hash via pgcrypto and confirms the email.
 
 ### Visual design reference
 
