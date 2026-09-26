@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody } from '../../components/ui/Card'
@@ -7,6 +7,8 @@ import { fieldBase } from '../../components/ui/fieldStyles'
 import { Button } from '../../components/ui/Button'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
+import { Select } from '../../components/ui/Select'
+import { localTimeZone } from '../../lib/dates'
 import { useOrgDetails, useUpdateOrgDetails, type OrgDetailsInput } from './api'
 
 export function CompanyInfoPage() {
@@ -28,6 +30,7 @@ export function CompanyInfoPage() {
         email: org.email,
         currency_symbol: org.currency_symbol,
         currency_code: org.currency_code,
+        timezone: org.timezone,
       })
     }
   }, [org])
@@ -43,6 +46,9 @@ export function CompanyInfoPage() {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     }
   }
+
+  const timeZones = useTimeZoneOptions(form?.timezone ?? null)
+  const deviceZone = localTimeZone()
 
   if (isLoading || !form) return <PageSpinner />
 
@@ -106,6 +112,39 @@ export function CompanyInfoPage() {
                 onChange={(e) => setForm({ ...form, currency_code: e.target.value.toUpperCase() })}
               />
             </div>
+            <div>
+              <Select
+                label="Timezone"
+                disabled={!canEdit}
+                value={form.timezone ?? ''}
+                onChange={(e) => setForm({ ...form, timezone: e.target.value || null })}
+              >
+                <option value="">Not set (UTC)</option>
+                {timeZones.map((z) => (
+                  <option key={z.value} value={z.value}>
+                    {z.label}
+                  </option>
+                ))}
+              </Select>
+              <p className="mt-1.5 text-xs text-text-muted">
+                Invoices, receipts, bills, and reports are dated in this timezone, so something created just after
+                midnight gets today's date, not yesterday's.
+              </p>
+              {!form.timezone && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-warning-600/20 bg-warning-50 px-3 py-2 text-xs text-warning-600">
+                  <span>Not set yet, so documents are dated in UTC.</span>
+                  {canEdit && deviceZone !== 'UTC' && (
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, timezone: deviceZone })}
+                      className="font-semibold underline underline-offset-2 hover:no-underline"
+                    >
+                      Use this device's timezone ({deviceZone})
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </CardBody>
         </Card>
 
@@ -121,4 +160,30 @@ export function CompanyInfoPage() {
       </form>
     </div>
   )
+}
+
+// Every IANA timezone the browser knows, labelled with its current UTC offset
+// ("Europe/London (GMT+1)"). The saved value stays listed even if this
+// browser happens not to know it.
+function useTimeZoneOptions(current: string | null) {
+  return useMemo(() => {
+    let zones: string[] = []
+    try {
+      zones = Intl.supportedValuesOf('timeZone')
+    } catch {
+      zones = ['UTC']
+    }
+    if (current && !zones.includes(current)) zones = [current, ...zones]
+    return zones.map((zone) => {
+      let offset = ''
+      try {
+        offset = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'shortOffset' })
+          .formatToParts(new Date())
+          .find((p) => p.type === 'timeZoneName')?.value ?? ''
+      } catch {
+        offset = ''
+      }
+      return { value: zone, label: offset ? `${zone.replace(/_/g, ' ')} (${offset})` : zone.replace(/_/g, ' ') }
+    })
+  }, [current])
 }

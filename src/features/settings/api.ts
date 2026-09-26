@@ -57,7 +57,7 @@ export function useResetOrgData(orgId: string) {
 export type OrgDetails = Database['public']['Tables']['orgs']['Row']
 export type OrgDetailsInput = Pick<
   Database['public']['Tables']['orgs']['Update'],
-  'name' | 'address' | 'phone' | 'email' | 'currency_symbol' | 'currency_code'
+  'name' | 'address' | 'phone' | 'email' | 'currency_symbol' | 'currency_code' | 'timezone'
 >
 
 export function useOrgDetails(orgId: string) {

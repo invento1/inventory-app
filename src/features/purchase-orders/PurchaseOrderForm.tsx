@@ -10,6 +10,7 @@ import { Select } from '../../components/ui/Select'
 import { useToast } from '../../components/ui/Toast'
 import { useSuppliers } from '../suppliers/api'
 import { useItems } from '../items/api'
+import { SupplierItemsToggle, clearUnlinkedLines, supplierItemOptions } from '../items/supplierItems'
 import { useCreatePurchaseOrder, type NewPurchaseOrderLine } from './api'
 
 interface DraftLine {
@@ -35,6 +36,28 @@ export function PurchaseOrderForm() {
     { key: nextKey++, item_id: '', quantity_ordered: '', unit_cost: '' },
   ])
   const [error, setError] = useState<string | null>(null)
+
+  // Item picker follows the chosen supplier (see features/items/supplierItems).
+  const [showAllItems, setShowAllItems] = useState(false)
+  const [clearedCount, setClearedCount] = useState(0)
+  const itemPicker = supplierItemOptions(items, supplierId, showAllItems)
+  const supplierName = suppliers?.find((s) => s.id === supplierId)?.name
+
+  function applyItemFilter(nextSupplierId: string, nextShowAll: boolean) {
+    const result = clearUnlinkedLines(lines, items, nextSupplierId, nextShowAll)
+    setLines(result.lines)
+    setClearedCount(result.cleared)
+  }
+
+  function changeSupplier(nextSupplierId: string) {
+    setSupplierId(nextSupplierId)
+    applyItemFilter(nextSupplierId, showAllItems)
+  }
+
+  function changeShowAll(nextShowAll: boolean) {
+    setShowAllItems(nextShowAll)
+    applyItemFilter(supplierId, nextShowAll)
+  }
 
   function updateLine(key: number, patch: Partial<DraftLine>) {
     setLines((current) => current.map((l) => (l.key === key ? { ...l, ...patch } : l)))
@@ -107,20 +130,29 @@ export function PurchaseOrderForm() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Card>
           <CardBody>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Select
-                label="Supplier"
-                required
-                value={supplierId}
-                onChange={(e) => setSupplierId(e.target.value)}
-              >
-                <option value="">Select a supplier…</option>
-                {suppliers?.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </Select>
+            <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
+              <div>
+                <Select
+                  label="Supplier"
+                  required
+                  value={supplierId}
+                  onChange={(e) => changeSupplier(e.target.value)}
+                >
+                  <option value="">Select a supplier…</option>
+                  {suppliers?.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </Select>
+                <SupplierItemsToggle
+                  supplierName={supplierName}
+                  linkedCount={itemPicker.linkedCount}
+                  showAll={showAllItems}
+                  onShowAllChange={changeShowAll}
+                  clearedCount={clearedCount}
+                />
+              </div>
               <Input
                 label="Expected date"
                 type="date"
@@ -145,7 +177,7 @@ export function PurchaseOrderForm() {
                       onChange={(e) => updateLine(line.key, { item_id: e.target.value })}
                     >
                       <option value="">Select an item…</option>
-                      {items?.map((item) => (
+                      {itemPicker.options.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.name} ({item.sku})
                         </option>

@@ -224,7 +224,7 @@ export type Database = {
           credit_memo_number: string
           customer_id: string
           id?: string
-          issue_date?: string
+          issue_date: string
           notes?: string | null
           org_id: string
           status?: string
@@ -333,7 +333,7 @@ export type Database = {
           account_id: string
           created_at?: string
           created_by?: string | null
-          deposit_date?: string
+          deposit_date: string
           deposit_number: string
           id?: string
           memo?: string | null
@@ -425,7 +425,7 @@ export type Database = {
           category_account_id: string
           created_at?: string
           created_by?: string | null
-          expense_date?: string
+          expense_date: string
           expense_number: string
           id?: string
           notes?: string | null
@@ -569,7 +569,7 @@ export type Database = {
         }
         Insert: {
           adjustment_account_id: string
-          adjustment_date?: string
+          adjustment_date: string
           adjustment_number: string
           adjustment_type: string
           created_at?: string
@@ -787,7 +787,7 @@ export type Database = {
           due_date: string
           id?: string
           invoice_number: string
-          issue_date?: string
+          issue_date: string
           notes?: string | null
           org_id: string
           status?: string
@@ -1155,6 +1155,7 @@ export type Database = {
           name: string
           phone: string | null
           slug: string
+          timezone: string | null
         }
         Insert: {
           address?: string | null
@@ -1166,6 +1167,7 @@ export type Database = {
           name: string
           phone?: string | null
           slug: string
+          timezone?: string | null
         }
         Update: {
           address?: string | null
@@ -1177,6 +1179,7 @@ export type Database = {
           name?: string
           phone?: string | null
           slug?: string
+          timezone?: string | null
         }
         Relationships: []
       }
@@ -1194,7 +1197,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
-          list_date?: string
+          list_date: string
           list_type?: string
           org_id: string
           updated_at?: string
@@ -1395,7 +1398,7 @@ export type Database = {
           customer_id?: string | null
           expiry_date?: string | null
           id?: string
-          issue_date?: string
+          issue_date: string
           notes?: string | null
           org_id: string
           quotation_number: string
@@ -1462,7 +1465,7 @@ export type Database = {
           org_id: string
           payment_method: string
           reference_number?: string | null
-          refund_date?: string
+          refund_date: string
           refund_number: string
         }
         Update: {
@@ -1578,6 +1581,7 @@ export type Database = {
           org_id: string
           payment_method: string
           receipt_number: string
+          sale_date: string
           status: string
           subtotal: number
           total: number
@@ -1592,6 +1596,7 @@ export type Database = {
           org_id: string
           payment_method: string
           receipt_number: string
+          sale_date: string
           status?: string
           subtotal?: number
           total?: number
@@ -1606,6 +1611,7 @@ export type Database = {
           org_id?: string
           payment_method?: string
           receipt_number?: string
+          sale_date?: string
           status?: string
           subtotal?: number
           total?: number
@@ -1903,7 +1909,7 @@ export type Database = {
           created_by?: string | null
           due_date: string
           id?: string
-          issue_date?: string
+          issue_date: string
           notes?: string | null
           org_id: string
           purchase_order_id?: string | null
@@ -2533,6 +2539,7 @@ export type Database = {
           org_id: string
           payment_method: string
           receipt_number: string
+          sale_date: string
           status: string
           subtotal: number
           total: number
@@ -2799,7 +2806,13 @@ export type Database = {
         Returns: string
       }
       next_item_sku: { Args: { p_org_id: string }; Returns: string }
+      org_local_date: {
+        Args: { p_org_id: string; p_ts: string }
+        Returns: string
+      }
       org_role: { Args: { target_org: string }; Returns: string }
+      org_timezone: { Args: { p_org_id: string }; Returns: string }
+      org_today: { Args: { p_org_id: string }; Returns: string }
       payment_collection: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }
         Returns: {
