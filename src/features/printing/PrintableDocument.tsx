@@ -4,6 +4,9 @@ import type { OrgDetails } from '../settings/api'
 import { formatDate } from '../reports/dates'
 import { paymentMethodLabel } from '../reports/references'
 import type { PrintableDoc } from './api'
+import { useOrg } from '../../auth/OrgProvider'
+import { useInvoiceHistory } from '../invoices/api'
+import { CustomerHistoryTables } from '../invoices/CustomerHistory'
 
 const TITLES: Record<PrintableDoc['kind'], string> = {
   invoice: 'Invoice',
@@ -24,6 +27,10 @@ export function PrintableDocument({
   symbol: string
 }) {
   const money = (v: number) => formatMoney(v, symbol)
+  // Optional customer history, as it stood when the invoice was created.
+  const { orgId } = useOrg()
+  const { data: history } = useInvoiceHistory(orgId, doc.id, doc.kind === 'invoice' && !!doc.history)
+  const showPrevious = doc.kind === 'invoice' && !doc.isVoid && !!doc.history?.previousBalance
   const partyLabel = doc.kind === 'invoice' ? 'Bill to' : 'Sold to'
   const contact = [org?.phone, org?.email].filter(Boolean).join(' · ')
 
@@ -132,11 +139,33 @@ export function PrintableDocument({
             <dt className="text-text-muted">{doc.kind === 'invoice' ? 'Amount paid' : 'Paid'}</dt>
             <dd className="tabular-nums text-text">{money(doc.amountPaid)}</dd>
           </div>
-          {doc.kind === 'invoice' && !doc.isVoid && (
+          {doc.kind === 'invoice' && !doc.isVoid && !(showPrevious && history) && (
             <div className="mt-1 flex justify-between rounded-lg bg-surface-muted px-3 py-2 font-semibold print:border print:border-border">
               <dt className="text-text">Balance due</dt>
               <dd className={`tabular-nums ${doc.balance > 0 ? 'text-danger-600' : 'text-text'}`}>{money(doc.balance)}</dd>
             </div>
+          )}
+          {/* Old HashirHub "Balance Forward": this invoice's balance plus what
+              was already owed when it was created. Information only. */}
+          {showPrevious && history && (
+            <>
+              <div className="flex justify-between py-1">
+                <dt className="text-text-muted">Balance on this invoice</dt>
+                <dd className="tabular-nums text-text">{money(doc.balance)}</dd>
+              </div>
+              <div className="flex justify-between py-1">
+                <dt className="text-text-muted">Previous balance</dt>
+                <dd className="tabular-nums text-text">{money(history.previous_balance)}</dd>
+              </div>
+              <div className="mt-1 flex justify-between rounded-lg bg-surface-muted px-3 py-2 font-semibold print:border print:border-border">
+                <dt className="text-text">Total amount due</dt>
+                <dd
+                  className={`tabular-nums ${doc.balance + history.previous_balance > 0.005 ? 'text-danger-600' : 'text-text'}`}
+                >
+                  {money(doc.balance + history.previous_balance)}
+                </dd>
+              </div>
+            </>
           )}
         </dl>
       </div>
@@ -145,6 +174,12 @@ export function PrintableDocument({
         <section className="mt-8">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Notes</p>
           <p className="mt-1 whitespace-pre-line text-sm text-text">{doc.notes}</p>
+        </section>
+      )}
+
+      {history && doc.history && (doc.history.recentInvoices || doc.history.recentPayments) && (
+        <section className="mt-8 break-inside-avoid">
+          <CustomerHistoryTables history={history} options={doc.history} symbol={symbol} print />
         </section>
       )}
 

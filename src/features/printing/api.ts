@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabaseClient'
-import { invoiceStatusTone, type InvoiceBadgeTone } from '../invoices/api'
+import { invoiceStatusTone, type HistoryOptions, type InvoiceBadgeTone } from '../invoices/api'
 
 // Everything a printed document needs, normalized so one PrintableDocument
 // component renders invoices and sales receipts alike.
@@ -37,6 +37,8 @@ export interface PrintableDoc {
   balance: number
   paymentMethod: string | null
   notes: string | null
+  // Invoices only: which customer history the printout includes (null = none).
+  history: HistoryOptions | null
 }
 
 // Documents per batch print. A few hundred A4 pages is already a lot for a
@@ -60,6 +62,7 @@ function toLines(
 
 const INVOICE_SELECT =
   'id, invoice_number, issue_date, due_date, status, subtotal, total, amount_paid, notes, ' +
+  'show_previous_balance, show_recent_invoices, show_recent_payments, ' +
   'customers(name, address, phone, email), invoice_items(quantity, unit_price, line_total, items(name, sku, unit))'
 
 export interface InvoicePrintFilter {
@@ -110,6 +113,9 @@ export function usePrintableInvoices(orgId: string, filter: InvoicePrintFilter, 
         total: number
         amount_paid: number
         notes: string | null
+        show_previous_balance: boolean
+        show_recent_invoices: boolean
+        show_recent_payments: boolean
         customers: PrintableParty | null
         invoice_items: { quantity: number; unit_price: number; line_total: number; items: ItemRef }[]
       }
@@ -135,6 +141,14 @@ export function usePrintableInvoices(orgId: string, filter: InvoicePrintFilter, 
             balance: inv.total - inv.amount_paid,
             paymentMethod: null,
             notes: inv.notes,
+            history:
+              inv.show_previous_balance || inv.show_recent_invoices || inv.show_recent_payments
+                ? {
+                    previousBalance: inv.show_previous_balance,
+                    recentInvoices: inv.show_recent_invoices,
+                    recentPayments: inv.show_recent_payments,
+                  }
+                : null,
           }
         }),
       }
@@ -187,6 +201,7 @@ export function usePrintableSalesReceipt(orgId: string, id: string) {
         balance: 0,
         paymentMethod: r.payment_method,
         notes: r.notes,
+        history: null,
       }
       return doc
     },

@@ -807,6 +807,9 @@ export type Database = {
           issue_date: string
           notes: string | null
           org_id: string
+          show_previous_balance: boolean
+          show_recent_invoices: boolean
+          show_recent_payments: boolean
           status: string
           subtotal: number
           total: number
@@ -823,6 +826,9 @@ export type Database = {
           issue_date: string
           notes?: string | null
           org_id: string
+          show_previous_balance?: boolean
+          show_recent_invoices?: boolean
+          show_recent_payments?: boolean
           status?: string
           subtotal?: number
           total?: number
@@ -839,6 +845,9 @@ export type Database = {
           issue_date?: string
           notes?: string | null
           org_id?: string
+          show_previous_balance?: boolean
+          show_recent_invoices?: boolean
+          show_recent_payments?: boolean
           status?: string
           subtotal?: number
           total?: number
@@ -2562,6 +2571,9 @@ export type Database = {
           issue_date: string
           notes: string | null
           org_id: string
+          show_previous_balance: boolean
+          show_recent_invoices: boolean
+          show_recent_payments: boolean
           status: string
           subtotal: number
           total: number
@@ -2755,6 +2767,16 @@ export type Database = {
           invoiced: number
           paid: number
         }[]
+      }
+      customer_history: {
+        Args: {
+          p_customer_id: string
+          p_cutoff?: string
+          p_exclude_invoice?: string
+          p_limit?: number
+          p_org_id: string
+        }
+        Returns: Json
       }
       customer_statement: {
         Args: {
@@ -2952,6 +2974,10 @@ export type Database = {
           unit: string
           value: number
         }[]
+      }
+      invoice_customer_history: {
+        Args: { p_invoice_id: string; p_limit?: number; p_org_id: string }
+        Returns: Json
       }
       invoice_items_summary: {
         Args: { p_from_number?: number; p_org_id: string; p_to_number?: number }
@@ -3162,6 +3188,9 @@ export type Database = {
           issue_date: string
           notes: string | null
           org_id: string
+          show_previous_balance: boolean
+          show_recent_invoices: boolean
+          show_recent_payments: boolean
           status: string
           subtotal: number
           total: number
@@ -3297,6 +3326,15 @@ export type Database = {
       seed_default_roles: { Args: { p_org_id: string }; Returns: undefined }
       seed_org_starter_data: { Args: { p_org_id: string }; Returns: undefined }
       seed_system_accounts: { Args: { p_org_id: string }; Returns: undefined }
+      set_invoice_history_options: {
+        Args: {
+          p_invoice_id: string
+          p_previous_balance: boolean
+          p_recent_invoices: boolean
+          p_recent_payments: boolean
+        }
+        Returns: undefined
+      }
       set_login_password: {
         Args: { p_email: string; p_password: string }
         Returns: string
@@ -3438,6 +3476,9 @@ export type Database = {
           issue_date: string
           notes: string | null
           org_id: string
+          show_previous_balance: boolean
+          show_recent_invoices: boolean
+          show_recent_payments: boolean
           status: string
           subtotal: number
           total: number

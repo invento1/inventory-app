@@ -10,7 +10,8 @@ import { Button } from '../../components/ui/Button'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
 import { formatMoney } from '../../lib/currency'
-import { useInvoice, useVoidInvoice, invoiceStatusTone } from './api'
+import { useInvoice, useVoidInvoice, invoiceStatusTone, historyOptionsOf } from './api'
+import { InvoiceHistoryCard } from './CustomerHistory'
 import { RecordPaymentModal } from './RecordPaymentModal'
 
 export function InvoiceDetailPage() {
@@ -158,6 +159,14 @@ export function InvoiceDetailPage() {
             </Table>
           </CardBody>
         </Card>
+      </div>
+
+      <div className="mt-6">
+        <InvoiceHistoryCard
+          invoiceId={invoice.id}
+          options={historyOptionsOf(invoice)}
+          canEdit={can('invoices.create')}
+        />
       </div>
 
       {canVoid && (

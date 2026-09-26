@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, ScanLine, Trash2 } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
-import { Card, CardBody } from '../../components/ui/Card'
+import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
@@ -17,7 +17,17 @@ import { useStockLevels } from '../stock/api'
 import { useLocations } from '../../lib/useLocations'
 import { formatMoney } from '../../lib/currency'
 import { primeBeep } from '../../lib/beep'
-import { useCreateInvoice, type InvoiceLinePayload } from './api'
+import {
+  NO_HISTORY,
+  hasHistory,
+  useCreateInvoice,
+  useCustomerHistory,
+  useSetInvoiceHistoryOptions,
+  type HistoryOptions,
+  type InvoiceLinePayload,
+} from './api'
+import { CustomerHistoryTables, HistoryOptionsPicker } from './CustomerHistory'
+import { useUserPreference } from '../../lib/userPreferences'
 import { ymd } from '../../lib/dates'
 
 interface DraftLine {
@@ -62,6 +72,17 @@ export function NewInvoicePage() {
     { key: nextKey++, item_id: '', location_id: '', quantity: '', unit_price: '' },
   ])
   const [error, setError] = useState<string | null>(null)
+
+  // Customer history on the invoice: each person's last choice is their default.
+  const historyPref = useUserPreference<HistoryOptions>('invoice.history_options')
+  const [historyChoice, setHistoryChoice] = useState<HistoryOptions | null>(null)
+  const historyOptions = historyChoice ?? historyPref.value ?? NO_HISTORY
+  const { data: history, isLoading: historyLoading } = useCustomerHistory(orgId, customerId)
+  const setHistoryOptions = useSetInvoiceHistoryOptions(orgId)
+  const newCharges = lines.reduce(
+    (sum, l) => (l.item_id ? sum + (Number(l.quantity) || 0) * (Number(l.unit_price) || 0) : sum),
+    0,
+  )
 
   // Fast entry: scan or search to add items.
   const quickAddRef = useRef<AutocompleteHandle>(null)
@@ -204,6 +225,17 @@ export function NewInvoicePage() {
         lines: validLines,
         notes: notes || null,
       })
+      if (hasHistory(historyOptions)) {
+        // Display-only settings, saved right after the invoice. If this fails
+        // the invoice still stands; the options can be set on its page.
+        await setHistoryOptions
+          .mutateAsync({ invoiceId: invoice.id, options: historyOptions })
+          .catch(() => toast.error("Invoice created, but the customer history choice wasn't saved. Set it on the invoice page."))
+      }
+      // Remember this person's choice as their default for the next invoice.
+      if (JSON.stringify(historyOptions) !== JSON.stringify(historyPref.value ?? NO_HISTORY)) {
+        void historyPref.save(historyOptions).catch(() => {})
+      }
       toast.success('Invoice created')
       navigate(`/invoices/${invoice.id}`)
     } catch (err) {
@@ -423,6 +455,65 @@ export function NewInvoicePage() {
             </div>
           </CardBody>
         </Card>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader
+              title="Customer history on this invoice"
+              subtitle="Optional: show what they already owe and their recent activity on the printed invoice"
+            />
+            <CardBody className="flex flex-col gap-4">
+              {!customerId ? (
+                <p className="text-sm text-text-muted">Choose a customer to see their previous balance and history.</p>
+              ) : (
+                <>
+                  <HistoryOptionsPicker
+                    value={historyOptions}
+                    onChange={setHistoryChoice}
+                    history={history}
+                    loading={historyLoading}
+                    symbol={currencySymbol}
+                  />
+                  {history && (historyOptions.recentInvoices || historyOptions.recentPayments) && (
+                    <CustomerHistoryTables history={history} options={historyOptions} symbol={currencySymbol} />
+                  )}
+                </>
+              )}
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader title="Summary" />
+            <CardBody>
+              <dl className="flex flex-col gap-1 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-text-muted">This invoice</dt>
+                  <dd className="font-medium tabular-nums text-text">{formatMoney(newCharges, currencySymbol)}</dd>
+                </div>
+                {customerId && historyOptions.previousBalance && (
+                  <>
+                    <div className="flex justify-between">
+                      <dt className="text-text-muted">Previous balance</dt>
+                      <dd className="tabular-nums text-text">
+                        {history ? formatMoney(history.previous_balance, currencySymbol) : '…'}
+                      </dd>
+                    </div>
+                    <div className="mt-1 flex justify-between border-t border-border pt-2 text-base font-semibold">
+                      <dt className="text-text">Total amount due</dt>
+                      <dd className="tabular-nums text-text">
+                        {formatMoney(newCharges + (history?.previous_balance ?? 0), currencySymbol)}
+                      </dd>
+                    </div>
+                    <p className="mt-1 text-xs text-text-muted">
+                      The previous balance is shown for information only. This invoice's own total, and what the
+                      customer owes in your books, don't change.
+                    </p>
+                  </>
+                )}
+              </dl>
+            </CardBody>
+          </Card>
+        </div>
 
         {error && <p className="text-sm text-danger-600">{error}</p>}
 

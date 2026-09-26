@@ -182,3 +182,94 @@ export function invoiceStatusTone(invoice: {
   if (invoice.status === 'partially_paid') return { tone: 'warning', label: 'Partially paid' }
   return { tone: 'accent', label: 'Unpaid' }
 }
+
+// ---- Customer history on invoices (previous balance, recent invoices and
+// payments). Computed server-side "as at" a moment: now, for a new invoice;
+// the invoice's creation time, for an existing one (so reprints match).
+
+export interface CustomerHistory {
+  as_of: string
+  previous_balance: number
+  open_invoice_count: number
+  credit_total: number
+  invoices: { invoice_number: string; issue_date: string; created_at: string; total: number; paid: number; balance: number }[]
+  payments: {
+    paid_at: string
+    created_at: string
+    amount: number
+    payment_method: string
+    reference_number: string | null
+    invoice_number: string
+  }[]
+}
+
+export interface HistoryOptions {
+  previousBalance: boolean
+  recentInvoices: boolean
+  recentPayments: boolean
+}
+
+export const NO_HISTORY: HistoryOptions = { previousBalance: false, recentInvoices: false, recentPayments: false }
+
+export const hasHistory = (o: HistoryOptions) => o.previousBalance || o.recentInvoices || o.recentPayments
+
+export function historyOptionsOf(invoice: {
+  show_previous_balance: boolean
+  show_recent_invoices: boolean
+  show_recent_payments: boolean
+}): HistoryOptions {
+  return {
+    previousBalance: invoice.show_previous_balance,
+    recentInvoices: invoice.show_recent_invoices,
+    recentPayments: invoice.show_recent_payments,
+  }
+}
+
+// For the New Invoice form: the customer's history right now.
+export function useCustomerHistory(orgId: string, customerId: string) {
+  return useQuery({
+    queryKey: ['customer_history', orgId, customerId],
+    enabled: !!customerId,
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('customer_history', { p_org_id: orgId, p_customer_id: customerId })
+      if (error) throw error
+      return data as unknown as CustomerHistory
+    },
+  })
+}
+
+// For an existing invoice: the history as it stood when it was created.
+export function useInvoiceHistory(orgId: string, invoiceId: string, enabled = true) {
+  return useQuery({
+    queryKey: ['invoice_customer_history', orgId, invoiceId],
+    enabled: enabled && !!invoiceId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('invoice_customer_history', {
+        p_org_id: orgId,
+        p_invoice_id: invoiceId,
+      })
+      if (error) throw error
+      return data as unknown as CustomerHistory
+    },
+  })
+}
+
+export function useSetInvoiceHistoryOptions(orgId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ invoiceId, options }: { invoiceId: string; options: HistoryOptions }) => {
+      const { error } = await supabase.rpc('set_invoice_history_options', {
+        p_invoice_id: invoiceId,
+        p_previous_balance: options.previousBalance,
+        p_recent_invoices: options.recentInvoices,
+        p_recent_payments: options.recentPayments,
+      })
+      if (error) throw error
+    },
+    onSuccess: (_d, { invoiceId }) => {
+      queryClient.invalidateQueries({ queryKey: ['invoice', invoiceId] })
+      queryClient.invalidateQueries({ queryKey: ['printable_invoices', orgId] })
+    },
+  })
+}
