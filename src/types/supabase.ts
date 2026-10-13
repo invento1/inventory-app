@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   graphql_public: {
     Tables: {
@@ -3013,6 +3013,7 @@ export type Database = {
           reference_type: string
         }[]
       }
+      keep_alive: { Args: never; Returns: string }
       list_org_members: {
         Args: { p_org_id: string }
         Returns: {

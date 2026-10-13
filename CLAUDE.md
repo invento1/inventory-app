@@ -606,7 +606,7 @@ where sl.quantity <= coalesce(i.reorder_threshold, 0);
 │   │                                 off-canvas drawer below lg -- see below and §9)
 │   └── types/                     -- generated via `supabase gen types typescript`
 ├── docs/onboarding-new-client.md  -- non-developer runbook for provisioning a new client org
-└── .github/workflows/deploy.yml
+└── .github/workflows/             -- deploy.yml (GitHub Pages), keep-alive.yml (stops Supabase pausing, see §8)
 ```
 
 **Navigation**: `Sidebar.tsx` is an accordion, not a flat list — Items/Business Hub/Account/Reports/Settings are collapsible groups whose sub-links render indented beneath them (only one top-level group open at a time; auto-expands on load if the current route falls under it). This replaced an earlier design where each section had its own horizontal tab bar at the top of the page (`ItemsLayout.tsx`/`SettingsLayout.tsx`, both now deleted) — routes are flat (`/items/list`, `/settings/brands`, `/account/capital-matrix`, `/expenses`, etc.) with the Sidebar as the only sub-navigation. Follow this pattern for any new multi-page feature section rather than reintroducing an in-page tab bar.
@@ -650,6 +650,7 @@ The sidebar header is the HashirHub icon + name and links to `/` (Dashboard). It
 - GitHub Actions builds and deploys the Vite app to GitHub Pages on push to `main`. Live site: **https://invento1.github.io/inventory-app/** (`vite.config.ts` has `base: '/inventory-app/'`).
 - **Verify a deploy against GitHub, not local git state** — a clean `git push` doesn't mean the Pages deploy succeeded (the `actions/deploy-pages` step has failed on GitHub's side before, fixed by pushing an empty retrigger commit). There's no `gh`-based check needed; the public API works unauthenticated: `curl -s "https://api.github.com/repos/invento1/inventory-app/actions/runs?per_page=1"` and confirm `head_sha` matches the pushed commit with `status: completed`, `conclusion: success`. A deploy typically takes 30–90s and can sit in `queued`/`waiting` for a while first.
 - GitHub Pages caveats to remember: static hosting only (no server secrets); client-side routing needs `HashRouter` or a manual 404 fallback since Pages doesn't support arbitrary rewrites; a custom domain needs a `CNAME` file in `public/`.
+- **Free-plan pausing and the keep-alive.** Supabase pauses a free-plan project after about 7 days with no activity. Its hostname then stops resolving (NXDOMAIN), every login fails, and `npx supabase projects list` shows `INACTIVE`. It happened on 2026-10-13; the fix is **Restore project** in the Supabase Dashboard (possible for 90 days; data is kept). `.github/workflows/keep-alive.yml` now calls the `keep_alive()` RPC (returns `now()`, anon-callable on purpose) every 2 days using the deploy workflow's two secrets, and fails loudly if Supabase doesn't answer. GitHub disables scheduled workflows after 60 days without a commit, so re-enable it under Actions if that email arrives. Supabase Pro never pauses and is the real answer once clients are live.
 - Supabase migrations (`supabase db push`) are a **separate, deliberate step** — not auto-run on every frontend deploy — to avoid accidentally applying schema changes alongside an unrelated UI deploy.
 
 ## 9. Coding Conventions

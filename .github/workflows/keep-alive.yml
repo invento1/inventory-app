@@ -1,0 +1,47 @@
+name: Keep Supabase awake
+
+# Supabase pauses a free-plan project after about 7 days with no activity,
+# which takes the whole app down (logins fail: the project's address stops
+# existing). This makes one small real database query every two days so the
+# project always counts as active. If it fails, GitHub emails the repo owner.
+#
+# Notes:
+# - It only reads one row of the public permission catalog with the public
+#   anon key (the same key that ships in the website); no secrets beyond the
+#   two the deploy workflow already uses.
+# - GitHub switches off scheduled workflows in a repo with no commits for 60
+#   days. It emails first; re-enable under Actions -> this workflow, or push
+#   any commit.
+# - Not needed on the Supabase Pro plan, which never pauses.
+
+on:
+  schedule:
+    - cron: '17 5 */2 * *' # every 2 days, 05:17 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Query the database
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          # A few tries: the API can answer 503 for a moment while it warms up.
+          for attempt in 1 2 3 4 5; do
+            status=$(curl -s -m 30 -o /tmp/body -w '%{http_code}' \
+              "$SUPABASE_URL/rest/v1/rpc/keep_alive" \
+              -X POST -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              -H 'Content-Type: application/json' -d '{}' || echo 000)
+            echo "attempt $attempt: HTTP $status $(cat /tmp/body 2>/dev/null | head -c 200)"
+            if [ "$status" = "200" ]; then
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "::error::Supabase did not answer. If the project is paused, restore it at https://supabase.com/dashboard"
+          exit 1
