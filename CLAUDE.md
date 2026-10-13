@@ -635,7 +635,7 @@ The sidebar header is the HashirHub icon + name and links to `/` (Dashboard). It
 
 **Moving to another computer / setting up a new machine** (owner's runbook: `docs/moving-to-a-new-computer.md`). Everything that matters is online: code on GitHub, data and the Edge Function on Supabase, the site on Pages, and the workflow secrets on GitHub. A new machine needs only the following.
 - **Tools:** Git, Node (this laptop runs v24; CI builds on 20), GitHub CLI, Chrome, VS Code with Claude Code.
-- **Code:** `gh repo clone invento1/inventory-app supabase` on the Desktop, then `npm install`. Keeping the path `C:UsersyasirDesktopsupabase` keeps Claude's per-project history folder name (`c--Users-yasir-Desktop-supabase`) valid.
+- **Code:** `gh repo clone invento1/inventory-app supabase` on the Desktop, then `npm install`. Keeping the path `C:\Users\yasir\Desktop\supabase` keeps Claude's per-project history folder name (`c--Users-yasir-Desktop-supabase`) valid.
 - **Machine-local files, never in git** (copy them across by hand):
   - `.env` (the two `VITE_SUPABASE_*` values; recreatable from the Supabase Dashboard);
   - `public/refernce image made by chatgpt.png` (private, see §9);
