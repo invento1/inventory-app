@@ -606,6 +606,7 @@ where sl.quantity <= coalesce(i.reorder_threshold, 0);
 │   │                                 off-canvas drawer below lg -- see below and §9)
 │   └── types/                     -- generated via `supabase gen types typescript`
 ├── docs/onboarding-new-client.md  -- non-developer runbook for provisioning a new client org
+├── docs/moving-to-a-new-computer.md -- runbook for moving development to another machine (§6)
 └── .github/workflows/             -- deploy.yml (GitHub Pages), keep-alive.yml (stops Supabase pausing, see §8)
 ```
 
@@ -631,6 +632,30 @@ The sidebar header is the HashirHub icon + name and links to `/` (Dashboard). It
 **Accounts & auth (this laptop is dedicated to this project)**:
 - **Supabase**: project `inventory-app`, ref `qkxquryxqpwsckdezxjh`. The CLI is authenticated with a personal access token (`npx supabase login --token <sbp_...>`) — the interactive browser login fails in non-TTY shells. `npx supabase link` returns a 403 with this token, but that's harmless: the project is already linked locally, and `db push`, `db query --linked`, `migration list --linked`, and `gen types` all work. First thing to check if anything Supabase-related 403s: `npx supabase projects list` must show `inventory-app` — if it shows other projects, the CLI was logged into a different account and needs `login --token` again.
 - **GitHub**: repo `github.com/invento1/inventory-app`, pushed as the **`invento1`** account. Git credentials for `github.com` are routed through the **GitHub CLI** (`credential.https://github.com.helper = !gh auth git-credential` in the global `~/.gitconfig`), *not* Git Credential Manager — so `git credential approve`/GCM changes have no effect; check and fix with `gh auth status` / `echo <token> | gh auth login --with-token`. Commits are authored as `hashirhub-uk <yasir.visal@gmail.com>` (the local git identity) — that's expected and differs from the pushing account on purpose; don't change it. Verify push access non-destructively with `git push --dry-run`.
+
+**Moving to another computer / setting up a new machine** (owner's runbook: `docs/moving-to-a-new-computer.md`). Everything that matters is online: code on GitHub, data and the Edge Function on Supabase, the site on Pages, and the workflow secrets on GitHub. A new machine needs only the following.
+- **Tools:** Git, Node (this laptop runs v24; CI builds on 20), GitHub CLI, Chrome, VS Code with Claude Code.
+- **Code:** `gh repo clone invento1/inventory-app supabase` on the Desktop, then `npm install`. Keeping the path `C:UsersyasirDesktopsupabase` keeps Claude's per-project history folder name (`c--Users-yasir-Desktop-supabase`) valid.
+- **Machine-local files, never in git** (copy them across by hand):
+  - `.env` (the two `VITE_SUPABASE_*` values; recreatable from the Supabase Dashboard);
+  - `public/refernce image made by chatgpt.png` (private, see §9);
+  - `Desktop/adil-business-solutions/` (the old HashirHub source used as a reference, see §1; ~14 MB);
+  - the onboarding PDF on the Desktop (regenerable from `docs/onboarding-new-client.md`).
+
+  `supabase/.temp`, `dist`, `node_modules` and `new updates/` are disposable.
+- **Machine-global settings that don't travel** (they live in `~/.gitconfig` and the OS keyring, not in the repo):
+  - git identity `hashirhub-uk <yasir.visal@gmail.com>`;
+  - the GitHub credential helper (`gh auth setup-git`);
+  - the GitHub login as `invento1`, which **must include the `workflow` scope** (`gh auth login -h github.com -p https -w -s workflow`), or pushes that touch `.github/workflows/` are rejected;
+  - the Supabase CLI token (`npx supabase login --token <sbp_...>`), then `npx supabase link --project-ref qkxquryxqpwsckdezxjh`.
+- **Tokens expire.** The `invento1` GitHub token went invalid on 2026-10-13 (push failed with "Invalid username or token"). The fix is the same `gh auth login` command; check with `gh auth status`.
+- **Verify a machine** with:
+  - `npm run dev`;
+  - `npx supabase projects list` (expects `inventory-app`, `ACTIVE_HEALTHY`);
+  - `npx supabase db query --linked "select * from tenant_schema_audit()"` (expects no rows);
+  - `git push --dry-run`.
+- **Browser test scripts aren't in the repo.** Verification so far used throwaway Playwright scripts in Claude's scratch folder: `playwright-core` driving the installed Chrome (`channel: 'chrome'`), with credentials passed only as environment variables and never written to a file. On a new machine, `npm install playwright-core` in the scratch folder and write the scripts again as needed. They aren't committed because the repo is public and they name real customers and items.
+- **Chat history** isn't needed (this file is the source of truth). To keep it resumable, copy `~/.claude/projects/c--Users-yasir-Desktop-supabase` (~110 MB) to the same path on the new machine.
 
 **Testing gotchas against the live database**:
 - `db query --linked -f <file>.sql` runs the **whole file as one transaction** and returns **only the last statement's result set** — put one check per invocation if you need to see several results. Because it's one transaction, every row inserted in that file gets the **same `now()`/`created_at`**; the MAC replay orders events by `(created_at, id)`, so two RPC calls that must happen in sequence (e.g. a supplier bill, then an inventory adjustment) have to be separate invocations or the tiebreak by random UUID can reorder them and produce a wrong-looking `avg_cost`. In real use every RPC call is its own transaction, so this only bites tests.
