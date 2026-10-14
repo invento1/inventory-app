@@ -648,6 +648,9 @@ The sidebar header is the HashirHub icon + name and links to `/` (Dashboard). It
   - the GitHub credential helper (`gh auth setup-git`);
   - the GitHub login as `invento1`, which **must include the `workflow` scope** (`gh auth login -h github.com -p https -w -s workflow`), or pushes that touch `.github/workflows/` are rejected;
   - the Supabase CLI token (`npx supabase login --token <sbp_...>`), then `npx supabase link --project-ref qkxquryxqpwsckdezxjh`.
+- **The owner's PC (moved there 2026-10-14) differs from the laptop in two ways:**
+  - PowerShell blocks scripts there, so `npm`/`npx` fail with "running scripts is disabled". Use `npm.cmd` / `npx.cmd` in PowerShell; the Bash tool is unaffected.
+  - It is also signed in to GitHub as `bollinclinic` for another project, so this repo must be pinned to `invento1` with **repo-local** settings: the remote URL `https://invento1@github.com/invento1/inventory-app.git` and a local `credential.https://github.com.helper` of `!gh auth git-credential` (after an empty reset entry). Never change global git or gh settings on that machine without asking: other projects depend on them. The Supabase CLI holds one login at a time, so check `npx supabase projects list` shows `inventory-app` before any database command.
 - **Tokens expire.** The `invento1` GitHub token went invalid on 2026-10-13 (push failed with "Invalid username or token"). The fix is the same `gh auth login` command; check with `gh auth status`.
 - **Verify a machine** with:
   - `npm run dev`;

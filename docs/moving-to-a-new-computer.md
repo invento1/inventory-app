@@ -129,11 +129,34 @@ It only matches if the project is at the same path on both computers (`C:\Users\
 
 | Problem | Fix |
 |---|---|
+| `npm` or `npx` says "running scripts is disabled on this system" | Windows PowerShell is blocking scripts. Type `npm.cmd` and `npx.cmd` instead (for example `npm.cmd install`). To fix it for good: `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` |
+| `git push` is denied and names a different GitHub account (for example the one used for another project) | The computer has another account saved. See "If the computer already uses another GitHub account" below |
 | `git push` says "Authentication failed" | Run the `gh auth login ...` command from Step 3 again |
 | A push is rejected mentioning "workflow" | Your sign-in lacks the workflow permission. Run the Step 3 login command again exactly as written (it includes `-s workflow`) |
 | `npx supabase ...` says 403 or lists a different project | You're signed in to the wrong Supabase account. Run `npx supabase login --token ...` with a token from the right account |
 | The app opens but sign-in fails for everyone | Check `.env` has the right two values. If they're right, the Supabase project may be paused: Supabase Dashboard → **Restore project** |
 | `npm run dev` says a command isn't found | Close the terminal and open a new one, so it sees the tools you installed |
+
+## If the computer already uses another GitHub account
+
+This happened on the PC: it was signed in as `bollinclinic` for another project, so pushes to HashirHub were denied. These settings are saved inside the HashirHub folder only, so the other project is not affected.
+
+1. Add the HashirHub account next to the existing one (sign in as **invento1** in the browser; use a private window if the browser is signed in as someone else):
+   ```
+   gh auth login -h github.com -p https -w -s workflow
+   ```
+2. Tell this project which account it belongs to:
+   ```
+   git remote set-url origin https://invento1@github.com/invento1/inventory-app.git
+   ```
+3. Tell this project to get its sign-in from the GitHub tool instead of the computer's saved login:
+   ```
+   git config --local credential.https://github.com.helper ""
+   git config --local --add credential.https://github.com.helper "!gh auth git-credential"
+   ```
+4. Test with `git push --dry-run`. If it still names the other account, run `gh auth switch -u invento1` and test again. Switch back with `gh auth switch -u <other account>` if the other project's pushes are then refused.
+
+The Supabase tool holds one login at a time. If the other project uses a different Supabase account, run `npx supabase login --token ...` again with the right token when you change projects.
 
 ## Afterwards
 
