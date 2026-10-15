@@ -18,6 +18,8 @@ const LABELS: Record<string, string> = {
   supplier_bill_payment: 'Bill payment',
   credit_memo: 'Credit memo',
   credit_memo_void: 'Credit memo void',
+  credit_memo_cogs: 'Credit memo (COGS)',
+  credit_memo_void_cogs: 'Credit memo void (COGS)',
   refund: 'Refund',
   expense: 'Expense',
   expense_void: 'Expense void',
@@ -41,6 +43,8 @@ const PATHS: Record<string, string> = {
   supplier_bill_void: '/supplier-bills',
   credit_memo: '/credit-memos',
   credit_memo_void: '/credit-memos',
+  credit_memo_cogs: '/credit-memos',
+  credit_memo_void_cogs: '/credit-memos',
   inventory_adjustment: '/inventory-adjustments',
 }
 
