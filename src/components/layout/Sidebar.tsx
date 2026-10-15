@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -164,6 +164,29 @@ function childMatches(child: NavChild, pathname: string): boolean {
     : child.children.some((leaf) => pathname.startsWith(leaf.to))
 }
 
+const APP_TITLE = 'HashirHub'
+
+// Browser tab title: the label of the most specific nav link the current page
+// sits under ("Invoices" for /invoices/123, "Balance Sheet" for its report),
+// as the old HashirHub did. The dashboard, and any page no link covers, keep
+// the plain app name.
+function navTitle(pathname: string): string {
+  let best: NavLeaf | undefined
+  const visit = (leaf: NavLeaf) => {
+    const hit = leaf.end ? pathname === leaf.to : pathname === leaf.to || pathname.startsWith(`${leaf.to}/`)
+    if (hit && (!best || leaf.to.length > best.to.length)) best = leaf
+  }
+  for (const entry of navEntries) {
+    if (entry.type === 'leaf') visit(entry)
+    else
+      for (const child of entry.children) {
+        if (child.type === 'leaf') visit(child)
+        else child.children.forEach(visit)
+      }
+  }
+  return best && best.to !== '/' ? `${best.label} - ${APP_TITLE}` : APP_TITLE
+}
+
 function findActiveSubGroupKey(children: NavChild[], pathname: string): string | undefined {
   return children.find(
     (c): c is Extract<NavChild, { type: 'group' }> =>
@@ -187,6 +210,17 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
 
   const [openGroup, setOpenGroup] = useState<string | undefined>(activeGroup?.key)
   const [openSubGroup, setOpenSubGroup] = useState<string | undefined>(activeSubGroupKey)
+
+  // Sidebar is mounted on every signed-in page, so it owns the tab title;
+  // leaving the app (sign out) puts the plain name back.
+  useEffect(() => {
+    document.title = navTitle(location.pathname)
+  }, [location.pathname])
+  useEffect(() => {
+    return () => {
+      document.title = APP_TITLE
+    }
+  }, [])
 
   function toggleGroup(key: string) {
     setOpenGroup((current) => (current === key ? undefined : key))
