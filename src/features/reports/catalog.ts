@@ -175,10 +175,9 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
       },
       {
         title: 'Damaged / Expired Inventory',
-        description: 'Stock written off as damaged or past expiry',
+        description: 'Stock written off as damaged or expired, and stock past or near its expiry date',
         path: '/reports/damaged-expired',
-        status: 'blocked',
-        blockedReason: 'Needs damaged/expired stock tracking (expiry dates, a write-off reason)',
+        status: 'ready',
       },
     ],
   },

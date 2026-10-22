@@ -25,6 +25,7 @@ const emptyForm: Omit<ItemInput, 'sku'> = {
   unit_price: 0,
   reorder_threshold: null,
   commission_rate: 0,
+  expiry_date: null,
   category_id: null,
   brand_id: null,
   supplier_id: null,
@@ -212,11 +213,22 @@ export function NewItemPage() {
                 )}
               </div>
             </div>
-            <Input
-              label="Description"
-              value={form.description ?? ''}
-              onChange={(e) => setForm({ ...form, description: e.target.value || null })}
-            />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="sm:col-span-2">
+                <Input
+                  label="Description"
+                  value={form.description ?? ''}
+                  onChange={(e) => setForm({ ...form, description: e.target.value || null })}
+                />
+              </div>
+              <Input
+                label="Expiry date"
+                type="date"
+                title="Optional. Stock past this date shows in the Damaged / Expired Inventory report."
+                value={form.expiry_date ?? ''}
+                onChange={(e) => setForm({ ...form, expiry_date: e.target.value || null })}
+              />
+            </div>
           </CardBody>
         </Card>
 

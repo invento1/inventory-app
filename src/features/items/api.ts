@@ -13,6 +13,7 @@ export type ItemInput = Pick<
   | 'unit_price'
   | 'reorder_threshold'
   | 'commission_rate'
+  | 'expiry_date'
   | 'category_id'
   | 'brand_id'
   | 'supplier_id'

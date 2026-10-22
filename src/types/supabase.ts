@@ -676,6 +676,7 @@ export type Database = {
           id: string
           location_id: string
           org_id: string
+          reason: string
           reference_number: string | null
           total_value_diff: number
         }
@@ -690,6 +691,7 @@ export type Database = {
           id?: string
           location_id: string
           org_id: string
+          reason?: string
           reference_number?: string | null
           total_value_diff?: number
         }
@@ -704,6 +706,7 @@ export type Database = {
           id?: string
           location_id?: string
           org_id?: string
+          reason?: string
           reference_number?: string | null
           total_value_diff?: number
         }
@@ -977,6 +980,7 @@ export type Database = {
           commission_rate: number
           created_at: string
           description: string | null
+          expiry_date: string | null
           id: string
           is_active: boolean
           name: string
@@ -996,6 +1000,7 @@ export type Database = {
           commission_rate?: number
           created_at?: string
           description?: string | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -1015,6 +1020,7 @@ export type Database = {
           commission_rate?: number
           created_at?: string
           description?: string | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean
           name?: string
@@ -2876,6 +2882,7 @@ export type Database = {
           p_lines: Json
           p_location_id: string
           p_org_id: string
+          p_reason?: string
           p_reference_number: string
         }
         Returns: {
@@ -2889,6 +2896,7 @@ export type Database = {
           id: string
           location_id: string
           org_id: string
+          reason: string
           reference_number: string | null
           total_value_diff: number
         }
@@ -3262,6 +3270,19 @@ export type Database = {
           note: string
           party_name: string
           total: number
+        }[]
+      }
+      expired_stock: {
+        Args: { p_as_of: string; p_org_id: string; p_within_days?: number }
+        Returns: {
+          category_name: string
+          expiry_date: string
+          item_id: string
+          item_name: string
+          quantity: number
+          sku: string
+          status: string
+          value: number
         }[]
       }
       financial_recovery: {
@@ -3870,6 +3891,22 @@ export type Database = {
       set_login_password: {
         Args: { p_email: string; p_password: string }
         Returns: string
+      }
+      stock_write_offs: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          adjustment_date: string
+          adjustment_id: string
+          adjustment_number: string
+          category_name: string
+          item_id: string
+          item_name: string
+          location_name: string
+          quantity: number
+          reason: string
+          sku: string
+          value: number
+        }[]
       }
       supplier_balance_summary: {
         Args: { p_as_of: string; p_org_id: string }

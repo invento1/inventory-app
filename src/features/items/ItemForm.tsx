@@ -33,6 +33,7 @@ export function ItemForm({
     unit: item.unit,
     unit_price: item.unit_price,
     reorder_threshold: item.reorder_threshold,
+    expiry_date: item.expiry_date,
     commission_rate: item.commission_rate,
     category_id: item.category_id,
     brand_id: item.brand_id,
@@ -209,11 +210,22 @@ export function ItemForm({
             )}
           </div>
         </div>
-        <Input
-          label="Description"
-          value={form.description ?? ''}
-          onChange={(e) => setForm({ ...form, description: e.target.value || null })}
-        />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="sm:col-span-2">
+            <Input
+              label="Description"
+              value={form.description ?? ''}
+              onChange={(e) => setForm({ ...form, description: e.target.value || null })}
+            />
+          </div>
+          <Input
+            label="Expiry date"
+            type="date"
+            title="Optional. Stock past this date shows in the Damaged / Expired Inventory report."
+            value={form.expiry_date ?? ''}
+            onChange={(e) => setForm({ ...form, expiry_date: e.target.value || null })}
+          />
+        </div>
         {error && <p className="text-sm text-danger-600">{error}</p>}
         <div className="mt-2 flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>

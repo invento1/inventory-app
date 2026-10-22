@@ -14,7 +14,13 @@ import { useItems } from '../items/api'
 import { useStockLevels } from '../stock/api'
 import { useLedgerAccounts, isManuallyPostable } from '../accounts/api'
 import { formatMoney } from '../../lib/currency'
-import { useCreateInventoryAdjustment, type AdjustmentType, type NewInventoryAdjustmentLine } from './api'
+import {
+  ADJUSTMENT_REASONS,
+  useCreateInventoryAdjustment,
+  type AdjustmentReason,
+  type AdjustmentType,
+  type NewInventoryAdjustmentLine,
+} from './api'
 import { ymd } from '../../lib/dates'
 
 interface DraftLine {
@@ -54,6 +60,7 @@ export function NewInventoryAdjustmentPage() {
   const avgCostByItem = useMemo(() => new Map((items ?? []).map((i) => [i.id, i.avg_cost])), [items])
 
   const [adjustmentType, setAdjustmentType] = useState<AdjustmentType>('quantity')
+  const [reason, setReason] = useState<AdjustmentReason>('stock_count')
   const [adjustmentDate, setAdjustmentDate] = useState(today())
   const [locationId, setLocationId] = useState('')
   const [adjustmentAccountId, setAdjustmentAccountId] = useState('')
@@ -149,6 +156,7 @@ export function NewInventoryAdjustmentPage() {
       const adjustment = await createAdjustment.mutateAsync({
         locationId,
         adjustmentType,
+        reason,
         adjustmentAccountId,
         adjustmentDate,
         referenceNumber: referenceNumber || null,
@@ -181,7 +189,7 @@ export function NewInventoryAdjustmentPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Card>
           <CardBody className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Select
                 label="Adjustment type"
                 value={adjustmentType}
@@ -190,6 +198,13 @@ export function NewInventoryAdjustmentPage() {
                 {TYPE_OPTIONS.map((t) => (
                   <option key={t.value} value={t.value}>
                     {t.label}
+                  </option>
+                ))}
+              </Select>
+              <Select label="Reason" value={reason} onChange={(e) => setReason(e.target.value as AdjustmentReason)}>
+                {ADJUSTMENT_REASONS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
                   </option>
                 ))}
               </Select>

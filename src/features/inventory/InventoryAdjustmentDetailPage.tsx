@@ -7,7 +7,7 @@ import { Table, THead, Th, Td, Tr } from '../../components/ui/Table'
 import { Badge } from '../../components/ui/Badge'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { formatMoney } from '../../lib/currency'
-import { useInventoryAdjustment, type AdjustmentType } from './api'
+import { adjustmentReasonLabel, useInventoryAdjustment, type AdjustmentType } from './api'
 
 const TYPE_LABELS: Record<AdjustmentType, string> = {
   quantity: 'Quantity',
@@ -45,6 +45,9 @@ export function InventoryAdjustmentDetailPage() {
 
       <div className="mb-4 flex items-center gap-3">
         <Badge tone="neutral">{TYPE_LABELS[type]}</Badge>
+        <Badge tone={adjustment.reason === 'damaged' || adjustment.reason === 'expired' ? 'warning' : 'neutral'}>
+          {adjustmentReasonLabel(adjustment.reason)}
+        </Badge>
         <span className="text-sm text-text-muted">Dated {adjustment.adjustment_date}</span>
         <span className="text-sm text-text-muted">Adjustment account: {adjustment.adjustment_account_name}</span>
         {adjustment.reference_number && (

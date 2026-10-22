@@ -104,6 +104,7 @@ import {
 import { CustomerDiscountsReport, ItemDiscountsReport } from './features/reports/DiscountReports'
 import { OpenOrdersReport, SalesOrdersSummaryReport } from './features/reports/SalesOrderReports'
 import { DeletedTransactionsReport, UpdatedTransactionsReport } from './features/reports/AuditReports'
+import { DamagedExpiredReport } from './features/reports/DamagedExpiredReport'
 
 function App() {
   return (
@@ -198,6 +199,7 @@ function App() {
         <Route path="/reports/inventory-movement" element={<InventoryMovementReport />} />
         <Route path="/reports/stock-by-supplier" element={<StockBySupplierReport />} />
         <Route path="/reports/physical-inventory-worksheet" element={<PhysicalInventoryWorksheet />} />
+        <Route path="/reports/damaged-expired" element={<DamagedExpiredReport />} />
         <Route path="/reports/income-by-customer" element={<IncomeByCustomerReport />} />
         <Route path="/reports/transactions-summary" element={<TransactionsSummaryReport />} />
         <Route path="/reports/purchases-by-supplier" element={<PurchasesBySupplierReport />} />

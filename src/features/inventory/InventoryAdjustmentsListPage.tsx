@@ -8,7 +8,7 @@ import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { formatMoney } from '../../lib/currency'
-import { useInventoryAdjustments, type AdjustmentType } from './api'
+import { adjustmentReasonLabel, useInventoryAdjustments, type AdjustmentType } from './api'
 
 const TYPE_LABELS: Record<AdjustmentType, string> = {
   quantity: 'Quantity',
@@ -48,6 +48,7 @@ export function InventoryAdjustmentsListPage() {
               <Th>Date</Th>
               <Th>Location</Th>
               <Th>Type</Th>
+              <Th>Reason</Th>
               <Th>Adjustment account</Th>
               <Th className="text-right">Total value</Th>
               <Th>Description</Th>
@@ -64,6 +65,7 @@ export function InventoryAdjustmentsListPage() {
                   <Td>
                     <Badge tone="neutral">{TYPE_LABELS[row.adjustment_type as AdjustmentType]}</Badge>
                   </Td>
+                  <Td className="text-text-muted">{adjustmentReasonLabel(row.reason)}</Td>
                   <Td>{row.adjustment_account_name}</Td>
                   <Td
                     className={`text-right font-medium ${

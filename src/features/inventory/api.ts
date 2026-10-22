@@ -85,6 +85,23 @@ export type InventoryAdjustment = Database['public']['Tables']['inventory_adjust
 export type InventoryAdjustmentItem = Database['public']['Tables']['inventory_adjustment_items']['Row']
 export type AdjustmentType = 'quantity' | 'value' | 'quantity_and_value'
 
+// Why stock was adjusted. Damaged and Expired feed the Damaged / Expired
+// Inventory report.
+export const ADJUSTMENT_REASONS = [
+  { value: 'stock_count', label: 'Stock count' },
+  { value: 'damaged', label: 'Damaged' },
+  { value: 'expired', label: 'Expired' },
+  { value: 'lost', label: 'Lost / stolen' },
+  { value: 'revaluation', label: 'Revaluation' },
+  { value: 'other', label: 'Other' },
+] as const
+
+export type AdjustmentReason = (typeof ADJUSTMENT_REASONS)[number]['value']
+
+export function adjustmentReasonLabel(reason: string | null | undefined) {
+  return ADJUSTMENT_REASONS.find((r) => r.value === reason)?.label ?? 'Other'
+}
+
 export interface InventoryAdjustmentListRow extends InventoryAdjustment {
   location_name: string
   adjustment_account_name: string
@@ -161,6 +178,7 @@ export function useCreateInventoryAdjustment(orgId: string) {
     mutationFn: async (input: {
       locationId: string
       adjustmentType: AdjustmentType
+      reason: AdjustmentReason
       adjustmentAccountId: string
       adjustmentDate: string
       referenceNumber: string | null
@@ -176,6 +194,7 @@ export function useCreateInventoryAdjustment(orgId: string) {
         p_reference_number: input.referenceNumber as unknown as string,
         p_description: input.description as unknown as string,
         p_lines: input.lines as unknown as Json,
+        p_reason: input.reason,
       })
       if (error) throw error
       return data as InventoryAdjustment
