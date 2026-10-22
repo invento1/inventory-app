@@ -103,6 +103,7 @@ import {
 } from './features/reports/SalesRepReports'
 import { CustomerDiscountsReport, ItemDiscountsReport } from './features/reports/DiscountReports'
 import { OpenOrdersReport, SalesOrdersSummaryReport } from './features/reports/SalesOrderReports'
+import { DeletedTransactionsReport, UpdatedTransactionsReport } from './features/reports/AuditReports'
 
 function App() {
   return (
@@ -215,6 +216,8 @@ function App() {
         <Route path="/reports/item-discounts" element={<ItemDiscountsReport />} />
         <Route path="/reports/sales-orders" element={<SalesOrdersSummaryReport />} />
         <Route path="/reports/open-orders" element={<OpenOrdersReport />} />
+        <Route path="/reports/deleted-transactions" element={<DeletedTransactionsReport />} />
+        <Route path="/reports/updated-transactions" element={<UpdatedTransactionsReport />} />
 
         <Route path="/settings" element={<Navigate to="/settings/appearance" replace />} />
         <Route path="/settings/appearance" element={<AppearancePage />} />

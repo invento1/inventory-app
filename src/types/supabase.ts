@@ -107,6 +107,62 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          changed_fields: string[]
+          doc_number: string | null
+          doc_type: string
+          id: string
+          new_data: Json | null
+          note: string | null
+          old_data: Json | null
+          org_id: string
+          record_id: string | null
+          table_name: string
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          changed_fields?: string[]
+          doc_number?: string | null
+          doc_type: string
+          id?: string
+          new_data?: Json | null
+          note?: string | null
+          old_data?: Json | null
+          org_id: string
+          record_id?: string | null
+          table_name: string
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          changed_fields?: string[]
+          doc_number?: string | null
+          doc_type?: string
+          id?: string
+          new_data?: Json | null
+          note?: string | null
+          old_data?: Json | null
+          org_id?: string
+          record_id?: string | null
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brands: {
         Row: {
           created_at: string
@@ -2645,6 +2701,11 @@ export type Database = {
         Args: { p_discount: number; p_quantity: number; p_unit_price: number }
         Returns: undefined
       }
+      audit_doc_date: { Args: { d: Json }; Returns: string }
+      audit_user_label: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: string
+      }
       balance_sheet: {
         Args: { p_as_of: string; p_org_id: string }
         Returns: {
@@ -3186,6 +3247,22 @@ export type Database = {
       delete_org_role: {
         Args: { p_org_id: string; p_role_key: string }
         Returns: undefined
+      }
+      deleted_transactions: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          action: string
+          changed_at: string
+          changed_by_name: string
+          doc_date: string
+          doc_id: string
+          doc_number: string
+          doc_type: string
+          log_id: string
+          note: string
+          party_name: string
+          total: number
+        }[]
       }
       financial_recovery: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }
@@ -3903,6 +3980,23 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      updated_transactions: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          changed_at: string
+          changed_by_name: string
+          changed_fields: string[]
+          doc_date: string
+          doc_id: string
+          doc_number: string
+          doc_type: string
+          log_id: string
+          new_data: Json
+          old_data: Json
+          party_name: string
+          total: number
+        }[]
       }
       void_credit_memo: {
         Args: { p_credit_memo_id: string }

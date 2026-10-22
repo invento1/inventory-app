@@ -24,6 +24,7 @@ export const RESET_DATA_CATEGORIES: { group: string; categories: ResetDataCatego
       { key: 'expenses', label: 'Expenses', description: 'Every recorded expense' },
       { key: 'inventory_activity', label: 'Inventory Transfers & Adjustments', description: 'Stock moved between locations or manually adjusted' },
       { key: 'ledger_entries', label: 'Manual Ledger Entries & Fund Transfers', description: 'Fiscal Daybook manual entries and Banking transfers' },
+      { key: 'audit_log', label: 'Audit Log', description: 'History behind Deleted and Updated Transactions (each Reset Data run is still recorded)' },
     ],
   },
   {

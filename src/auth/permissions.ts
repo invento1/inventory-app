@@ -56,6 +56,7 @@ export const PERMISSIONS = [
   'reports.receivables_payables',
   'reports.sales_purchases',
   'reports.inventory',
+  'reports.audit',
   'settings.company',
   'settings.master_data',
   'users.manage',
@@ -76,6 +77,7 @@ export const REPORT_PERMISSIONS: Permission[] = [
   'reports.receivables_payables',
   'reports.sales_purchases',
   'reports.inventory',
+  'reports.audit',
 ]
 
 // Every document type's "view" permission (All Transactions lists them all).

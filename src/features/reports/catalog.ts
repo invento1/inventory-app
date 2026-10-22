@@ -309,21 +309,19 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
   {
     key: 'misc',
     title: 'Misc.',
-    permission: 'reports.financial',
+    permission: 'reports.audit',
     reports: [
       {
         title: 'Deleted Transactions',
-        description: 'Audit trail of deleted documents',
+        description: 'Documents voided, cancelled or deleted, and who did it',
         path: '/reports/deleted-transactions',
-        status: 'blocked',
-        blockedReason: 'Needs an audit log (documents are voided, never deleted, today)',
+        status: 'ready',
       },
       {
         title: 'Updated Transactions',
-        description: 'Audit trail of edited documents',
+        description: 'Changes made to documents: what changed, who and when',
         path: '/reports/updated-transactions',
-        status: 'blocked',
-        blockedReason: 'Needs an audit log of document edits',
+        status: 'ready',
       },
     ],
   },
