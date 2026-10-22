@@ -9,8 +9,9 @@ import { useAreas } from '../settings/api'
 import { AreaForm } from '../settings/AreaForm'
 import { useCreateCustomer, useUpdateCustomer, type Customer, type CustomerInput } from './api'
 import { useOrg } from '../../auth/OrgProvider'
+import { SalesRepSelect } from '../sales-reps/SalesRepSelect'
 
-const emptyForm: CustomerInput = { name: '', phone: '', email: '', address: '', area_id: null }
+const emptyForm: CustomerInput = { name: '', phone: '', email: '', address: '', area_id: null, sales_rep_id: null }
 
 export function CustomerForm({
   orgId,
@@ -32,6 +33,7 @@ export function CustomerForm({
           email: customer.email,
           address: customer.address,
           area_id: customer.area_id,
+          sales_rep_id: customer.sales_rep_id,
         }
       : emptyForm,
   )
@@ -108,6 +110,16 @@ export function CustomerForm({
               <Plus size={14} />
             </Button>
           )}
+        </div>
+        <div>
+          <SalesRepSelect
+            label="Sales rep / credit manager"
+            value={form.sales_rep_id ?? null}
+            onChange={(id) => setForm({ ...form, sales_rep_id: id })}
+          />
+          <p className="mt-1 text-xs text-text-muted">
+            Filled in on this customer's new documents, and their credit manager in the Financial Recovery report.
+          </p>
         </div>
         {error && <p className="text-sm text-danger-600">{error}</p>}
         <div className="mt-2 flex justify-end gap-2">

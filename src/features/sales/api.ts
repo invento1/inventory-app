@@ -33,7 +33,7 @@ export function useSalesReceipt(orgId: string, id: string) {
     queryFn: async () => {
       const { data: receipt, error: receiptError } = await supabase
         .from('sales_receipts')
-        .select('*, customers(name)')
+        .select('*, customers(name), sales_reps(name)')
         .eq('id', id)
         .eq('org_id', orgId)
         .single()
@@ -46,7 +46,7 @@ export function useSalesReceipt(orgId: string, id: string) {
       if (linesError) throw linesError
 
       return {
-        receipt: receipt as SalesReceipt & { customers: { name: string } | null },
+        receipt: receipt as SalesReceipt & { customers: { name: string } | null; sales_reps: { name: string } | null },
         lines: (lines ?? []).map((l) => ({
           ...l,
           item_name: l.items?.name ?? '',
@@ -63,6 +63,7 @@ export interface CartLinePayload {
   location_id: string
   quantity: number
   unit_price: number
+  discount: number
 }
 
 export function useCreateSalesReceipt(orgId: string) {
@@ -72,6 +73,8 @@ export function useCreateSalesReceipt(orgId: string) {
       customerId: string | null
       paymentMethod: string
       lines: CartLinePayload[]
+      salesRepId: string | null
+      discount: number
     }) => {
       // The generated RPC arg types don't reflect that p_customer_id/p_lines
       // accept null/plain-object-array at the SQL level (uuid with no
@@ -82,6 +85,8 @@ export function useCreateSalesReceipt(orgId: string) {
         p_customer_id: input.customerId as unknown as string,
         p_payment_method: input.paymentMethod,
         p_lines: input.lines as unknown as Json,
+        p_sales_rep_id: input.salesRepId as unknown as string,
+        p_discount: input.discount,
       })
       if (error) throw error
       return data as SalesReceipt

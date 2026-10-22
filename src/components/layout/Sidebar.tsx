@@ -56,6 +56,7 @@ const navEntries: NavEntry[] = [
       { type: 'leaf', to: '/inventory-transfers', label: 'Inventory Transfer' },
       { type: 'leaf', to: '/inventory-adjustments', label: 'Inventory Adjustment' },
       { type: 'leaf', to: '/quotations', label: 'Quotations' },
+      { type: 'leaf', to: '/sales-orders', label: 'Sales Orders' },
       {
         type: 'group',
         key: 'credit-memos-refunds',
@@ -133,6 +134,7 @@ const navEntries: NavEntry[] = [
       { type: 'leaf', to: '/settings/brands', label: 'Brands' },
       { type: 'leaf', to: '/settings/units', label: 'Units' },
       { type: 'leaf', to: '/settings/areas', label: 'Regions & Areas' },
+      { type: 'leaf', to: '/settings/sales-reps', label: 'Sales Representatives' },
       { type: 'leaf', to: '/settings/users', label: 'Users' },
       { type: 'leaf', to: '/settings/security-groups', label: 'Security Groups' },
       { type: 'leaf', to: '/settings/reset-data', label: 'Reset Data' },

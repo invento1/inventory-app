@@ -34,6 +34,7 @@ export interface InvoiceLineRow {
   location_id: string
   quantity: number
   unit_price: number
+  discount: number
   line_total: number
   item_name: string
   item_sku: string
@@ -46,11 +47,20 @@ export function useInvoice(orgId: string, id: string) {
     queryFn: async () => {
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
-        .select('*, customers(name)')
+        .select('*, customers(name), sales_reps(name)')
         .eq('id', id)
         .eq('org_id', orgId)
         .single()
       if (invoiceError) throw invoiceError
+
+      // The sales order this invoice was made from, if any.
+      const { data: salesOrder, error: salesOrderError } = await supabase
+        .from('sales_orders')
+        .select('id, order_number')
+        .eq('invoice_id', id)
+        .eq('org_id', orgId)
+        .maybeSingle()
+      if (salesOrderError) throw salesOrderError
 
       const { data: lines, error: linesError } = await supabase
         .from('invoice_items')
@@ -66,7 +76,8 @@ export function useInvoice(orgId: string, id: string) {
       if (paymentsError) throw paymentsError
 
       return {
-        invoice: invoice as Invoice & { customers: { name: string } | null },
+        invoice: invoice as Invoice & { customers: { name: string } | null; sales_reps: { name: string } | null },
+        salesOrder: salesOrder as { id: string; order_number: string } | null,
         lines: (lines ?? []).map((l) => ({
           ...l,
           item_name: l.items?.name ?? '',
@@ -84,6 +95,7 @@ export interface InvoiceLinePayload {
   location_id: string
   quantity: number
   unit_price: number
+  discount: number
 }
 
 export function useCreateInvoice(orgId: string) {
@@ -94,6 +106,9 @@ export function useCreateInvoice(orgId: string) {
       dueDate: string
       lines: InvoiceLinePayload[]
       notes: string | null
+      salesRepId: string | null
+      discount: number
+      salesOrderId: string | null
     }) => {
       // The generated RPC arg types don't reflect that p_lines/p_notes
       // accept a plain object array / null at the SQL level (jsonb and
@@ -105,12 +120,17 @@ export function useCreateInvoice(orgId: string) {
         p_due_date: input.dueDate,
         p_lines: input.lines as unknown as Json,
         p_notes: input.notes as unknown as string,
+        p_sales_rep_id: input.salesRepId as unknown as string,
+        p_discount: input.discount,
+        p_sales_order_id: input.salesOrderId as unknown as string,
       })
       if (error) throw error
       return data as Invoice
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['sales_orders', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['sales_order'] })
       queryClient.invalidateQueries({ queryKey: ['stock_levels', orgId] })
       queryClient.invalidateQueries({ queryKey: ['stock_movements', orgId] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', orgId] })
@@ -161,6 +181,9 @@ export function useVoidInvoice(orgId: string, invoiceId: string) {
       queryClient.invalidateQueries({ queryKey: ['stock_levels', orgId] })
       queryClient.invalidateQueries({ queryKey: ['stock_movements', orgId] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', orgId] })
+      // Voiding reopens the sales order it came from.
+      queryClient.invalidateQueries({ queryKey: ['sales_orders', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['sales_order'] })
     },
   })
 }

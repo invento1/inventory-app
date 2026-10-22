@@ -170,6 +170,7 @@ const DOC_TYPES: Record<string, { label: string; path: string; detail: boolean }
   supplier_bill: { label: 'Supplier bill', path: '/supplier-bills', detail: true },
   purchase_order: { label: 'Purchase order', path: '/purchase-orders', detail: true },
   quotation: { label: 'Quotation', path: '/quotations', detail: true },
+  sales_order: { label: 'Sales order', path: '/sales-orders', detail: true },
   credit_memo: { label: 'Credit memo', path: '/credit-memos', detail: true },
   expense: { label: 'Expense', path: '/expenses', detail: false },
   refund: { label: 'Refund', path: '/refunds', detail: false },

@@ -10,6 +10,7 @@ export interface PrintableLine {
   unit: string | null
   quantity: number
   unitPrice: number
+  discount: number
   lineTotal: number
 }
 
@@ -32,10 +33,13 @@ export interface PrintableDoc {
   party: PrintableParty | null
   lines: PrintableLine[]
   subtotal: number
+  // Whole-document discount (line discounts are on each line).
+  discount: number
   total: number
   amountPaid: number
   balance: number
   paymentMethod: string | null
+  salesRep: string | null
   notes: string | null
   // Invoices only: which customer history the printout includes (null = none).
   history: HistoryOptions | null
@@ -48,7 +52,7 @@ export const BATCH_LIMIT = 200
 type ItemRef = { name: string; sku: string; unit: string | null } | null
 
 function toLines(
-  rows: { quantity: number; unit_price: number; line_total: number; items: ItemRef }[],
+  rows: { quantity: number; unit_price: number; discount: number; line_total: number; items: ItemRef }[],
 ): PrintableLine[] {
   return rows.map((l) => ({
     name: l.items?.name ?? '',
@@ -56,14 +60,15 @@ function toLines(
     unit: l.items?.unit ?? null,
     quantity: l.quantity,
     unitPrice: l.unit_price,
+    discount: l.discount ?? 0,
     lineTotal: l.line_total,
   }))
 }
 
 const INVOICE_SELECT =
-  'id, invoice_number, issue_date, due_date, status, subtotal, total, amount_paid, notes, ' +
+  'id, invoice_number, issue_date, due_date, status, subtotal, discount, total, amount_paid, notes, sales_reps(name), ' +
   'show_previous_balance, show_recent_invoices, show_recent_payments, ' +
-  'customers(name, address, phone, email), invoice_items(quantity, unit_price, line_total, items(name, sku, unit))'
+  'customers(name, address, phone, email), invoice_items(quantity, unit_price, discount, line_total, items(name, sku, unit))'
 
 export interface InvoicePrintFilter {
   ids?: string[]
@@ -110,14 +115,16 @@ export function usePrintableInvoices(orgId: string, filter: InvoicePrintFilter, 
         due_date: string
         status: string
         subtotal: number
+        discount: number
         total: number
         amount_paid: number
+        sales_reps: { name: string } | null
         notes: string | null
         show_previous_balance: boolean
         show_recent_invoices: boolean
         show_recent_payments: boolean
         customers: PrintableParty | null
-        invoice_items: { quantity: number; unit_price: number; line_total: number; items: ItemRef }[]
+        invoice_items: { quantity: number; unit_price: number; discount: number; line_total: number; items: ItemRef }[]
       }
       const rows = (data ?? []) as unknown as Row[]
       return {
@@ -136,10 +143,12 @@ export function usePrintableInvoices(orgId: string, filter: InvoicePrintFilter, 
             party: inv.customers,
             lines: toLines(inv.invoice_items),
             subtotal: inv.subtotal,
+            discount: inv.discount,
             total: inv.total,
             amountPaid: inv.amount_paid,
             balance: inv.total - inv.amount_paid,
             paymentMethod: null,
+            salesRep: inv.sales_reps?.name ?? null,
             notes: inv.notes,
             history:
               inv.show_previous_balance || inv.show_recent_invoices || inv.show_recent_payments
@@ -163,8 +172,8 @@ export function usePrintableSalesReceipt(orgId: string, id: string) {
       const { data, error } = await supabase
         .from('sales_receipts')
         .select(
-          'id, receipt_number, created_at, status, payment_method, subtotal, total, notes, ' +
-            'customers(name, address, phone, email), sales_receipt_items(quantity, unit_price, line_total, items(name, sku, unit))',
+          'id, receipt_number, created_at, status, payment_method, subtotal, discount, total, notes, sales_reps(name), ' +
+            'customers(name, address, phone, email), sales_receipt_items(quantity, unit_price, discount, line_total, items(name, sku, unit))',
         )
         .eq('org_id', orgId)
         .eq('id', id)
@@ -178,10 +187,12 @@ export function usePrintableSalesReceipt(orgId: string, id: string) {
         status: string
         payment_method: string
         subtotal: number
+        discount: number
         total: number
         notes: string | null
+        sales_reps: { name: string } | null
         customers: PrintableParty | null
-        sales_receipt_items: { quantity: number; unit_price: number; line_total: number; items: ItemRef }[]
+        sales_receipt_items: { quantity: number; unit_price: number; discount: number; line_total: number; items: ItemRef }[]
       }
       const isVoid = r.status === 'void'
       const doc: PrintableDoc = {
@@ -196,10 +207,12 @@ export function usePrintableSalesReceipt(orgId: string, id: string) {
         party: r.customers,
         lines: toLines(r.sales_receipt_items),
         subtotal: r.subtotal,
+        discount: r.discount,
         total: r.total,
         amountPaid: isVoid ? 0 : r.total,
         balance: 0,
         paymentMethod: r.payment_method,
+        salesRep: r.sales_reps?.name ?? null,
         notes: r.notes,
         history: null,
       }

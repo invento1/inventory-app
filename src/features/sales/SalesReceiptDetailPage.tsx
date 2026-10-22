@@ -19,6 +19,7 @@ export function SalesReceiptDetailPage() {
   if (isLoading || !data) return <PageSpinner />
 
   const { receipt, lines } = data
+  const hasLineDiscounts = lines.some((l) => l.discount > 0)
 
   return (
     <div>
@@ -51,6 +52,7 @@ export function SalesReceiptDetailPage() {
           {receipt.customers?.name ?? 'Walk-in customer'}
         </span>
         <Badge tone="neutral">{receipt.payment_method.replace('_', ' ')}</Badge>
+        {receipt.sales_reps && <span className="text-sm text-text-muted">Rep: {receipt.sales_reps.name}</span>}
       </div>
 
       <Card>
@@ -62,6 +64,7 @@ export function SalesReceiptDetailPage() {
               <Th>Location</Th>
               <Th className="text-right">Qty</Th>
               <Th className="text-right">Unit price</Th>
+              {hasLineDiscounts && <Th className="text-right">Discount</Th>}
               <Th className="text-right">Line total</Th>
             </THead>
             <tbody>
@@ -73,6 +76,9 @@ export function SalesReceiptDetailPage() {
                   <Td>{line.location_name}</Td>
                   <Td className="text-right">{line.quantity}</Td>
                   <Td className="text-right">{formatMoney(line.unit_price, currencySymbol)}</Td>
+                  {hasLineDiscounts && (
+                    <Td className="text-right">{line.discount > 0 ? formatMoney(line.discount, currencySymbol) : '—'}</Td>
+                  )}
                   <Td className="text-right">{formatMoney(line.line_total, currencySymbol)}</Td>
                 </Tr>
               ))}
@@ -87,6 +93,12 @@ export function SalesReceiptDetailPage() {
             <span>Subtotal</span>
             <span>{formatMoney(receipt.subtotal, currencySymbol)}</span>
           </div>
+          {receipt.discount > 0 && (
+            <div className="mt-1 flex justify-between text-sm text-text-muted">
+              <span>Discount</span>
+              <span>− {formatMoney(receipt.discount, currencySymbol)}</span>
+            </div>
+          )}
           <div className="mt-1 flex justify-between text-base font-semibold text-text">
             <span>Total</span>
             <span>{formatMoney(receipt.total, currencySymbol)}</span>

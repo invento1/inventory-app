@@ -207,11 +207,14 @@ items                   -- org_id, sku, barcode, name, description, unit, reorde
                         --   avg_cost (added post-Phase-5): a stored, mutable Perpetual Moving Average Cost --
                         --   see the MAC paragraph below for why this is a deliberate exception to "derive,
                         --   don't store", parallel to stock_levels.quantity
+                        --   commission_rate (%, default 0): snapshotted onto sales lines, see §4 Sales reps
 categories              -- org_id, name, parent_id (self-ref, hierarchical)
 brands                  -- org_id, name
 units_of_measure        -- org_id, name, abbreviation -- backs the Unit field on items (a Select, not free text);
                         --   items.unit itself stays a plain text column so old values never break
 areas                   -- org_id, name, region (plain text, not its own table) -- customers.area_id references this
+sales_reps              -- org_id, name (unique per org, case-insensitive), phone, email, is_active -- master data
+                        --   (settings.master_data). One list serves as rep, salesman and customer credit manager
 price_lists             -- org_id, list_date, list_type (retail/wholesale/custom), image_url -- a dated log of
                         --   price-sheet documents, NOT a per-item pricing engine (that's still deferred)
 stock_levels            -- org_id, item_id, location_id, quantity
@@ -224,23 +227,29 @@ purchase_orders         -- org_id, supplier_id, status, created_by, expected_dat
 purchase_order_lines    -- po_id, item_id, quantity_ordered, quantity_received, unit_cost
 customers               -- org_id, name, phone, email, address, is_active, area_id (nullable FK) (contact record
                         --   only -- no balance column; AR balance is always derived from invoices, never stored)
+                        --   sales_rep_id (nullable FK, set null): default rep on their documents + credit manager
 doc_number_counters     -- org_id, doc_type, next_number (system-managed, no client policies)
-sales_receipts          -- org_id, receipt_number, customer_id, status, payment_method, subtotal, total,
-                        --   sale_date (org-local calendar date, trigger-stamped; reports/views use it, not created_at)
+sales_receipts          -- org_id, receipt_number, customer_id, status, payment_method, subtotal, discount, total,
+                        --   sales_rep_id, sale_date (org-local calendar date, trigger-stamped; reports/views use it,
+                        --   not created_at). total = subtotal - discount (whole-receipt discount amount)
                         --   walk-in, paid-in-full sale only (customer_id nullable) -- for credit sales see invoices below
-sales_receipt_items     -- sales_receipt_id, item_id, location_id, quantity, unit_price, unit_cost, line_total
+sales_receipt_items     -- sales_receipt_id, item_id, location_id, quantity, unit_price, discount, unit_cost,
+                        --   commission_rate, line_total (= quantity * unit_price - discount)
                         --   no org_id (line-item child table exception, see §3). unit_cost (added post-
                         --   Phase-5) snapshots the item's avg_cost at the moment of sale -- nullable (existing
                         --   pre-MAC rows are NULL, "no cost data", never a misleading 0)
 invoices                -- org_id, invoice_number, customer_id (not null), status (unpaid/partially_paid/paid/void),
-                        --   issue_date, due_date, subtotal, total, amount_paid, notes,
+                        --   issue_date, due_date, subtotal, discount, total (= subtotal - discount), amount_paid,
+                        --   notes, sales_rep_id,
                         --   show_previous_balance / show_recent_invoices / show_recent_payments (printout
                         --   options, see §4 Printing -- display only, set via set_invoice_history_options)
                         --   'overdue' is NOT a stored status -- it's computed (due_date passed, balance > 0),
                         --   see outstanding_invoices below
-invoice_items           -- invoice_id, item_id, location_id, quantity, unit_price, unit_cost, line_total
+invoice_items           -- invoice_id, item_id, location_id, quantity, unit_price, discount, unit_cost,
+                        --   commission_rate, line_total (= quantity * unit_price - discount)
                         --   no org_id (line-item child table exception, see §3). unit_cost: same MAC
-                        --   snapshot as sales_receipt_items.unit_cost above
+                        --   snapshot as sales_receipt_items.unit_cost above; commission_rate likewise
+                        --   snapshots items.commission_rate (NULL on lines from before it existed)
 invoice_payments        -- org_id, invoice_id, amount, payment_method, paid_at, notes, reference_number,
                         --   deposit_id (nullable FK to deposits, set by record_deposit -- see Stage 3 below)
                         --   append-only ledger; has its own org_id (unlike invoice_items) since it's a
@@ -289,6 +298,12 @@ quotations              -- org_id, quotation_number (prefix 'QT'), customer_id (
                         --   shape every other document uses, just with no stock_movements/post_journal_entry
 quotation_items         -- quotation_id, item_id, quantity, unit_price, line_total -- no location_id (nothing
                         --   to deduct from) and no org_id (line-item child table exception, see §3)
+sales_orders            -- org_id, order_number (prefix 'SO'), customer_id (not null), sales_rep_id, status
+                        --   (open/invoiced/cancelled), order_date (trigger-stamped org-local), delivery_date,
+                        --   subtotal, discount, total, notes, invoice_id (nullable FK, set null) -- RPC-only
+                        --   writes, select policy only; never touches stock or the ledger (see §4 Sales Orders)
+sales_order_items       -- sales_order_id, item_id, quantity, unit_price, discount, line_total, line_order -- no
+                        --   location_id (chosen when invoicing) and no org_id (line-item child exception, §3)
 expenses                -- org_id, expense_number (prefix 'EXP'), expense_date, payee_supplier_id (nullable FK),
                         --   payee_name (free text, for non-supplier payees), category_account_id (FK to a
                         --   ledger_accounts row of type 'expense'), amount, payment_method, account_id (which
@@ -296,7 +311,7 @@ expenses                -- org_id, expense_number (prefix 'EXP'), expense_date, 
                         --   paid in full immediately (mirrors sales_receipts' shape, not supplier_bills' AP
                         --   lifecycle -- avoids a second, overlapping AP system)
 credit_memos            -- org_id, credit_memo_number (prefix 'CM'), customer_id (not null), status (open/void),
-                        --   issue_date, subtotal, total, notes -- a standalone credit note: creating one
+                        --   issue_date, subtotal, total, notes, sales_rep_id -- a standalone credit note: creating one
                         --   immediately reduces Accounts Receivable in aggregate, no per-invoice
                         --   amount_applied tracking (deliberately the simple end of the design space -- see
                         --   the Credit Memos paragraph below for why)
@@ -412,12 +427,39 @@ inventory_adjustment_items -- adjustment_id, item_id, qty_on_hand_before, curren
   - `income_by_customer` nets credit memos and refunds. Its net sales total equals the Sales Income GL activity.
   - `invoice_items_summary(org, from_number int, to_number int)` matches the numeric suffix of `invoice_number`.
   - `purchases_by_supplier` and `transactions_summary` (built on `all_transactions`).
+- **Reps, discounts, sales orders** (`20260824000000`, see Sales reps below; pages in `SalesRepReports.tsx`, `DiscountReports.tsx`, `SalesOrderReports.tsx`):
+  - `sales_by_rep` (sales, discounts, returns = credit memos by rep) and `sales_by_salesman` (every line with its commission) are built on `sales_lines`;
+  - `return_stock_by_rep`: per rep and item, sold vs credit-memo returned;
+  - `financial_recovery`: per customer, grouped by credit manager (the customer's rep). Sales and recovered (invoice payments + sales receipts) are in the period; outstanding is `customer_balance_summary` at the end date;
+  - `customer_discounts` / `item_discounts`: only rows with a discount;
+  - `sales_orders_summary` (range) and `open_orders(org)` (no range, so it has its own hook rather than `useRangeReport`).
 - **Frontend conventions**:
   - Any RPC whose args are exactly `(p_org_id, p_start_date, p_end_date)` uses the generic typed `useRangeReport('fn_name', ...)` hook in `reports/api.ts`. Don't write a new hook for those.
   - Drill-downs pass `?account=` / `?customer=` / `?supplier=` plus `?from=&to=` (or `?asOf=`), which `useDateRange` / `useAsOfDate` read as their initial state.
   - Report cells (`ReportParts.tsx`) deliberately set no default text colour or conflicting padding, because `cn()` is plain `clsx` with no tailwind-merge. A caller's `className` colour only wins if the base doesn't also set one.
   - Printing: `AppLayout` and `Sidebar` carry `print:` classes that hide the app chrome and un-clip the scroll container, and `ReportShell` hides its own controls. `window.print()` therefore prints just the report document.
   - P&L moved from Account to Reports; `/account/profit-loss` redirects.
+
+**Sales reps, discounts and Sales Orders** (`20260824000000`, `20260824000100`; `src/features/sales-reps/`, `src/features/sales-orders/`, `src/features/sales/discounts.tsx`) are the features behind 8 of the old app's reports.
+- **Sales representatives** (Settings → Sales Representatives): one list, as in the old app, used as rep, salesman and customer credit manager.
+  - **On customers:** `customers.sales_rep_id` is the default rep, and the credit manager in Financial Recovery.
+  - **On documents:** invoices, sales receipts, credit memos and sales orders carry `sales_rep_id`. Every form fills it from the customer when one is picked (`chooseCustomer`) and it stays changeable. `SalesRepSelect` lists active reps plus the current value if since deactivated. The RPCs only validate it with `assert_sales_rep_in_org`; they never default it themselves.
+  - **Commission:** `items.commission_rate` (%) is snapshotted onto `invoice_items` / `sales_receipt_items.commission_rate` at the sale, so changing a rate never rewrites past commission. Commission = the line's net amount × that rate.
+  - Documents with no rep report as "Unassigned"; nothing was backfilled.
+- **Discounts** on invoices, sales receipts and sales orders. **Only amounts are stored:**
+  - a line `discount`, with `line_total = quantity * unit_price - discount`;
+  - a document `discount`, with `total = subtotal - discount` and `subtotal = sum(line_total)`.
+  - The forms accept "5%" or an amount per line, and Percent/Amount for the document (`lineDiscountAmount`, `DocumentDiscountField`). The RPCs check every line with `assert_valid_line_discount` before the document check (`20260824000100`), so an oversized line discount gets its own message.
+  - **Revenue posts net** (Credit Sales Income with the total), so the ledger and every existing report stay consistent. There is no separate Sales Discounts account.
+  - `sales_lines` gained `sales_rep_id, gross_amount, line_discount, discount, commission_rate`. Its `amount` is now the line's share of the document total: `line_total × total/subtotal`, i.e. the document discount spread in proportion, so line-based reports still add up to document totals.
+  - Printouts show a Discount column (only when a line has one), a Discount row and the Sales rep.
+- **Sales Orders** (Business Hub → Sales Orders, permissions `sales_orders.view/create/void`, module 65): a customer's order before it's invoiced. Like a quotation, it never touches stock or the ledger.
+  - `create_sales_order` / `update_sales_order` (open only; replaces the lines through the private `write_sales_order_lines`) / `cancel_sales_order` (open only).
+  - **Convert:** "Convert to invoice" opens `/invoices/new?fromOrder=<id>`, pre-filled (locations default to the first; quantities and prices editable). `create_invoice(..., p_sales_order_id)` checks the order is open and for the same customer, then sets it `invoiced` with `invoice_id`.
+  - **Voiding** that invoice reopens the order (`void_invoice` resets status and `invoice_id`).
+  - Sales orders are in `all_transactions` (`doc_type 'sales_order'`), so All Transactions, global search, the dashboard and Transactions Summary list them.
+- **Signature changes:** `create_invoice`, `create_sales_receipt` and `create_credit_memo` gained trailing defaulted parameters (`p_sales_rep_id`, `p_discount`, `p_sales_order_id`). The old signatures were dropped first, as with `dashboard_summary`.
+- **Reset Data:** a Sales Orders category; `reference_data` also clears sales reps.
 
 **Item SKUs are always system-assigned**, never typed by hand: `next_item_sku(org_id)` reuses the same `doc_number_counters` mechanism as `next_document_number` but is seeded to start at `100001` and returns a bare number with no prefix (`100001`, `100002`, ...). Unlike `next_document_number` (revoked from clients), it's called directly by the client (item creation is a plain insert, not a SECURITY DEFINER RPC), so it does its own `is_org_member` check and is left executable by authenticated clients (no `revoke`).
 
@@ -594,6 +636,8 @@ where sl.quantity <= coalesce(i.reorder_threshold, 0);
 │   │   │                             stock/AdjustStockModal.tsx no longer exists
 │   │   ├── expenses/              -- Phase 5, paid-in-full-immediately (mirrors sales/'s simplicity)
 │   │   ├── quotations/            -- Phase 5, standalone estimates -- never touch stock or the ledger
+│   │   ├── sales-orders/          -- customer orders before invoicing, convert to invoice (§4)
+│   │   ├── sales-reps/            -- Settings → Sales Representatives + SalesRepSelect (§4)
 │   │   ├── credit-memos/          -- Phase 5, standalone customer credit notes (AR mirror of a return)
 │   │   ├── refunds/               -- Phase 5, standalone cash-back documents
 │   │   ├── printing/              -- printable invoice/receipt documents, single + batch print pages
@@ -783,10 +827,11 @@ The sidebar header is the HashirHub icon + name and links to `/` (Dashboard). It
   - `tenant_schema_audit()` checks the multi-tenancy rules. Its first run found `next_document_number`/`recompute_item_avg_cost` callable by any signed-in user, now revoked.
 
   See §3 Global changes and Tenant provisioning.
-- **User management + Security Groups (RBAC)** (shipped): Settings → Users (invite by email or create with a password, change role, deactivate, remove, resend invite, password reset), Settings → Security Groups (owner-edited role × permission matrix, 50 permissions in 15 modules, custom roles), and permission checks in every write RPC and write policy, plus ledger reads. The sidebar, pages, buttons and search follow the same permissions (§3 Permissions, §4 Users & Security Groups). The same pass repaired this file: an earlier scripted edit had duplicated §4–§10, because `'$'` in a JS replace string meant "rest of the file".
+- **User management + Security Groups (RBAC)** (shipped): Settings → Users (invite by email or create with a password, change role, deactivate, remove, resend invite, password reset), Settings → Security Groups (owner-edited role × permission matrix, 50 permissions in 15 modules, now 53 in 16 with Sales Orders, custom roles), and permission checks in every write RPC and write policy, plus ledger reads. The sidebar, pages, buttons and search follow the same permissions (§3 Permissions, §4 Users & Security Groups). The same pass repaired this file: an earlier scripted edit had duplicated §4–§10, because `'$'` in a JS replace string meant "rest of the file".
 - **Camera barcode scanning + fast invoice entry** (shipped): Scan buttons on New/Edit Item, and New Invoice's customer/item autocomplete, scan-or-search bar (quantity auto-increment for repeat scans), and camera scanning (§4). This closes the old "camera-based barcode scanning" deferral for items and invoices; New Sale still uses its original USB-scanner input.
 - **Org timezone + supplier-filtered item pickers** (shipped): documents, sales receipts, auto-posted journal entries, and the timestamp-based reports/views are dated in the org's timezone (Company Info), and the Purchase Order / Supplier Bill item dropdowns follow the chosen supplier (§4). This resolves the follow-up below once an org's timezone is set; orgs that haven't set one keep UTC dating.
+- **Sales reps, discounts and Sales Orders** (shipped): Sales Representatives (on customers and documents, with item commission rates), line and document discounts on invoices / sales receipts / sales orders, and the Sales Orders document with Convert to invoice. Unlocked 8 reports: Sales by Representative, Return Stock by Representative, Sales by Salesman, Financial Recovery & Sales Performance, Customer and Item Discounts Summaries, Sales Orders Summary, Open Orders Summary (§4). 34 of the old app's 37 reports now exist; the last 3 need an audit log and damaged/expired stock tracking.
 - **Credit memo cost of returns** (shipped): a credit memo now moves the returned goods' cost from Cost of Goods Sold back into Inventory (and its void reverses that), and the MAC replay counts returns, so profit and the Inventory account stay right after a return (§4 Credit Memos). No org had a credit memo yet, so nothing needed backfilling.
 - *(Resolved by Org timezone, kept for history)* **Known follow-up: system-stamped document dates are still UTC.** `create_invoice`/`create_credit_memo`/`create_supplier_bill`/`create_quotation` default `issue_date` to `current_date`, and several auto-postings use `current_date` for `entry_date`. Both are UTC in Supabase, so a document created between local midnight and UTC midnight gets yesterday's date. That affects its printed date, `all_transactions`, and every report; only the dashboard compensates. The proper fix is an org timezone setting (Company Info) that those RPCs use instead of `current_date`, plus the same `p_tz` treatment for the report RPCs.
-- **Explicitly deferred to later phases**: linking Credit Memos to specific invoices (currently an immediate, aggregate AR reduction only, with returns costed at the current average cost rather than the original sale's), converting a Quotation into an Invoice/Sales Receipt (currently a fully standalone estimate), a Posting Settings screen for explicit default-account configuration (currently auto-created by fixed name on first use instead, see §4's caveat about name collisions with manually-created accounts), wholesale/multi-tier pricing, the old-app reports still blocked on a missing feature (listed greyed-out in the Reports catalog: Sales by Representative / Return Stock by Representative / Sales by Salesman / Financial Recovery need sales reps, salesmen with commission, and customer credit managers; Customer & Item Discounts need line discounts; Sales Orders & Open Orders need a Sales Orders document; Deleted/Updated Transactions need an audit log; Damaged/Expired Inventory needs expiry/damage tracking), multi-org switcher UI (schema supports multi-org membership already; Phase 1 UI just auto-selects a user's single org). Camera scanning shipped for items and invoices; the owner decided New Sale doesn't need it.
+- **Explicitly deferred to later phases**: linking Credit Memos to specific invoices (currently an immediate, aggregate AR reduction only, with returns costed at the current average cost rather than the original sale's), converting a Quotation into an Invoice/Sales Receipt (currently a fully standalone estimate), a Posting Settings screen for explicit default-account configuration (currently auto-created by fixed name on first use instead, see §4's caveat about name collisions with manually-created accounts), wholesale/multi-tier pricing, the old-app reports still blocked on a missing feature (listed greyed-out in the Reports catalog: Deleted/Updated Transactions need an audit log; Damaged/Expired Inventory needs expiry/damage tracking), multi-org switcher UI (schema supports multi-org membership already; Phase 1 UI just auto-selects a user's single org). Camera scanning shipped for items and invoices; the owner decided New Sale doesn't need it.
 - This is a living document — update it as schema or architecture decisions evolve, don't let it drift from reality.

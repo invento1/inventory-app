@@ -59,6 +59,7 @@ export function CreditMemoDetailPage() {
           {creditMemo.status === 'void' ? 'Void' : 'Open'}
         </Badge>
         <span className="text-sm text-text-muted">Issued {creditMemo.issue_date}</span>
+        {creditMemo.sales_reps && <span className="text-sm text-text-muted">Rep: {creditMemo.sales_reps.name}</span>}
       </div>
 
       <Card>

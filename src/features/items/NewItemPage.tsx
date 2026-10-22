@@ -24,6 +24,7 @@ const emptyForm: Omit<ItemInput, 'sku'> = {
   unit: 'unit',
   unit_price: 0,
   reorder_threshold: null,
+  commission_rate: 0,
   category_id: null,
   brand_id: null,
   supplier_id: null,
@@ -91,7 +92,7 @@ export function NewItemPage() {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
             <BarcodeField value={form.barcode ?? ''} onChange={(barcode) => setForm({ ...form, barcode })} />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <Select
@@ -135,6 +136,15 @@ export function NewItemPage() {
                     reorder_threshold: e.target.value === '' ? null : Number(e.target.value),
                   })
                 }
+              />
+              <Input
+                label="Commission %"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={form.commission_rate ?? 0}
+                onChange={(e) => setForm({ ...form, commission_rate: e.target.value === '' ? 0 : Number(e.target.value) })}
               />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

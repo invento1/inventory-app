@@ -17,6 +17,17 @@ import { CustomerPicker } from './CustomerPicker'
 import { useBarcodeInput } from './useBarcodeInput'
 import { useCreateSalesReceipt } from './api'
 import type { CartLine } from './types'
+import { useCustomers } from '../customers/api'
+import { SalesRepSelect } from '../sales-reps/SalesRepSelect'
+import {
+  DocumentDiscountField,
+  NO_DOCUMENT_DISCOUNT,
+  documentDiscountAmount,
+  documentDiscountError,
+  lineDiscountAmount,
+  lineDiscountError,
+  type DocumentDiscount,
+} from './discounts'
 
 export function NewSalesReceiptPage() {
   const { orgId, currencySymbol } = useOrg()
@@ -33,7 +44,16 @@ export function NewSalesReceiptPage() {
   const [defaultLocationId, setDefaultLocationId] = useState('')
   const [cart, setCart] = useState<CartLine[]>([])
   const [customerId, setCustomerId] = useState('')
+  const [salesRepId, setSalesRepId] = useState<string | null>(null)
+  const [docDiscount, setDocDiscount] = useState<DocumentDiscount>(NO_DOCUMENT_DISCOUNT)
+  const { data: customers } = useCustomers(orgId)
   const [paymentMethod, setPaymentMethod] = useState('cash')
+
+  // Picking a customer fills in their sales rep (still changeable).
+  function chooseCustomer(id: string) {
+    setCustomerId(id)
+    setSalesRepId(customers?.find((c) => c.id === id)?.sales_rep_id ?? null)
+  }
   const [searchTerm, setSearchTerm] = useState('')
 
   const activeLocationId = defaultLocationId || locations?.[0]?.id || ''
@@ -71,6 +91,7 @@ export function NewSalesReceiptPage() {
           location_id: activeLocationId,
           quantity: 1,
           unit_price: item.unit_price,
+          discount: '',
         },
       ]
     })
@@ -103,11 +124,23 @@ export function NewSalesReceiptPage() {
     setCart((current) => current.filter((l) => l.key !== key))
   }
 
-  const subtotal = cart.reduce((sum, l) => sum + l.quantity * l.unit_price, 0)
+  const lineNet = (l: CartLine) => {
+    const discount = lineDiscountAmount(l.discount, l.quantity * l.unit_price)
+    return l.quantity * l.unit_price - (Number.isNaN(discount) ? 0 : discount)
+  }
+  const subtotal = cart.reduce((sum, l) => sum + lineNet(l), 0)
+  const docDiscountAmount = documentDiscountAmount(docDiscount, subtotal)
+  const total = subtotal - docDiscountAmount
 
   async function handleCompleteSale() {
     if (cart.length === 0) {
       toast.error('Add at least one item to the sale.')
+      return
+    }
+    const lineProblem = cart.map((l) => lineDiscountError(l.discount, l.quantity * l.unit_price)).find(Boolean)
+    const problem = lineProblem ?? documentDiscountError(docDiscount, subtotal)
+    if (problem) {
+      toast.error(problem)
       return
     }
     try {
@@ -119,7 +152,10 @@ export function NewSalesReceiptPage() {
           location_id: l.location_id,
           quantity: l.quantity,
           unit_price: l.unit_price,
+          discount: lineDiscountAmount(l.discount, l.quantity * l.unit_price),
         })),
+        salesRepId,
+        discount: docDiscountAmount,
       })
       toast.success(`Sale ${receipt.receipt_number} completed`)
       setCart([])
@@ -223,7 +259,7 @@ export function NewSalesReceiptPage() {
                 </p>
               ) : (
                 <div className="overflow-x-auto">
-                  <div className="min-w-[640px] divide-y divide-border">
+                  <div className="min-w-[720px] divide-y divide-border">
                     {cart.map((line) => (
                       <SalesReceiptCartLine
                         key={line.key}
@@ -247,7 +283,8 @@ export function NewSalesReceiptPage() {
           <Card>
             <CardHeader title="Complete sale" />
             <CardBody className="flex flex-col gap-4">
-              <CustomerPicker value={customerId} onChange={setCustomerId} />
+              <CustomerPicker value={customerId} onChange={chooseCustomer} />
+              <SalesRepSelect value={salesRepId} onChange={setSalesRepId} />
               <Select
                 label="Payment method"
                 value={paymentMethod}
@@ -264,9 +301,21 @@ export function NewSalesReceiptPage() {
                   <span>Subtotal</span>
                   <span>{formatMoney(subtotal, currencySymbol)}</span>
                 </div>
+                <div className="my-2">
+                  <DocumentDiscountField label="Sale discount" value={docDiscount} onChange={setDocDiscount} />
+                  {documentDiscountError(docDiscount, subtotal) ? (
+                    <p className="mt-1 text-xs text-danger-600">{documentDiscountError(docDiscount, subtotal)}</p>
+                  ) : (
+                    docDiscountAmount > 0 && (
+                      <p className="mt-1 text-right text-xs tabular-nums text-text-muted">
+                        − {formatMoney(docDiscountAmount, currencySymbol)}
+                      </p>
+                    )
+                  )}
+                </div>
                 <div className="mt-1 flex justify-between text-base font-semibold text-text">
                   <span>Total</span>
-                  <span>{formatMoney(subtotal, currencySymbol)}</span>
+                  <span>{formatMoney(total, currencySymbol)}</span>
                 </div>
               </div>
 

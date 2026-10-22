@@ -27,6 +27,7 @@ export const DOC_TYPE_LABELS: Record<string, string> = {
   purchase_order: 'Purchase Order',
   expense: 'Expense',
   quotation: 'Quotation',
+  sales_order: 'Sales Order',
   credit_memo: 'Credit Memo',
   refund: 'Refund',
 }
@@ -37,5 +38,6 @@ export const DOC_TYPE_ROUTES: Record<string, (id: string) => string> = {
   supplier_bill: (id) => `/supplier-bills/${id}`,
   purchase_order: (id) => `/purchase-orders/${id}`,
   quotation: (id) => `/quotations/${id}`,
+  sales_order: (id) => `/sales-orders/${id}`,
   credit_memo: (id) => `/credit-memos/${id}`,
 }

@@ -44,7 +44,7 @@ export function useCreditMemo(orgId: string, id: string) {
     queryFn: async () => {
       const { data: creditMemo, error: creditMemoError } = await supabase
         .from('credit_memos')
-        .select('*, customers(name)')
+        .select('*, customers(name), sales_reps(name)')
         .eq('id', id)
         .eq('org_id', orgId)
         .single()
@@ -57,7 +57,7 @@ export function useCreditMemo(orgId: string, id: string) {
       if (linesError) throw linesError
 
       return {
-        creditMemo: creditMemo as CreditMemo & { customers: { name: string } | null },
+        creditMemo: creditMemo as CreditMemo & { customers: { name: string } | null; sales_reps: { name: string } | null },
         lines: (lines ?? []).map((l) => ({
           ...l,
           item_name: l.items?.name ?? '',
@@ -83,12 +83,14 @@ export function useCreateCreditMemo(orgId: string) {
       customerId: string
       lines: CreditMemoLinePayload[]
       notes: string | null
+      salesRepId: string | null
     }) => {
       const { data, error } = await supabase.rpc('create_credit_memo', {
         p_org_id: orgId,
         p_customer_id: input.customerId,
         p_lines: input.lines as unknown as Json,
         p_notes: input.notes as unknown as string,
+        p_sales_rep_id: input.salesRepId as unknown as string,
       })
       if (error) throw error
       return data as CreditMemo

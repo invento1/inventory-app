@@ -5,7 +5,7 @@ import type { Database } from '../../types/supabase'
 export type Customer = Database['public']['Tables']['customers']['Row']
 export type CustomerInput = Pick<
   Database['public']['Tables']['customers']['Insert'],
-  'name' | 'phone' | 'email' | 'address' | 'area_id'
+  'name' | 'phone' | 'email' | 'address' | 'area_id' | 'sales_rep_id'
 >
 
 export interface CustomerListRow extends Customer {

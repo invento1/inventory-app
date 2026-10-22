@@ -6,4 +6,6 @@ export interface CartLine {
   location_id: string
   quantity: number
   unit_price: number
+  // As typed: "", "250" or "5%" (see discounts.tsx).
+  discount: string
 }

@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Plus, ScanLine, Trash2 } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -29,6 +29,17 @@ import {
 import { CustomerHistoryTables, HistoryOptionsPicker } from './CustomerHistory'
 import { useUserPreference } from '../../lib/userPreferences'
 import { ymd } from '../../lib/dates'
+import { SalesRepSelect } from '../sales-reps/SalesRepSelect'
+import { useSalesOrder } from '../sales-orders/api'
+import {
+  DocumentDiscountField,
+  NO_DOCUMENT_DISCOUNT,
+  documentDiscountAmount,
+  documentDiscountError,
+  lineDiscountAmount,
+  lineDiscountError,
+  type DocumentDiscount,
+} from '../sales/discounts'
 
 interface DraftLine {
   key: number
@@ -36,6 +47,8 @@ interface DraftLine {
   location_id: string
   quantity: string
   unit_price: string
+  // As typed: "", "250" or "5%".
+  discount: string
 }
 
 let nextKey = 1
@@ -66,12 +79,47 @@ export function NewInvoicePage() {
   const [addingCustomer, setAddingCustomer] = useState(false)
 
   const [customerId, setCustomerId] = useState('')
+  const [salesRepId, setSalesRepId] = useState<string | null>(null)
   const [dueDate, setDueDate] = useState(defaultDueDate())
   const [notes, setNotes] = useState('')
   const [lines, setLines] = useState<DraftLine[]>([
-    { key: nextKey++, item_id: '', location_id: '', quantity: '', unit_price: '' },
+    { key: nextKey++, item_id: '', location_id: '', quantity: '', unit_price: '', discount: '' },
   ])
+  const [docDiscount, setDocDiscount] = useState<DocumentDiscount>(NO_DOCUMENT_DISCOUNT)
   const [error, setError] = useState<string | null>(null)
+
+  // Opened from a sales order (?fromOrder=<id>): pre-fill from it, and link
+  // the invoice to it so the order is marked invoiced.
+  const [searchParams] = useSearchParams()
+  const fromOrderId = searchParams.get('fromOrder')
+  const { data: fromOrder } = useSalesOrder(orgId, fromOrderId)
+  const [prefilledFrom, setPrefilledFrom] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!fromOrder || prefilledFrom === fromOrder.order.id || !locations) return
+    const location = locations[0]?.id ?? ''
+    setCustomerId(fromOrder.order.customer_id)
+    setSalesRepId(fromOrder.order.sales_rep_id)
+    setNotes(fromOrder.order.notes ?? '')
+    setLines(
+      fromOrder.lines.map((l) => ({
+        key: nextKey++,
+        item_id: l.item_id,
+        location_id: location,
+        quantity: String(l.quantity),
+        unit_price: String(l.unit_price),
+        discount: l.discount ? String(l.discount) : '',
+      })),
+    )
+    setDocDiscount(fromOrder.order.discount ? { mode: 'amount', value: String(fromOrder.order.discount) } : NO_DOCUMENT_DISCOUNT)
+    setPrefilledFrom(fromOrder.order.id)
+  }, [fromOrder, prefilledFrom, locations])
+
+  // Picking a customer fills in their sales rep (still changeable).
+  function chooseCustomer(id: string) {
+    setCustomerId(id)
+    setSalesRepId(customers?.find((c) => c.id === id)?.sales_rep_id ?? null)
+  }
 
   // Customer history on the invoice: each person's last choice is their default.
   const historyPref = useUserPreference<HistoryOptions>('invoice.history_options')
@@ -79,10 +127,14 @@ export function NewInvoicePage() {
   const historyOptions = historyChoice ?? historyPref.value ?? NO_HISTORY
   const { data: history, isLoading: historyLoading } = useCustomerHistory(orgId, customerId)
   const setHistoryOptions = useSetInvoiceHistoryOptions(orgId)
-  const newCharges = lines.reduce(
-    (sum, l) => (l.item_id ? sum + (Number(l.quantity) || 0) * (Number(l.unit_price) || 0) : sum),
-    0,
-  )
+  const lineGross = (l: DraftLine) => (Number(l.quantity) || 0) * (Number(l.unit_price) || 0)
+  const lineNet = (l: DraftLine) => {
+    const discount = lineDiscountAmount(l.discount, lineGross(l))
+    return lineGross(l) - (Number.isNaN(discount) ? 0 : discount)
+  }
+  const subtotal = lines.reduce((sum, l) => (l.item_id ? sum + lineNet(l) : sum), 0)
+  const docDiscountAmount = documentDiscountAmount(docDiscount, subtotal)
+  const newCharges = subtotal - docDiscountAmount
 
   // Fast entry: scan or search to add items.
   const quickAddRef = useRef<AutocompleteHandle>(null)
@@ -102,7 +154,7 @@ export function NewInvoicePage() {
   function addLine() {
     setLines((current) => [
       ...current,
-      { key: nextKey++, item_id: '', location_id: '', quantity: '', unit_price: '' },
+      { key: nextKey++, item_id: '', location_id: '', quantity: '', unit_price: '', discount: '' },
     ])
   }
 
@@ -154,6 +206,7 @@ export function NewInvoicePage() {
         item_id: item.id,
         quantity: '1',
         unit_price: String(item.unit_price),
+        discount: '',
       }
       setLines((current) => {
         const blank = current.find((l) => !l.item_id)
@@ -206,15 +259,26 @@ export function NewInvoicePage() {
         setError('Every line needs a unit price.')
         return
       }
+      const discountProblem = lineDiscountError(line.discount, qty * unitPrice)
+      if (discountProblem) {
+        setError(discountProblem)
+        return
+      }
       validLines.push({
         item_id: line.item_id,
         location_id: line.location_id,
         quantity: qty,
         unit_price: unitPrice,
+        discount: lineDiscountAmount(line.discount, qty * unitPrice),
       })
     }
     if (validLines.length === 0) {
       setError('Add at least one item line.')
+      return
+    }
+    const docDiscountProblem = documentDiscountError(docDiscount, subtotal)
+    if (docDiscountProblem) {
+      setError(docDiscountProblem)
       return
     }
 
@@ -224,6 +288,9 @@ export function NewInvoicePage() {
         dueDate,
         lines: validLines,
         notes: notes || null,
+        salesRepId,
+        discount: docDiscountAmount,
+        salesOrderId: prefilledFrom,
       })
       if (hasHistory(historyOptions)) {
         // Display-only settings, saved right after the invoice. If this fails
@@ -260,9 +327,18 @@ export function NewInvoicePage() {
       />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {fromOrder && (
+          <div className="rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-text">
+            Invoicing sales order{' '}
+            <Link to={`/sales-orders/${fromOrder.order.id}`} className="font-medium text-accent-700 hover:underline">
+              {fromOrder.order.order_number}
+            </Link>
+            . Check the locations and quantities, then create the invoice; the order will be marked invoiced.
+          </div>
+        )}
         <Card>
           <CardBody>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="flex items-end gap-2">
                 <div className="min-w-0 flex-1">
                   <Autocomplete
@@ -274,7 +350,7 @@ export function NewInvoicePage() {
                     getDescription={(c) => c.phone ?? c.email ?? undefined}
                     getSearchText={customerLabel}
                     value={customerId}
-                    onChange={(id) => setCustomerId(id)}
+                    onChange={chooseCustomer}
                     placeholder="Type to search customers…"
                     emptyText="No customers match"
                   />
@@ -292,6 +368,7 @@ export function NewInvoicePage() {
                   </Button>
                 )}
               </div>
+              <SalesRepSelect value={salesRepId} onChange={setSalesRepId} />
               <Input
                 label="Due date"
                 type="date"
@@ -366,7 +443,7 @@ export function NewInvoicePage() {
 
             <div className="flex flex-col gap-3">
               <div className="overflow-x-auto">
-              <div className="flex min-w-[640px] flex-col gap-3">
+              <div className="flex min-w-[760px] flex-col gap-3">
               {lines.map((line) => {
                 const onHand = line.item_id && line.location_id
                   ? (stockByKey.get(`${line.item_id}:${line.location_id}`) ?? 0)
@@ -378,7 +455,7 @@ export function NewInvoicePage() {
 
                 return (
                   <div key={line.key} className="grid grid-cols-12 items-end gap-3">
-                    <div className="col-span-4">
+                    <div className="col-span-3">
                       <Autocomplete
                         label="Item"
                         items={items ?? []}
@@ -397,7 +474,7 @@ export function NewInvoicePage() {
                         </p>
                       )}
                     </div>
-                    <div className="col-span-3">
+                    <div className="col-span-2">
                       <Select
                         label="Location"
                         value={line.location_id}
@@ -431,6 +508,21 @@ export function NewInvoicePage() {
                         value={line.unit_price}
                         onChange={(e) => updateLine(line.key, { unit_price: e.target.value })}
                       />
+                    </div>
+                    <div className="col-span-2">
+                      <Input
+                        label="Discount"
+                        placeholder="0 or 5%"
+                        title="An amount off this line (e.g. 250) or a percentage (e.g. 5%)"
+                        value={line.discount}
+                        error={line.discount && lineDiscountError(line.discount, lineGross(line)) ? ' ' : undefined}
+                        onChange={(e) => updateLine(line.key, { discount: e.target.value })}
+                      />
+                      {line.item_id && (
+                        <p className="mt-1 text-right text-xs tabular-nums text-text-muted">
+                          {formatMoney(lineNet(line), currencySymbol)}
+                        </p>
+                      )}
                     </div>
                     <div className="col-span-1">
                       <Button
@@ -487,6 +579,22 @@ export function NewInvoicePage() {
             <CardBody>
               <dl className="flex flex-col gap-1 text-sm">
                 <div className="flex justify-between">
+                  <dt className="text-text-muted">Subtotal</dt>
+                  <dd className="tabular-nums text-text">{formatMoney(subtotal, currencySymbol)}</dd>
+                </div>
+                <div className="my-1">
+                  <DocumentDiscountField label="Invoice discount" value={docDiscount} onChange={setDocDiscount} />
+                  {documentDiscountError(docDiscount, subtotal) ? (
+                    <p className="mt-1 text-xs text-danger-600">{documentDiscountError(docDiscount, subtotal)}</p>
+                  ) : (
+                    docDiscountAmount > 0 && (
+                      <p className="mt-1 text-right text-xs tabular-nums text-text-muted">
+                        − {formatMoney(docDiscountAmount, currencySymbol)}
+                      </p>
+                    )
+                  )}
+                </div>
+                <div className="flex justify-between">
                   <dt className="text-text-muted">This invoice</dt>
                   <dd className="font-medium tabular-nums text-text">{formatMoney(newCharges, currencySymbol)}</dd>
                 </div>
@@ -531,7 +639,10 @@ export function NewInvoicePage() {
         <CustomerForm
           orgId={orgId}
           onClose={() => setAddingCustomer(false)}
-          onCreated={(created) => setCustomerId(created.id)}
+          onCreated={(created) => {
+            setCustomerId(created.id)
+            setSalesRepId(created.sales_rep_id)
+          }}
         />
       )}
 

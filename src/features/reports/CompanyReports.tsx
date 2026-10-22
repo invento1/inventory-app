@@ -103,6 +103,7 @@ const DOC_TYPES: Record<string, { label: string; path: string }> = {
   credit_memo: { label: 'Credit memos', path: '/credit-memos' },
   refund: { label: 'Refunds', path: '/refunds' },
   quotation: { label: 'Quotations', path: '/quotations' },
+  sales_order: { label: 'Sales orders', path: '/sales-orders' },
   purchase_order: { label: 'Purchase orders', path: '/purchase-orders' },
   supplier_bill: { label: 'Supplier bills', path: '/supplier-bills' },
   expense: { label: 'Expenses', path: '/expenses' },

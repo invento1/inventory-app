@@ -4,9 +4,8 @@
 // status:
 //   'ready'   -- built and routed
 //   'blocked' -- needs an underlying feature this app doesn't have yet
-//                (sales reps, discounts, sales orders, an edit/delete audit
-//                log, damaged/expired stock tracking); shown greyed out with
-//                the reason, never linked
+//                (an edit/delete audit log, damaged/expired stock
+//                tracking); shown greyed out with the reason, never linked
 
 import type { Permission } from '../../auth/permissions'
 
@@ -239,31 +238,27 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
       },
       {
         title: 'Sales by Representative',
-        description: 'Sales per sales representative',
+        description: 'Sales, discounts and returns per sales representative',
         path: '/reports/sales-by-rep',
-        status: 'blocked',
-        blockedReason: 'Needs sales representatives on invoices',
+        status: 'ready',
       },
       {
         title: 'Return Stock by Representative',
-        description: 'Invoiced vs returned stock per representative',
+        description: 'Sold vs returned stock per representative and item',
         path: '/reports/return-stock-by-rep',
-        status: 'blocked',
-        blockedReason: 'Needs sales representatives, and credit memos linked to invoices',
+        status: 'ready',
       },
       {
         title: 'Sales by Salesman',
-        description: 'Sales and commission per salesman',
+        description: 'Every sale per salesman, with the commission it earned',
         path: '/reports/sales-by-salesman',
-        status: 'blocked',
-        blockedReason: 'Needs salesmen and commission rates',
+        status: 'ready',
       },
       {
         title: 'Financial Recovery & Sales Performance',
-        description: 'Sales, recovered credit, and collection efficiency per customer manager',
+        description: 'Sales, money recovered and dues per customer, by credit manager',
         path: '/reports/financial-recovery',
-        status: 'blocked',
-        blockedReason: 'Needs a customer credit manager assigned to each customer',
+        status: 'ready',
       },
       {
         title: 'Invoice Batch Print',
@@ -280,17 +275,15 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
     reports: [
       {
         title: 'Customer Discounts Summary',
-        description: 'Discounts given per customer',
+        description: 'Line and invoice discounts given per customer',
         path: '/reports/customer-discounts',
-        status: 'blocked',
-        blockedReason: 'Needs line discounts on invoices and sales receipts',
+        status: 'ready',
       },
       {
         title: 'Item Discounts Summary',
         description: 'Discounts given per item',
         path: '/reports/item-discounts',
-        status: 'blocked',
-        blockedReason: 'Needs line discounts on invoices and sales receipts',
+        status: 'ready',
       },
     ],
   },
@@ -301,17 +294,15 @@ export const REPORT_CATEGORIES: ReportCategory[] = [
     reports: [
       {
         title: 'Sales Orders Summary',
-        description: 'Every sales order in a period',
+        description: 'Every sales order in a period, with its status',
         path: '/reports/sales-orders',
-        status: 'blocked',
-        blockedReason: 'Needs a Sales Orders document type',
+        status: 'ready',
       },
       {
         title: 'Open Orders Summary',
-        description: 'Sales orders not yet fulfilled',
+        description: 'Sales orders not yet invoiced, oldest first',
         path: '/reports/open-orders',
-        status: 'blocked',
-        blockedReason: 'Needs a Sales Orders document type',
+        status: 'ready',
       },
     ],
   },

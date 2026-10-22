@@ -22,6 +22,7 @@ type Kind =
   | 'supplier_bill'
   | 'purchase_order'
   | 'quotation'
+  | 'sales_order'
   | 'credit_memo'
   | 'expense'
   | 'refund'
@@ -44,6 +45,7 @@ const KINDS: Record<Kind, { label: string; href: (r: SearchRow) => string }> = {
   supplier_bill: { label: 'Bill', href: (r) => `/supplier-bills/${r.id}` },
   purchase_order: { label: 'Purchase order', href: (r) => `/purchase-orders/${r.id}` },
   quotation: { label: 'Quotation', href: (r) => `/quotations/${r.id}` },
+  sales_order: { label: 'Sales order', href: (r) => `/sales-orders/${r.id}` },
   credit_memo: { label: 'Credit memo', href: (r) => `/credit-memos/${r.id}` },
   expense: { label: 'Expense', href: () => '/expenses' },
   refund: { label: 'Refund', href: () => '/refunds' },

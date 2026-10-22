@@ -27,6 +27,7 @@ export function PrintableDocument({
   symbol: string
 }) {
   const money = (v: number) => formatMoney(v, symbol)
+  const hasLineDiscounts = doc.lines.some((l) => l.discount > 0)
   // Optional customer history, as it stood when the invoice was created.
   const { orgId } = useOrg()
   const { data: history } = useInvoiceHistory(orgId, doc.id, doc.kind === 'invoice' && !!doc.history)
@@ -87,6 +88,12 @@ export function PrintableDocument({
               <dd className="text-right font-medium text-text">{paymentMethodLabel(doc.paymentMethod)}</dd>
             </>
           )}
+          {doc.salesRep && (
+            <>
+              <dt className="text-text-muted">Sales rep</dt>
+              <dd className="text-right font-medium text-text">{doc.salesRep}</dd>
+            </>
+          )}
           <dt className="text-text-muted">Status</dt>
           <dd className="text-right">
             <Badge tone={doc.statusTone}>{doc.statusLabel}</Badge>
@@ -101,6 +108,7 @@ export function PrintableDocument({
             <th className="px-3 py-2.5 font-semibold">Item</th>
             <th className="px-3 py-2.5 text-right font-semibold">Qty</th>
             <th className="px-3 py-2.5 text-right font-semibold">Unit price</th>
+            {hasLineDiscounts && <th className="px-3 py-2.5 text-right font-semibold">Discount</th>}
             <th className="px-3 py-2.5 text-right font-semibold">Amount</th>
           </tr>
         </thead>
@@ -117,6 +125,11 @@ export function PrintableDocument({
                 {line.unit && <span className="ml-1 text-xs text-text-muted">{line.unit}</span>}
               </td>
               <td className="px-3 py-2.5 text-right align-top tabular-nums whitespace-nowrap">{money(line.unitPrice)}</td>
+              {hasLineDiscounts && (
+                <td className="px-3 py-2.5 text-right align-top tabular-nums whitespace-nowrap text-text-muted">
+                  {line.discount > 0 ? `− ${money(line.discount)}` : ''}
+                </td>
+              )}
               <td className="px-3 py-2.5 text-right align-top font-medium tabular-nums whitespace-nowrap">
                 {money(line.lineTotal)}
               </td>
@@ -131,6 +144,12 @@ export function PrintableDocument({
             <dt className="text-text-muted">Subtotal</dt>
             <dd className="tabular-nums text-text">{money(doc.subtotal)}</dd>
           </div>
+          {doc.discount > 0 && (
+            <div className="flex justify-between py-1">
+              <dt className="text-text-muted">Discount</dt>
+              <dd className="tabular-nums text-text">− {money(doc.discount)}</dd>
+            </div>
+          )}
           <div className="flex justify-between border-t border-border py-2 text-base font-semibold">
             <dt className="text-text">Total</dt>
             <dd className="tabular-nums text-text">{money(doc.total)}</dd>

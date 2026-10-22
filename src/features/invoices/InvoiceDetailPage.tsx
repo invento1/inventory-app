@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Printer } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -27,8 +27,9 @@ export function InvoiceDetailPage() {
 
   if (isLoading || !data) return <PageSpinner />
 
-  const { invoice, lines, payments } = data
+  const { invoice, lines, payments, salesOrder } = data
   const balance = invoice.total - invoice.amount_paid
+  const hasLineDiscounts = lines.some((l) => l.discount > 0)
   const { tone, label } = invoiceStatusTone(invoice)
 
   const canRecordPayment =
@@ -68,10 +69,19 @@ export function InvoiceDetailPage() {
         }
       />
 
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
         <Badge tone={tone}>{label}</Badge>
         <span className="text-sm text-text-muted">Issued {invoice.issue_date}</span>
         <span className="text-sm text-text-muted">Due {invoice.due_date}</span>
+        {invoice.sales_reps && <span className="text-sm text-text-muted">Rep: {invoice.sales_reps.name}</span>}
+        {salesOrder && (
+          <span className="text-sm text-text-muted">
+            From sales order{' '}
+            <Link to={`/sales-orders/${salesOrder.id}`} className="font-medium text-accent-700 hover:underline">
+              {salesOrder.order_number}
+            </Link>
+          </span>
+        )}
       </div>
 
       <Card>
@@ -83,6 +93,7 @@ export function InvoiceDetailPage() {
               <Th>Location</Th>
               <Th className="text-right">Qty</Th>
               <Th className="text-right">Unit price</Th>
+              {hasLineDiscounts && <Th className="text-right">Discount</Th>}
               <Th className="text-right">Line total</Th>
             </THead>
             <tbody>
@@ -94,6 +105,9 @@ export function InvoiceDetailPage() {
                   <Td>{line.location_name}</Td>
                   <Td className="text-right">{line.quantity}</Td>
                   <Td className="text-right">{formatMoney(line.unit_price, currencySymbol)}</Td>
+                  {hasLineDiscounts && (
+                    <Td className="text-right">{line.discount > 0 ? formatMoney(line.discount, currencySymbol) : '—'}</Td>
+                  )}
                   <Td className="text-right">{formatMoney(line.line_total, currencySymbol)}</Td>
                 </Tr>
               ))}
@@ -108,6 +122,12 @@ export function InvoiceDetailPage() {
             <span>Subtotal</span>
             <span>{formatMoney(invoice.subtotal, currencySymbol)}</span>
           </div>
+          {invoice.discount > 0 && (
+            <div className="mt-1 flex justify-between text-sm text-text-muted">
+              <span>Discount</span>
+              <span>− {formatMoney(invoice.discount, currencySymbol)}</span>
+            </div>
+          )}
           <div className="mt-1 flex justify-between text-base font-semibold text-text">
             <span>Total</span>
             <span>{formatMoney(invoice.total, currencySymbol)}</span>

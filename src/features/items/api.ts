@@ -12,6 +12,7 @@ export type ItemInput = Pick<
   | 'unit'
   | 'unit_price'
   | 'reorder_threshold'
+  | 'commission_rate'
   | 'category_id'
   | 'brand_id'
   | 'supplier_id'

@@ -12,6 +12,7 @@ import { useCustomers } from '../customers/api'
 import { useItems } from '../items/api'
 import { useLocations } from '../../lib/useLocations'
 import { useCreateCreditMemo, type CreditMemoLinePayload } from './api'
+import { SalesRepSelect } from '../sales-reps/SalesRepSelect'
 
 interface DraftLine {
   key: number
@@ -33,6 +34,7 @@ export function NewCreditMemoPage() {
   const createCreditMemo = useCreateCreditMemo(orgId)
 
   const [customerId, setCustomerId] = useState('')
+  const [salesRepId, setSalesRepId] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [lines, setLines] = useState<DraftLine[]>([
     { key: nextKey++, item_id: '', location_id: '', quantity: '', unit_price: '' },
@@ -102,6 +104,7 @@ export function NewCreditMemoPage() {
         customerId,
         lines: validLines,
         notes: notes || null,
+        salesRepId,
       })
       toast.success('Credit memo created')
       navigate(`/credit-memos/${creditMemo.id}`)
@@ -130,12 +133,16 @@ export function NewCreditMemoPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Card>
           <CardBody>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Select
                 label="Customer"
                 required
                 value={customerId}
-                onChange={(e) => setCustomerId(e.target.value)}
+                onChange={(e) => {
+                  // The customer's rep fills in (still changeable).
+                  setCustomerId(e.target.value)
+                  setSalesRepId(customers?.find((c) => c.id === e.target.value)?.sales_rep_id ?? null)
+                }}
               >
                 <option value="">Select a customer…</option>
                 {customers?.map((c) => (
@@ -144,6 +151,7 @@ export function NewCreditMemoPage() {
                   </option>
                 ))}
               </Select>
+              <SalesRepSelect value={salesRepId} onChange={setSalesRepId} />
               <Input label="Notes / reason" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
           </CardBody>

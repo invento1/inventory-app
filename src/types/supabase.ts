@@ -249,6 +249,7 @@ export type Database = {
           issue_date: string
           notes: string | null
           org_id: string
+          sales_rep_id: string | null
           status: string
           subtotal: number
           total: number
@@ -263,6 +264,7 @@ export type Database = {
           issue_date: string
           notes?: string | null
           org_id: string
+          sales_rep_id?: string | null
           status?: string
           subtotal?: number
           total?: number
@@ -277,6 +279,7 @@ export type Database = {
           issue_date?: string
           notes?: string | null
           org_id?: string
+          sales_rep_id?: string | null
           status?: string
           subtotal?: number
           total?: number
@@ -297,6 +300,13 @@ export type Database = {
             referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "credit_memos_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "sales_reps"
+            referencedColumns: ["id"]
+          },
         ]
       }
       customers: {
@@ -310,6 +320,7 @@ export type Database = {
           name: string
           org_id: string
           phone: string | null
+          sales_rep_id: string | null
           updated_at: string
         }
         Insert: {
@@ -322,6 +333,7 @@ export type Database = {
           name: string
           org_id: string
           phone?: string | null
+          sales_rep_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -334,6 +346,7 @@ export type Database = {
           name?: string
           org_id?: string
           phone?: string | null
+          sales_rep_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -349,6 +362,13 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "sales_reps"
             referencedColumns: ["id"]
           },
         ]
@@ -664,7 +684,9 @@ export type Database = {
       }
       invoice_items: {
         Row: {
+          commission_rate: number | null
           created_at: string
+          discount: number
           id: string
           invoice_id: string
           item_id: string
@@ -675,7 +697,9 @@ export type Database = {
           unit_price: number
         }
         Insert: {
+          commission_rate?: number | null
           created_at?: string
+          discount?: number
           id?: string
           invoice_id: string
           item_id: string
@@ -686,7 +710,9 @@ export type Database = {
           unit_price: number
         }
         Update: {
+          commission_rate?: number | null
           created_at?: string
+          discount?: number
           id?: string
           invoice_id?: string
           item_id?: string
@@ -804,12 +830,14 @@ export type Database = {
           created_at: string
           created_by: string | null
           customer_id: string
+          discount: number
           due_date: string
           id: string
           invoice_number: string
           issue_date: string
           notes: string | null
           org_id: string
+          sales_rep_id: string | null
           show_previous_balance: boolean
           show_recent_invoices: boolean
           show_recent_payments: boolean
@@ -823,12 +851,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_id: string
+          discount?: number
           due_date: string
           id?: string
           invoice_number: string
           issue_date: string
           notes?: string | null
           org_id: string
+          sales_rep_id?: string | null
           show_previous_balance?: boolean
           show_recent_invoices?: boolean
           show_recent_payments?: boolean
@@ -842,12 +872,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_id?: string
+          discount?: number
           due_date?: string
           id?: string
           invoice_number?: string
           issue_date?: string
           notes?: string | null
           org_id?: string
+          sales_rep_id?: string | null
           show_previous_balance?: boolean
           show_recent_invoices?: boolean
           show_recent_payments?: boolean
@@ -871,6 +903,13 @@ export type Database = {
             referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "invoices_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "sales_reps"
+            referencedColumns: ["id"]
+          },
         ]
       }
       items: {
@@ -879,6 +918,7 @@ export type Database = {
           barcode: string | null
           brand_id: string | null
           category_id: string | null
+          commission_rate: number
           created_at: string
           description: string | null
           id: string
@@ -897,6 +937,7 @@ export type Database = {
           barcode?: string | null
           brand_id?: string | null
           category_id?: string | null
+          commission_rate?: number
           created_at?: string
           description?: string | null
           id?: string
@@ -915,6 +956,7 @@ export type Database = {
           barcode?: string | null
           brand_id?: string | null
           category_id?: string | null
+          commission_rate?: number
           created_at?: string
           description?: string | null
           id?: string
@@ -1651,9 +1693,155 @@ export type Database = {
           },
         ]
       }
-      sales_receipt_items: {
+      sales_order_items: {
         Row: {
           created_at: string
+          discount: number
+          id: string
+          item_id: string
+          line_order: number
+          line_total: number
+          quantity: number
+          sales_order_id: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          discount?: number
+          id?: string
+          item_id: string
+          line_order?: number
+          line_total: number
+          quantity: number
+          sales_order_id: string
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          discount?: number
+          id?: string
+          item_id?: string
+          line_order?: number
+          line_total?: number
+          quantity?: number
+          sales_order_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_order_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_order_items_sales_order_id_fkey"
+            columns: ["sales_order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_orders: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          delivery_date: string | null
+          discount: number
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          order_date: string
+          order_number: string
+          org_id: string
+          sales_rep_id: string | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          delivery_date?: string | null
+          discount?: number
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          order_date: string
+          order_number: string
+          org_id: string
+          sales_rep_id?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          delivery_date?: string | null
+          discount?: number
+          id?: string
+          invoice_id?: string | null
+          notes?: string | null
+          order_date?: string
+          order_number?: string
+          org_id?: string
+          sales_rep_id?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_orders_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_orders_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "outstanding_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_orders_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_orders_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "sales_reps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_receipt_items: {
+        Row: {
+          commission_rate: number | null
+          created_at: string
+          discount: number
           id: string
           item_id: string
           line_total: number
@@ -1664,7 +1852,9 @@ export type Database = {
           unit_price: number
         }
         Insert: {
+          commission_rate?: number | null
           created_at?: string
+          discount?: number
           id?: string
           item_id: string
           line_total: number
@@ -1675,7 +1865,9 @@ export type Database = {
           unit_price: number
         }
         Update: {
+          commission_rate?: number | null
           created_at?: string
+          discount?: number
           id?: string
           item_id?: string
           line_total?: number
@@ -1714,12 +1906,14 @@ export type Database = {
           created_at: string
           created_by: string | null
           customer_id: string | null
+          discount: number
           id: string
           notes: string | null
           org_id: string
           payment_method: string
           receipt_number: string
           sale_date: string
+          sales_rep_id: string | null
           status: string
           subtotal: number
           total: number
@@ -1729,12 +1923,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          discount?: number
           id?: string
           notes?: string | null
           org_id: string
           payment_method: string
           receipt_number: string
           sale_date: string
+          sales_rep_id?: string | null
           status?: string
           subtotal?: number
           total?: number
@@ -1744,12 +1940,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          discount?: number
           id?: string
           notes?: string | null
           org_id?: string
           payment_method?: string
           receipt_number?: string
           sale_date?: string
+          sales_rep_id?: string | null
           status?: string
           subtotal?: number
           total?: number
@@ -1765,6 +1963,54 @@ export type Database = {
           },
           {
             foreignKeyName: "sales_receipts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_receipts_sales_rep_id_fkey"
+            columns: ["sales_rep_id"]
+            isOneToOne: false
+            referencedRelation: "sales_reps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_reps: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          org_id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          org_id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          org_id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_reps_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "orgs"
@@ -2391,6 +2637,14 @@ export type Database = {
         Args: { p_org_id: string; p_permission: string }
         Returns: undefined
       }
+      assert_sales_rep_in_org: {
+        Args: { p_org_id: string; p_sales_rep_id: string }
+        Returns: undefined
+      }
+      assert_valid_line_discount: {
+        Args: { p_discount: number; p_quantity: number; p_unit_price: number }
+        Returns: undefined
+      }
       balance_sheet: {
         Args: { p_as_of: string; p_org_id: string }
         Returns: {
@@ -2399,6 +2653,33 @@ export type Database = {
           account_type: string
           balance: number
         }[]
+      }
+      cancel_sales_order: {
+        Args: { p_order_id: string }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          delivery_date: string | null
+          discount: number
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          order_date: string
+          order_number: string
+          org_id: string
+          sales_rep_id: string | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sales_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       convert_purchase_order_to_bill: {
         Args: {
@@ -2437,6 +2718,7 @@ export type Database = {
           p_lines: Json
           p_notes?: string
           p_org_id: string
+          p_sales_rep_id?: string
         }
         Returns: {
           created_at: string
@@ -2447,6 +2729,7 @@ export type Database = {
           issue_date: string
           notes: string | null
           org_id: string
+          sales_rep_id: string | null
           status: string
           subtotal: number
           total: number
@@ -2558,22 +2841,27 @@ export type Database = {
       create_invoice: {
         Args: {
           p_customer_id: string
+          p_discount?: number
           p_due_date: string
           p_lines: Json
           p_notes?: string
           p_org_id: string
+          p_sales_order_id?: string
+          p_sales_rep_id?: string
         }
         Returns: {
           amount_paid: number
           created_at: string
           created_by: string | null
           customer_id: string
+          discount: number
           due_date: string
           id: string
           invoice_number: string
           issue_date: string
           notes: string | null
           org_id: string
+          sales_rep_id: string | null
           show_previous_balance: boolean
           show_recent_invoices: boolean
           show_recent_payments: boolean
@@ -2687,23 +2975,62 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_sales_order: {
+        Args: {
+          p_customer_id: string
+          p_delivery_date: string
+          p_discount?: number
+          p_lines: Json
+          p_notes?: string
+          p_org_id: string
+          p_sales_rep_id?: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          delivery_date: string | null
+          discount: number
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          order_date: string
+          order_number: string
+          org_id: string
+          sales_rep_id: string | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sales_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_sales_receipt: {
         Args: {
           p_customer_id: string
+          p_discount?: number
           p_lines: Json
           p_org_id: string
           p_payment_method: string
+          p_sales_rep_id?: string
         }
         Returns: {
           created_at: string
           created_by: string | null
           customer_id: string | null
+          discount: number
           id: string
           notes: string | null
           org_id: string
           payment_method: string
           receipt_number: string
           sale_date: string
+          sales_rep_id: string | null
           status: string
           subtotal: number
           total: number
@@ -2769,6 +3096,19 @@ export type Database = {
           customer_name: string
           invoiced: number
           paid: number
+        }[]
+      }
+      customer_discounts: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          amount: number
+          customer_id: string
+          customer_name: string
+          discount: number
+          doc_count: number
+          document_discount: number
+          gross_amount: number
+          line_discount: number
         }[]
       }
       customer_history: {
@@ -2846,6 +3186,20 @@ export type Database = {
       delete_org_role: {
         Args: { p_org_id: string; p_role_key: string }
         Returns: undefined
+      }
+      financial_recovery: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          area: string
+          credit_manager: string
+          credit_manager_id: string
+          customer_id: string
+          customer_name: string
+          outstanding: number
+          recovered: number
+          region: string
+          total_sales: number
+        }[]
       }
       find_auth_user_by_email: {
         Args: { p_email: string }
@@ -2994,6 +3348,20 @@ export type Database = {
         }[]
       }
       is_org_member: { Args: { target_org: string }; Returns: boolean }
+      item_discounts: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          amount: number
+          brand_name: string
+          category_name: string
+          discount: number
+          gross_amount: number
+          item_id: string
+          item_name: string
+          quantity: number
+          sku: string
+        }[]
+      }
       journal_entry_is_system_dated: {
         Args: { p_reference_type: string }
         Returns: boolean
@@ -3038,6 +3406,21 @@ export type Database = {
         Returns: string
       }
       next_item_sku: { Args: { p_org_id: string }; Returns: string }
+      open_orders: {
+        Args: { p_org_id: string }
+        Returns: {
+          customer_id: string
+          customer_name: string
+          days_open: number
+          delivery_date: string
+          is_overdue: boolean
+          order_date: string
+          order_id: string
+          order_number: string
+          rep_name: string
+          total: number
+        }[]
+      }
       org_local_date: {
         Args: { p_org_id: string; p_ts: string }
         Returns: string
@@ -3186,12 +3569,14 @@ export type Database = {
           created_at: string
           created_by: string | null
           customer_id: string
+          discount: number
           due_date: string
           id: string
           invoice_number: string
           issue_date: string
           notes: string | null
           org_id: string
+          sales_rep_id: string | null
           show_previous_balance: boolean
           show_recent_invoices: boolean
           show_recent_payments: boolean
@@ -3249,6 +3634,20 @@ export type Database = {
         Args: { p_categories: string[]; p_org_id: string }
         Returns: undefined
       }
+      return_stock_by_rep: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          item_id: string
+          item_name: string
+          rep_name: string
+          returned_amount: number
+          returned_qty: number
+          sales_rep_id: string
+          sku: string
+          sold_amount: number
+          sold_qty: number
+        }[]
+      }
       role_permission_keys: {
         Args: { p_org_id: string; p_role_key: string }
         Returns: string[]
@@ -3289,6 +3688,37 @@ export type Database = {
           sku: string
         }[]
       }
+      sales_by_rep: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          amount: number
+          discount: number
+          doc_count: number
+          gross_amount: number
+          net_amount: number
+          rep_name: string
+          returns: number
+          sales_rep_id: string
+        }[]
+      }
+      sales_by_salesman: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          amount: number
+          commission: number
+          commission_rate: number
+          doc_id: string
+          doc_number: string
+          doc_type: string
+          gross_amount: number
+          item_id: string
+          item_name: string
+          quantity: number
+          rep_name: string
+          sales_rep_id: string
+          txn_date: string
+        }[]
+      }
       sales_documents: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }
         Returns: {
@@ -3311,16 +3741,37 @@ export type Database = {
           category_id: string
           category_name: string
           cogs: number
+          commission_rate: number
           customer_id: string
           customer_name: string
+          discount: number
           doc_id: string
           doc_number: string
           doc_type: string
+          gross_amount: number
           item_id: string
           item_name: string
+          line_discount: number
           quantity: number
+          sales_rep_id: string
           sku: string
           txn_date: string
+        }[]
+      }
+      sales_orders_summary: {
+        Args: { p_end_date: string; p_org_id: string; p_start_date: string }
+        Returns: {
+          customer_id: string
+          customer_name: string
+          delivery_date: string
+          invoice_id: string
+          invoice_number: string
+          order_date: string
+          order_id: string
+          order_number: string
+          rep_name: string
+          status: string
+          total: number
         }[]
       }
       save_role_permissions: {
@@ -3418,6 +3869,41 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_sales_order: {
+        Args: {
+          p_customer_id: string
+          p_delivery_date: string
+          p_discount?: number
+          p_lines: Json
+          p_notes?: string
+          p_order_id: string
+          p_sales_rep_id?: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          delivery_date: string | null
+          discount: number
+          id: string
+          invoice_id: string | null
+          notes: string | null
+          order_date: string
+          order_number: string
+          org_id: string
+          sales_rep_id: string | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sales_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       void_credit_memo: {
         Args: { p_credit_memo_id: string }
         Returns: {
@@ -3429,6 +3915,7 @@ export type Database = {
           issue_date: string
           notes: string | null
           org_id: string
+          sales_rep_id: string | null
           status: string
           subtotal: number
           total: number
@@ -3474,12 +3961,14 @@ export type Database = {
           created_at: string
           created_by: string | null
           customer_id: string
+          discount: number
           due_date: string
           id: string
           invoice_number: string
           issue_date: string
           notes: string | null
           org_id: string
+          sales_rep_id: string | null
           show_previous_balance: boolean
           show_recent_invoices: boolean
           show_recent_payments: boolean
@@ -3544,6 +4033,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      write_sales_order_lines: {
+        Args: { p_lines: Json; p_order_id: string; p_org_id: string }
+        Returns: number
       }
     }
     Enums: {

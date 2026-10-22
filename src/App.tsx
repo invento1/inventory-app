@@ -91,6 +91,18 @@ import { NewCreditMemoPage } from './features/credit-memos/NewCreditMemoPage'
 import { CreditMemoDetailPage } from './features/credit-memos/CreditMemoDetailPage'
 import { RefundsListPage } from './features/refunds/RefundsListPage'
 import { NewRefundPage } from './features/refunds/NewRefundPage'
+import { SalesOrdersListPage } from './features/sales-orders/SalesOrdersListPage'
+import { SalesOrderFormPage } from './features/sales-orders/SalesOrderFormPage'
+import { SalesOrderDetailPage } from './features/sales-orders/SalesOrderDetailPage'
+import { SalesRepsPage } from './features/sales-reps/SalesRepsPage'
+import {
+  FinancialRecoveryReport,
+  ReturnStockByRepReport,
+  SalesByRepReport,
+  SalesBySalesmanReport,
+} from './features/reports/SalesRepReports'
+import { CustomerDiscountsReport, ItemDiscountsReport } from './features/reports/DiscountReports'
+import { OpenOrdersReport, SalesOrdersSummaryReport } from './features/reports/SalesOrderReports'
 
 function App() {
   return (
@@ -144,6 +156,10 @@ function App() {
         <Route path="/quotations" element={<QuotationsListPage />} />
         <Route path="/quotations/new" element={<NewQuotationPage />} />
         <Route path="/quotations/:id" element={<QuotationDetailPage />} />
+        <Route path="/sales-orders" element={<SalesOrdersListPage />} />
+        <Route path="/sales-orders/new" element={<SalesOrderFormPage />} />
+        <Route path="/sales-orders/:id" element={<SalesOrderDetailPage />} />
+        <Route path="/sales-orders/:id/edit" element={<SalesOrderFormPage />} />
         <Route path="/credit-memos" element={<CreditMemosListPage />} />
         <Route path="/credit-memos/new" element={<NewCreditMemoPage />} />
         <Route path="/credit-memos/:id" element={<CreditMemoDetailPage />} />
@@ -191,6 +207,14 @@ function App() {
         <Route path="/reports/invoice-items-summary" element={<InvoiceItemsSummaryReport />} />
         <Route path="/reports/customer-item-sales" element={<CustomerItemSalesReport />} />
         <Route path="/reports/invoice-batch-print" element={<InvoiceBatchPrintPage />} />
+        <Route path="/reports/sales-by-rep" element={<SalesByRepReport />} />
+        <Route path="/reports/return-stock-by-rep" element={<ReturnStockByRepReport />} />
+        <Route path="/reports/sales-by-salesman" element={<SalesBySalesmanReport />} />
+        <Route path="/reports/financial-recovery" element={<FinancialRecoveryReport />} />
+        <Route path="/reports/customer-discounts" element={<CustomerDiscountsReport />} />
+        <Route path="/reports/item-discounts" element={<ItemDiscountsReport />} />
+        <Route path="/reports/sales-orders" element={<SalesOrdersSummaryReport />} />
+        <Route path="/reports/open-orders" element={<OpenOrdersReport />} />
 
         <Route path="/settings" element={<Navigate to="/settings/appearance" replace />} />
         <Route path="/settings/appearance" element={<AppearancePage />} />
@@ -217,6 +241,7 @@ function App() {
         <Route path="/settings/brands" element={<BrandsPage />} />
         <Route path="/settings/units" element={<UnitsPage />} />
         <Route path="/settings/areas" element={<AreasPage />} />
+        <Route path="/settings/sales-reps" element={<SalesRepsPage />} />
         <Route path="/settings/users" element={<UsersPage />} />
         <Route path="/settings/security-groups" element={<SecurityGroupsPage />} />
         <Route path="/settings/reset-data" element={<ResetDataPage />} />
