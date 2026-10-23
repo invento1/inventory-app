@@ -68,11 +68,21 @@ export function DashboardPage() {
       <PageHeader
         title="Dashboard"
         action={
-          can('sales.create') && (
-            <Button onClick={() => navigate('/sales/new')}>
-              <Plus size={16} />
-              New sale
-            </Button>
+          (can('sales.create') || can('invoices.create')) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {can('sales.create') && (
+                <Button onClick={() => navigate('/sales/new')}>
+                  <Plus size={16} />
+                  New sale
+                </Button>
+              )}
+              {can('invoices.create') && (
+                <Button variant="success" onClick={() => navigate('/invoices/new')}>
+                  <Plus size={16} />
+                  New invoice
+                </Button>
+              )}
+            </div>
           )
         }
       />

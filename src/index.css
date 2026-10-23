@@ -59,6 +59,10 @@
      a text colour and turns light pink in the dark theme. */
   --color-danger-solid: #e11d48;
   --color-danger-solid-hover: #be123c;
+  /* Filled success buttons (white label, e.g. New invoice): emerald-700
+     keeps white text above 4.5:1 in both themes. */
+  --color-success-solid: #047857;
+  --color-success-solid-hover: #065f46;
   --color-info-50: #f1f5f9; /* neutral, draft */
   --color-info-600: #475569;
 
@@ -161,6 +165,8 @@
     --color-danger-700: #fda4af;
     --color-danger-solid: #e11d48;
     --color-danger-solid-hover: #f43f5e;
+    --color-success-solid: #047857;
+    --color-success-solid-hover: #059669;
     --color-info-50: rgb(148 163 184 / 0.13);
     --color-info-600: #b4bfd4;
 
@@ -240,6 +246,8 @@
   --color-danger-700: #be123c;
   --color-danger-solid: #e11d48;
   --color-danger-solid-hover: #be123c;
+  --color-success-solid: #047857;
+  --color-success-solid-hover: #065f46;
   --color-info-50: #f1f5f9;
   --color-info-600: #475569;
   --color-wave-back: rgb(129 140 248 / 0.08);

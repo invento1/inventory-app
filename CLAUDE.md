@@ -765,6 +765,7 @@ The sidebar header is the HashirHub icon + name and links to `/` (Dashboard). It
     - `field`: input backgrounds, recessed below the card in dark;
     - `scrim`: behind modals and the mobile drawer (was `bg-primary/40`);
     - `danger-solid` / `danger-solid-hover`: filled danger buttons, because `danger-600` is a text colour and turns light pink in dark.
+    - `success-solid` / `success-solid-hover` (emerald-700, the same in both themes): the green `variant="success"` button, first used for the dashboard's **New invoice** next to New sale.
     In light, `canvas` equals `surface-muted`; in dark they split into elevation steps: canvas `#080c18` < surface `#10172a` < surface-muted `#172036`.
   - **Design ("Midnight Harbour"):**
     - `-50` tints become translucent and `-600` flips to the light end of each hue;
