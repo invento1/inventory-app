@@ -213,6 +213,17 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
   const [openGroup, setOpenGroup] = useState<string | undefined>(activeGroup?.key)
   const [openSubGroup, setOpenSubGroup] = useState<string | undefined>(activeSubGroupKey)
 
+  // Follow the page: moving into another section (through any link, not just
+  // the sidebar) opens its group. Keyed on the section, not the path, so
+  // moving around within a section never reopens a group the user collapsed.
+  const activeGroupKey = activeGroup?.key
+  useEffect(() => {
+    if (activeGroupKey) setOpenGroup(activeGroupKey)
+  }, [activeGroupKey])
+  useEffect(() => {
+    if (activeSubGroupKey) setOpenSubGroup(activeSubGroupKey)
+  }, [activeSubGroupKey])
+
   // Sidebar is mounted on every signed-in page, so it owns the tab title;
   // leaving the app (sign out) puts the plain name back.
   useEffect(() => {
