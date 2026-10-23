@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabaseClient'
 import type { Database, Json } from '../../types/supabase'
+import { todayYmd } from '../../lib/dates'
+import { DOCUMENT_LIST_LIMIT, likePattern, type DocumentListFilters } from '../../lib/documentListFilters'
 
 export type SupplierBill = Database['public']['Tables']['supplier_bills']['Row']
 export type SupplierBillPayment = Database['public']['Tables']['supplier_bill_payments']['Row']
@@ -9,21 +11,31 @@ export interface SupplierBillListRow extends SupplierBill {
   supplier_name: string
 }
 
-export function useSupplierBills(orgId: string) {
+// The Supplier Bills list, filtered in the database so older documents are
+// never missed (see documentListFilters.ts).
+export function useSupplierBills(orgId: string, filters: DocumentListFilters) {
+  const { status, party, from, to, q } = filters
   return useQuery({
-    queryKey: ['supplier_bills', orgId],
+    queryKey: ['supplier_bills', orgId, { status, party, from, to, q }],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('supplier_bills')
-        .select('*, suppliers(name)')
-        .eq('org_id', orgId)
-        .order('created_at', { ascending: false })
-        .limit(200)
+      let query = supabase.from('supplier_bills').select('*, suppliers(name)').eq('org_id', orgId)
+      if (status === 'open' || status === 'overdue') query = query.in('status', ['unpaid', 'partially_paid'])
+      if (status === 'overdue') query = query.lt('due_date', todayYmd())
+      if (status === 'unpaid' || status === 'partially_paid' || status === 'paid' || status === 'void') {
+        query = query.eq('status', status)
+      }
+      if (party) query = query.eq('supplier_id', party)
+      if (from) query = query.gte('issue_date', from)
+      if (to) query = query.lte('issue_date', to)
+      if (q.trim()) query = query.ilike('bill_number', likePattern(q))
+
+      const { data, error } = await query.order('created_at', { ascending: false }).limit(DOCUMENT_LIST_LIMIT + 1)
       if (error) throw error
-      return (data ?? []).map((row) => ({
+      const rows = (data ?? []).map((row) => ({
         ...row,
         supplier_name: row.suppliers?.name ?? '',
       })) satisfies SupplierBillListRow[]
+      return { rows: rows.slice(0, DOCUMENT_LIST_LIMIT), truncated: rows.length > DOCUMENT_LIST_LIMIT }
     },
   })
 }
@@ -173,8 +185,8 @@ export function billStatusTone(bill: {
   if (bill.status === 'void') return { tone: 'neutral', label: 'Void' }
   if (bill.status === 'paid') return { tone: 'success', label: 'Paid' }
 
-  const isOverdue = new Date(bill.due_date) < new Date(new Date().toDateString())
-  if (isOverdue) return { tone: 'danger', label: 'Overdue' }
+  // Local calendar dates compared as strings (new Date('YYYY-MM-DD') is UTC).
+  if (bill.due_date < todayYmd()) return { tone: 'danger', label: 'Overdue' }
 
   if (bill.status === 'partially_paid') return { tone: 'warning', label: 'Partially paid' }
   return { tone: 'accent', label: 'Unpaid' }

@@ -609,6 +609,13 @@ join items i on i.id = sl.item_id
 where sl.quantity <= coalesce(i.reorder_threshold, 0);
 ```
 
+**Invoices / Supplier Bills list filters** (`src/lib/documentListFilters.ts`, `transactions/DocumentListParts.tsx`):
+- **Filters:** search by number, customer/supplier, sales rep (invoices), issued from/to, sort, and status chips: All / Open / Overdue / Unpaid / Partially paid / Paid / Void.
+- **Applied in the database** (`useInvoices(orgId, filters)` / `useSupplierBills`), up to `DOCUMENT_LIST_LIMIT` (500) with a "narrow the filters" note. The old lists only ever loaded the latest 200, which would have hidden older unpaid documents.
+- **Kept in the URL** (`?status=overdue&party=…&sort=due`), so the dashboard's Outstanding AR/AP and Overdue tiles link straight to the filtered view, and Back keeps the filters.
+- A totals strip (count, total, outstanding, overdue), "N days late" on overdue rows, and Export CSV of what's shown.
+- **Overdue** compares local `YYYY-MM-DD` strings with `todayYmd()`; `invoiceStatusTone` / `billStatusTone` used `new Date('YYYY-MM-DD')`, which is UTC.
+
 `outstanding_invoices` is the equivalent lightweight view for AR: unpaid/partially-paid invoices joined to customer name, with `balance` and `is_overdue` computed columns (not stored on `invoices` itself — same "derive, don't store" reasoning as `low_stock_report`). `outstanding_supplier_bills` is its AP counterpart (§4 above).
 
 ## 5. Folder Structure

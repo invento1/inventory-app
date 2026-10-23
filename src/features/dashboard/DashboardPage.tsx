@@ -124,14 +124,14 @@ export function DashboardPage() {
             value={formatMoney(summary?.outstanding_ar_total ?? 0, currencySymbol)}
             icon={DollarSign}
             tone="bg-warning-50 text-warning-600"
-            to="/invoices"
+            to="/invoices?status=open&sort=due"
           />
           <StatCard
             label="Overdue invoices"
             value={String(summary?.overdue_invoice_count ?? 0)}
             icon={FileWarning}
             tone="bg-danger-50 text-danger-600"
-            to="/invoices"
+            to="/invoices?status=overdue&sort=due"
           />
           <StatCard
             label="Customers"
@@ -159,14 +159,14 @@ export function DashboardPage() {
             value={formatMoney(summary?.outstanding_ap_total ?? 0, currencySymbol)}
             icon={Landmark}
             tone="bg-warning-50 text-warning-600"
-            to="/supplier-bills"
+            to="/supplier-bills?status=open&sort=due"
           />
           <StatCard
             label="Overdue bills"
             value={String(summary?.overdue_bill_count ?? 0)}
             icon={FileWarning}
             tone="bg-danger-50 text-danger-600"
-            to="/supplier-bills"
+            to="/supplier-bills?status=overdue&sort=due"
           />
         </div>
       )}

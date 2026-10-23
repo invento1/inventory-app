@@ -1,29 +1,45 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabaseClient'
 import type { Database, Json } from '../../types/supabase'
+import { todayYmd } from '../../lib/dates'
+import { DOCUMENT_LIST_LIMIT, likePattern, type DocumentListFilters } from '../../lib/documentListFilters'
 
 export type Invoice = Database['public']['Tables']['invoices']['Row']
 export type InvoicePayment = Database['public']['Tables']['invoice_payments']['Row']
 
 export interface InvoiceListRow extends Invoice {
   customer_name: string
+  rep_name: string | null
 }
 
-export function useInvoices(orgId: string) {
+// The Invoices list, filtered in the database so older documents are never
+// missed (see documentListFilters.ts).
+export function useInvoices(orgId: string, filters: DocumentListFilters) {
+  const { status, party, rep, from, to, q } = filters
   return useQuery({
-    queryKey: ['invoices', orgId],
+    queryKey: ['invoices', orgId, { status, party, rep, from, to, q }],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('invoices')
-        .select('*, customers(name)')
-        .eq('org_id', orgId)
-        .order('created_at', { ascending: false })
-        .limit(200)
+      let query = supabase.from('invoices').select('*, customers(name), sales_reps(name)').eq('org_id', orgId)
+      if (status === 'open' || status === 'overdue') query = query.in('status', ['unpaid', 'partially_paid'])
+      if (status === 'overdue') query = query.lt('due_date', todayYmd())
+      if (status === 'unpaid' || status === 'partially_paid' || status === 'paid' || status === 'void') {
+        query = query.eq('status', status)
+      }
+      if (party) query = query.eq('customer_id', party)
+      if (rep === 'none') query = query.is('sales_rep_id', null)
+      else if (rep) query = query.eq('sales_rep_id', rep)
+      if (from) query = query.gte('issue_date', from)
+      if (to) query = query.lte('issue_date', to)
+      if (q.trim()) query = query.ilike('invoice_number', likePattern(q))
+
+      const { data, error } = await query.order('created_at', { ascending: false }).limit(DOCUMENT_LIST_LIMIT + 1)
       if (error) throw error
-      return (data ?? []).map((row) => ({
+      const rows = (data ?? []).map((row) => ({
         ...row,
         customer_name: row.customers?.name ?? '',
+        rep_name: row.sales_reps?.name ?? null,
       })) satisfies InvoiceListRow[]
+      return { rows: rows.slice(0, DOCUMENT_LIST_LIMIT), truncated: rows.length > DOCUMENT_LIST_LIMIT }
     },
   })
 }
@@ -199,8 +215,8 @@ export function invoiceStatusTone(invoice: {
   if (invoice.status === 'void') return { tone: 'neutral', label: 'Void' }
   if (invoice.status === 'paid') return { tone: 'success', label: 'Paid' }
 
-  const isOverdue = new Date(invoice.due_date) < new Date(new Date().toDateString())
-  if (isOverdue) return { tone: 'danger', label: 'Overdue' }
+  // Local calendar dates compared as strings (new Date('YYYY-MM-DD') is UTC).
+  if (invoice.due_date < todayYmd()) return { tone: 'danger', label: 'Overdue' }
 
   if (invoice.status === 'partially_paid') return { tone: 'warning', label: 'Partially paid' }
   return { tone: 'accent', label: 'Unpaid' }
