@@ -158,6 +158,12 @@ export function PrintableDocument({
             <dt className="text-text-muted">{doc.kind === 'invoice' ? 'Amount paid' : 'Paid'}</dt>
             <dd className="tabular-nums text-text">{money(doc.amountPaid)}</dd>
           </div>
+          {(doc.amountCredited ?? 0) > 0 && (
+            <div className="flex justify-between py-1">
+              <dt className="text-text-muted">Credits applied</dt>
+              <dd className="tabular-nums text-text">{money(doc.amountCredited ?? 0)}</dd>
+            </div>
+          )}
           {doc.kind === 'invoice' && !doc.isVoid && !(showPrevious && history) && (
             <div className="mt-1 flex justify-between rounded-lg bg-surface-muted px-3 py-2 font-semibold print:border print:border-border">
               <dt className="text-text">Balance due</dt>

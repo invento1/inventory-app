@@ -8,7 +8,7 @@ import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { formatMoney } from '../../lib/currency'
-import { useCreditMemos } from './api'
+import { useCreditMemos, creditMemoStatus } from './api'
 
 export function CreditMemosListPage() {
   const { orgId, currencySymbol, can } = useOrg()
@@ -40,6 +40,7 @@ export function CreditMemosListPage() {
               <Th>Customer</Th>
               <Th>Date</Th>
               <Th className="text-right">Total</Th>
+              <Th className="text-right">Credit left</Th>
               <Th>Status</Th>
             </THead>
             <tbody>
@@ -54,10 +55,11 @@ export function CreditMemosListPage() {
                   <Td>{cm.customer_name}</Td>
                   <Td>{cm.issue_date}</Td>
                   <Td className="text-right">{formatMoney(cm.total, currencySymbol)}</Td>
+                  <Td className="text-right">
+                    {cm.status === 'void' ? '—' : formatMoney(cm.total - cm.amount_applied, currencySymbol)}
+                  </Td>
                   <Td>
-                    <Badge tone={cm.status === 'void' ? 'neutral' : 'warning'}>
-                      {cm.status === 'void' ? 'Void' : 'Open'}
-                    </Badge>
+                    <Badge tone={creditMemoStatus(cm).tone}>{creditMemoStatus(cm).label}</Badge>
                   </Td>
                 </Tr>
               ))}

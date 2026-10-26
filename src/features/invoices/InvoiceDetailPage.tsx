@@ -13,6 +13,12 @@ import { formatMoney } from '../../lib/currency'
 import { useInvoice, useVoidInvoice, invoiceStatusTone, historyOptionsOf } from './api'
 import { InvoiceHistoryCard } from './CustomerHistory'
 import { RecordPaymentModal } from './RecordPaymentModal'
+import {
+  ApplyCreditModal,
+  useCreditApplications,
+  useOpenCredits,
+  useRemoveCreditApplication,
+} from '../credit-memos/applications'
 
 export function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -24,17 +30,33 @@ export function InvoiceDetailPage() {
 
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [confirmingVoid, setConfirmingVoid] = useState(false)
+  const [applyingCredit, setApplyingCredit] = useState(false)
+  const { data: credits } = useCreditApplications(orgId, { invoiceId: id })
+  const { data: openCredits } = useOpenCredits(orgId, data?.invoice.customer_id)
+  const removeCredit = useRemoveCreditApplication(orgId)
 
   if (isLoading || !data) return <PageSpinner />
 
   const { invoice, lines, payments, salesOrder } = data
-  const balance = invoice.total - invoice.amount_paid
+  const balance = invoice.total - invoice.amount_paid - invoice.amount_credited
   const hasLineDiscounts = lines.some((l) => l.discount > 0)
   const { tone, label } = invoiceStatusTone(invoice)
 
   const canRecordPayment =
     can('customer_payments.receive') && invoice.status !== 'paid' && invoice.status !== 'void'
   const canVoid = can('invoices.void') && invoice.amount_paid === 0 && invoice.status !== 'void'
+  const isOpen = invoice.status === 'unpaid' || invoice.status === 'partially_paid'
+  const canApplyCredit = can('customer_payments.receive') && isOpen && (openCredits?.length ?? 0) > 0
+  const canReturn = can('credit_memos.create') && invoice.status !== 'void'
+
+  async function handleRemoveCredit(applicationId: string) {
+    try {
+      await removeCredit.mutateAsync(applicationId)
+      toast.success('Credit removed from this invoice')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Something went wrong')
+    }
+  }
 
   async function handleVoid() {
     try {
@@ -53,6 +75,11 @@ export function InvoiceDetailPage() {
         subtitle={invoice.customers?.name ?? 'Unknown customer'}
         action={
           <div className="flex items-center gap-3">
+            {canReturn && (
+              <Button variant="secondary" size="sm" onClick={() => navigate(`/credit-memos/new?invoice=${invoice.id}`)}>
+                Return items
+              </Button>
+            )}
             <Button variant="secondary" size="sm" onClick={() => navigate(`/invoices/${invoice.id}/print`)}>
               <Printer size={14} />
               Print
@@ -136,6 +163,12 @@ export function InvoiceDetailPage() {
             <span>Paid</span>
             <span>{formatMoney(invoice.amount_paid, currencySymbol)}</span>
           </div>
+          {invoice.amount_credited > 0 && (
+            <div className="mt-1 flex justify-between text-sm text-text-muted">
+              <span>Credits applied</span>
+              <span>{formatMoney(invoice.amount_credited, currencySymbol)}</span>
+            </div>
+          )}
           <div className="mt-1 flex justify-between text-base font-semibold text-text">
             <span>Balance</span>
             <span>{formatMoney(balance, currencySymbol)}</span>
@@ -181,6 +214,61 @@ export function InvoiceDetailPage() {
         </Card>
       </div>
 
+      {((credits?.length ?? 0) > 0 || canApplyCredit) && (
+        <div className="mt-6">
+          <Card>
+            <CardHeader
+              title="Credits applied"
+              action={
+                canApplyCredit ? (
+                  <Button size="sm" variant="secondary" onClick={() => setApplyingCredit(true)}>
+                    Apply credit
+                  </Button>
+                ) : undefined
+              }
+            />
+            <CardBody className="p-0">
+              <Table>
+                <THead>
+                  <Th>Credit memo</Th>
+                  <Th>Applied</Th>
+                  <Th className="text-right">Amount</Th>
+                  <Th />
+                </THead>
+                <tbody>
+                  {(credits?.length ?? 0) === 0 && (
+                    <EmptyState message="This customer has unused credit. Apply it to settle part of this invoice." />
+                  )}
+                  {credits?.map((c) => (
+                    <Tr key={c.id}>
+                      <Td>
+                        <Link to={`/credit-memos/${c.credit_memo_id}`} className="font-medium text-accent-700 hover:underline">
+                          {c.credit_memo_number}
+                        </Link>
+                      </Td>
+                      <Td>{c.applied_date ?? '—'}</Td>
+                      <Td className="text-right">{formatMoney(c.amount, currencySymbol)}</Td>
+                      <Td className="text-right">
+                        {can('customer_payments.receive') && invoice.status !== 'void' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleRemoveCredit(c.id)}
+                            disabled={removeCredit.isPending}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </Td>
+                    </Tr>
+                  ))}
+                </tbody>
+              </Table>
+            </CardBody>
+          </Card>
+        </div>
+      )}
+
       <div className="mt-6">
         <InvoiceHistoryCard
           invoiceId={invoice.id}
@@ -207,6 +295,19 @@ export function InvoiceDetailPage() {
             </Button>
           )}
         </div>
+      )}
+
+      {applyingCredit && openCredits && (
+        <ApplyCreditModal
+          orgId={orgId}
+          title={`Apply credit to ${invoice.invoice_number}`}
+          fixedSide={{ invoiceId: invoice.id }}
+          fixedAvailable={balance}
+          choiceLabel="Credit memo"
+          choices={openCredits.map((c) => ({ id: c.id, label: `${c.credit_memo_number} · ${c.issue_date}`, available: c.remaining }))}
+          currencySymbol={currencySymbol}
+          onClose={() => setApplyingCredit(false)}
+        />
       )}
 
       {showPaymentModal && (

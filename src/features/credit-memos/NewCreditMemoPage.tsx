@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -11,7 +11,12 @@ import { useToast } from '../../components/ui/Toast'
 import { useCustomers } from '../customers/api'
 import { useItems } from '../items/api'
 import { useLocations } from '../../lib/useLocations'
-import { useCreateCreditMemo, type CreditMemoLinePayload } from './api'
+import {
+  useCreateCreditMemo,
+  useInvoiceReturnables,
+  useReturnableInvoices,
+  type CreditMemoLinePayload,
+} from './api'
 import { SalesRepSelect } from '../sales-reps/SalesRepSelect'
 
 interface DraftLine {
@@ -32,14 +37,45 @@ export function NewCreditMemoPage() {
   const { data: items } = useItems(orgId)
   const { data: locations } = useLocations(orgId)
   const createCreditMemo = useCreateCreditMemo(orgId)
+  const [searchParams] = useSearchParams()
 
   const [customerId, setCustomerId] = useState('')
+  // Optional: a return against one invoice (from its "Return items" button).
+  const [invoiceId, setInvoiceId] = useState(searchParams.get('invoice') ?? '')
+  const [filledFor, setFilledFor] = useState('')
+  const { data: invoices } = useReturnableInvoices(orgId, customerId)
+  const { data: returnables } = useInvoiceReturnables(orgId, invoiceId)
   const [salesRepId, setSalesRepId] = useState<string | null>(null)
   const [notes, setNotes] = useState('')
   const [lines, setLines] = useState<DraftLine[]>([
     { key: nextKey++, item_id: '', location_id: '', quantity: '', unit_price: '' },
   ])
   const [error, setError] = useState<string | null>(null)
+
+  // Choosing an invoice fills in its items: what can still be returned, at
+  // the price the customer actually paid.
+  useEffect(() => {
+    if (!invoiceId || !returnables || filledFor === invoiceId) return
+    setFilledFor(invoiceId)
+    if (returnables.customerId !== customerId) {
+      setCustomerId(returnables.customerId)
+      setSalesRepId(customers?.find((c) => c.id === returnables.customerId)?.sales_rep_id ?? null)
+    }
+    const open = returnables.lines.filter((l) => l.sold - l.returned > 0)
+    setLines(
+      open.length > 0
+        ? open.map((l) => ({
+            key: nextKey++,
+            item_id: l.item_id,
+            location_id: l.location_id,
+            quantity: String(l.sold - l.returned),
+            unit_price: String(l.net_price),
+          }))
+        : [{ key: nextKey++, item_id: '', location_id: '', quantity: '', unit_price: '' }],
+    )
+  }, [invoiceId, returnables, filledFor, customerId, customers])
+
+  const returnableByItem = new Map((invoiceId ? returnables?.lines ?? [] : []).map((l) => [l.item_id, l]))
 
   function updateLine(key: number, patch: Partial<DraftLine>) {
     setLines((current) => current.map((l) => (l.key === key ? { ...l, ...patch } : l)))
@@ -105,6 +141,7 @@ export function NewCreditMemoPage() {
         lines: validLines,
         notes: notes || null,
         salesRepId,
+        invoiceId: invoiceId || null,
       })
       toast.success('Credit memo created')
       navigate(`/credit-memos/${creditMemo.id}`)
@@ -142,6 +179,8 @@ export function NewCreditMemoPage() {
                   // The customer's rep fills in (still changeable).
                   setCustomerId(e.target.value)
                   setSalesRepId(customers?.find((c) => c.id === e.target.value)?.sales_rep_id ?? null)
+                  setInvoiceId('')
+                  setFilledFor('')
                 }}
               >
                 <option value="">Select a customer…</option>
@@ -151,9 +190,32 @@ export function NewCreditMemoPage() {
                   </option>
                 ))}
               </Select>
+              <Select
+                label="Against invoice (optional)"
+                value={invoiceId}
+                disabled={!customerId}
+                onChange={(e) => {
+                  setInvoiceId(e.target.value)
+                  setFilledFor('')
+                }}
+              >
+                <option value="">None: a general credit</option>
+                {invoiceId && !invoices?.some((i) => i.id === invoiceId) && <option value={invoiceId}>Loading…</option>}
+                {invoices?.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {i.invoice_number} · {i.issue_date}
+                  </option>
+                ))}
+              </Select>
               <SalesRepSelect value={salesRepId} onChange={setSalesRepId} />
               <Input label="Notes / reason" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
+            {invoiceId && (
+              <p className="mt-3 text-sm text-text-muted">
+                Items come back at what they cost when they were sold on this invoice, and the credit goes against
+                this invoice's balance first. Only items on the invoice can be returned, up to the quantity sold.
+              </p>
+            )}
           </CardBody>
         </Card>
 
@@ -194,7 +256,15 @@ export function NewCreditMemoPage() {
                   </div>
                   <div className="col-span-2">
                     <Input
-                      label="Quantity"
+                      label={
+                        returnableByItem.has(line.item_id)
+                          ? `Quantity (sold ${returnableByItem.get(line.item_id)!.sold}${
+                              returnableByItem.get(line.item_id)!.returned > 0
+                                ? `, ${returnableByItem.get(line.item_id)!.returned} back`
+                                : ''
+                            })`
+                          : 'Quantity'
+                      }
                       type="number"
                       min="0"
                       step="1"

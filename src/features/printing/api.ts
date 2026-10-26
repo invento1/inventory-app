@@ -37,6 +37,8 @@ export interface PrintableDoc {
   discount: number
   total: number
   amountPaid: number
+  // Credit memos applied to this invoice (invoices only).
+  amountCredited?: number
   balance: number
   paymentMethod: string | null
   salesRep: string | null
@@ -66,7 +68,7 @@ function toLines(
 }
 
 const INVOICE_SELECT =
-  'id, invoice_number, issue_date, due_date, status, subtotal, discount, total, amount_paid, notes, sales_reps(name), ' +
+  'id, invoice_number, issue_date, due_date, status, subtotal, discount, total, amount_paid, amount_credited, notes, sales_reps(name), ' +
   'show_previous_balance, show_recent_invoices, show_recent_payments, ' +
   'customers(name, address, phone, email), invoice_items(quantity, unit_price, discount, line_total, items(name, sku, unit))'
 
@@ -118,6 +120,7 @@ export function usePrintableInvoices(orgId: string, filter: InvoicePrintFilter, 
         discount: number
         total: number
         amount_paid: number
+        amount_credited: number
         sales_reps: { name: string } | null
         notes: string | null
         show_previous_balance: boolean
@@ -146,7 +149,8 @@ export function usePrintableInvoices(orgId: string, filter: InvoicePrintFilter, 
             discount: inv.discount,
             total: inv.total,
             amountPaid: inv.amount_paid,
-            balance: inv.total - inv.amount_paid,
+            amountCredited: inv.amount_credited,
+            balance: inv.total - inv.amount_paid - inv.amount_credited,
             paymentMethod: null,
             salesRep: inv.sales_reps?.name ?? null,
             notes: inv.notes,

@@ -13,8 +13,7 @@ import {
   daysOverdue,
   isOverdue,
   sortDocuments,
-  useDocumentListFilters,
-} from '../../lib/documentListFilters'
+  useDocumentListFilters, openBalance } from '../../lib/documentListFilters'
 import { downloadCsv, type CsvRow } from '../reports/csv'
 import { useCustomers } from '../customers/api'
 import { useSalesReps } from '../sales-reps/api'
@@ -32,7 +31,7 @@ export function InvoicesListPage() {
 
   function exportCsv() {
     const out: CsvRow[] = [
-      ['Invoice', 'Issued', 'Customer', 'Sales rep', 'Due date', 'Status', 'Total', 'Paid', 'Balance', 'Days overdue'],
+      ['Invoice', 'Issued', 'Customer', 'Sales rep', 'Due date', 'Status', 'Total', 'Paid', 'Credits', 'Balance', 'Days overdue'],
       ...invoices.map((inv): CsvRow => [
         inv.invoice_number,
         inv.issue_date,
@@ -42,7 +41,8 @@ export function InvoicesListPage() {
         invoiceStatusTone(inv).label,
         inv.total,
         inv.amount_paid,
-        inv.total - inv.amount_paid,
+        inv.amount_credited,
+        openBalance(inv),
         isOverdue(inv) ? daysOverdue(inv.due_date) : '',
       ]),
     ]
@@ -132,7 +132,7 @@ export function InvoicesListPage() {
                     </Td>
                     <Td className="text-right">{formatMoney(inv.total, currencySymbol)}</Td>
                     <Td className="text-right">
-                      {inv.status === 'void' ? '—' : formatMoney(inv.total - inv.amount_paid, currencySymbol)}
+                      {inv.status === 'void' ? '—' : formatMoney(openBalance(inv), currencySymbol)}
                     </Td>
                     <Td>
                       <Badge tone={tone}>{label}</Badge>

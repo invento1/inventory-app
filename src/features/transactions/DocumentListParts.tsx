@@ -12,8 +12,7 @@ import {
   STATUS_FILTERS,
   type DocSort,
   type DocStatusFilter,
-  type DocumentListFilters,
-} from '../../lib/documentListFilters'
+  type DocumentListFilters, openBalance } from '../../lib/documentListFilters'
 
 // Filter bar and totals strip shared by the Invoices and Supplier Bills lists.
 
@@ -128,7 +127,7 @@ export function DocumentTotals({
   truncated,
   limit,
 }: {
-  rows: { status: string; due_date: string; total: number; amount_paid: number }[]
+  rows: { status: string; due_date: string; total: number; amount_paid: number; amount_credited?: number }[]
   noun: string
   symbol: string
   isOverdue: (row: { status: string; due_date: string }) => boolean
@@ -137,9 +136,9 @@ export function DocumentTotals({
 }) {
   const live = rows.filter((r) => r.status !== 'void')
   const total = live.reduce((s, r) => s + r.total, 0)
-  const outstanding = live.reduce((s, r) => s + (r.total - r.amount_paid), 0)
+  const outstanding = live.reduce((s, r) => s + openBalance(r), 0)
   const overdue = live.filter(isOverdue)
-  const overdueAmount = overdue.reduce((s, r) => s + (r.total - r.amount_paid), 0)
+  const overdueAmount = overdue.reduce((s, r) => s + openBalance(r), 0)
 
   return (
     <div className="mb-3 flex flex-wrap items-baseline gap-x-6 gap-y-1 px-1 text-sm">

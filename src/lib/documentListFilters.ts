@@ -98,7 +98,12 @@ export function likePattern(text: string) {
   return `%${text.trim().replace(/[\\%_]/g, (c) => `\\${c}`)}%`
 }
 
-export function sortDocuments<T extends { created_at: string; due_date: string; total: number; amount_paid: number }>(
+// What's still owed: total less payments and (invoices) credits applied.
+export function openBalance(row: { total: number; amount_paid: number; amount_credited?: number }) {
+  return row.total - row.amount_paid - (row.amount_credited ?? 0)
+}
+
+export function sortDocuments<T extends { created_at: string; due_date: string; total: number; amount_paid: number; amount_credited?: number }>(
   rows: T[],
   sort: DocSort,
 ): T[] {
@@ -109,7 +114,7 @@ export function sortDocuments<T extends { created_at: string; due_date: string; 
     case 'due':
       return copy.sort((a, b) => a.due_date.localeCompare(b.due_date))
     case 'balance':
-      return copy.sort((a, b) => b.total - b.amount_paid - (a.total - a.amount_paid))
+      return copy.sort((a, b) => openBalance(b) - openBalance(a))
     default:
       return copy.sort((a, b) => b.created_at.localeCompare(a.created_at))
   }

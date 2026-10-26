@@ -237,6 +237,68 @@ export type Database = {
           },
         ]
       }
+      credit_memo_applications: {
+        Row: {
+          amount: number
+          applied_date: string | null
+          created_at: string
+          created_by: string | null
+          credit_memo_id: string
+          id: string
+          invoice_id: string
+          org_id: string
+        }
+        Insert: {
+          amount: number
+          applied_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_memo_id: string
+          id?: string
+          invoice_id: string
+          org_id: string
+        }
+        Update: {
+          amount?: number
+          applied_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_memo_id?: string
+          id?: string
+          invoice_id?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_memo_applications_credit_memo_id_fkey"
+            columns: ["credit_memo_id"]
+            isOneToOne: false
+            referencedRelation: "credit_memos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_memo_applications_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_memo_applications_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "outstanding_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_memo_applications_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_memo_items: {
         Row: {
           created_at: string
@@ -297,11 +359,13 @@ export type Database = {
       }
       credit_memos: {
         Row: {
+          amount_applied: number
           created_at: string
           created_by: string | null
           credit_memo_number: string
           customer_id: string
           id: string
+          invoice_id: string | null
           issue_date: string
           notes: string | null
           org_id: string
@@ -312,11 +376,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amount_applied?: number
           created_at?: string
           created_by?: string | null
           credit_memo_number: string
           customer_id: string
           id?: string
+          invoice_id?: string | null
           issue_date: string
           notes?: string | null
           org_id: string
@@ -327,11 +393,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amount_applied?: number
           created_at?: string
           created_by?: string | null
           credit_memo_number?: string
           customer_id?: string
           id?: string
+          invoice_id?: string | null
           issue_date?: string
           notes?: string | null
           org_id?: string
@@ -347,6 +415,20 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_memos_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_memos_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "outstanding_invoices"
             referencedColumns: ["id"]
           },
           {
@@ -885,6 +967,7 @@ export type Database = {
       }
       invoices: {
         Row: {
+          amount_credited: number
           amount_paid: number
           created_at: string
           created_by: string | null
@@ -906,6 +989,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amount_credited?: number
           amount_paid?: number
           created_at?: string
           created_by?: string | null
@@ -927,6 +1011,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amount_credited?: number
           amount_paid?: number
           created_at?: string
           created_by?: string | null
@@ -2679,6 +2764,7 @@ export type Database = {
       }
       outstanding_invoices: {
         Row: {
+          amount_credited: number | null
           amount_paid: number | null
           balance: number | null
           customer_id: string | null
@@ -2750,6 +2836,30 @@ export type Database = {
       account_type_sort_order: {
         Args: { p_account_type: string }
         Returns: number
+      }
+      apply_credit_memo: {
+        Args: {
+          p_amount: number
+          p_credit_memo_id: string
+          p_invoice_id: string
+          p_org_id: string
+        }
+        Returns: {
+          amount: number
+          applied_date: string | null
+          created_at: string
+          created_by: string | null
+          credit_memo_id: string
+          id: string
+          invoice_id: string
+          org_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_memo_applications"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       apply_customer_payment: {
         Args: {
@@ -2879,17 +2989,20 @@ export type Database = {
       create_credit_memo: {
         Args: {
           p_customer_id: string
+          p_invoice_id?: string
           p_lines: Json
           p_notes?: string
           p_org_id: string
           p_sales_rep_id?: string
         }
         Returns: {
+          amount_applied: number
           created_at: string
           created_by: string | null
           credit_memo_number: string
           customer_id: string
           id: string
+          invoice_id: string | null
           issue_date: string
           notes: string | null
           org_id: string
@@ -3016,6 +3129,7 @@ export type Database = {
           p_sales_rep_id?: string
         }
         Returns: {
+          amount_credited: number
           amount_paid: number
           created_at: string
           created_by: string | null
@@ -3252,6 +3366,13 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      credit_application_room: {
+        Args: {
+          p_credit_memo: Database["public"]["Tables"]["credit_memos"]["Row"]
+          p_invoice: Database["public"]["Tables"]["invoices"]["Row"]
+        }
+        Returns: number
       }
       customer_balance_summary: {
         Args: { p_as_of: string; p_org_id: string }
@@ -3787,6 +3908,7 @@ export type Database = {
           p_reference_number?: string
         }
         Returns: {
+          amount_credited: number
           amount_paid: number
           created_at: string
           created_by: string | null
@@ -3847,6 +3969,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      remove_credit_application: {
+        Args: { p_application_id: string }
+        Returns: undefined
       }
       remove_org_member: {
         Args: { p_org_id: string; p_user_id: string }
@@ -4166,11 +4292,13 @@ export type Database = {
       void_credit_memo: {
         Args: { p_credit_memo_id: string }
         Returns: {
+          amount_applied: number
           created_at: string
           created_by: string | null
           credit_memo_number: string
           customer_id: string
           id: string
+          invoice_id: string | null
           issue_date: string
           notes: string | null
           org_id: string
@@ -4216,6 +4344,7 @@ export type Database = {
       void_invoice: {
         Args: { p_invoice_id: string }
         Returns: {
+          amount_credited: number
           amount_paid: number
           created_at: string
           created_by: string | null
