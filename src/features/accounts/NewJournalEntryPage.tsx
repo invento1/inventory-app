@@ -27,6 +27,10 @@ interface DraftLine {
   credit: string
   name: string
   memo: string
+  // Filled with its account's whole balance by "Debit all" / "Credit all".
+  full?: boolean
+  // Filled automatically to balance that line's full-balance transfer.
+  autoFor?: number
 }
 
 let nextKey = 1
@@ -93,35 +97,43 @@ const CREDIT_NORMAL_TYPES = new Set([
   'long_term_liability',
 ])
 
-// "Debit all" / "Credit all": fills the line with the account's whole balance.
+type Side = 'debit' | 'credit'
+
+// The side that empties an account: credit for debit-normal accounts with a
+// positive balance, debit for credit-normal ones (flipped when negative).
+function clearingSide(account: LedgerAccountRow): Side {
+  return CREDIT_NORMAL_TYPES.has(account.account_type) === account.balance > 0 ? 'debit' : 'credit'
+}
+
+const roundMoney = (n: number) => Math.round(n * 100) / 100
+const lineNet = (l: DraftLine) => (Number(l.debit) || 0) - (Number(l.credit) || 0)
+
+const helperSlot = 'flex h-5 justify-end'
+const helperText = 'mt-1 px-1 text-xs'
+
 // Faint until the row is hovered or the button focused.
-function FillBalanceButton({
-  side,
-  account,
-  currencySymbol,
-  onFill,
+function HelperButton({
+  label,
+  title,
+  strong,
+  onClick,
 }: {
-  side: 'debit' | 'credit'
-  account: LedgerAccountRow | undefined
-  currencySymbol: string
-  onFill: (amount: string) => void
+  label: string
+  title: string
+  strong?: boolean
+  onClick: () => void
 }) {
-  const amount = account ? Math.round(Math.abs(account.balance) * 100) / 100 : 0
-  if (!account || amount === 0) return <div className="h-5" aria-hidden />
-  // The side that empties the account: credit for debit-normal accounts with a
-  // positive balance, debit for credit-normal ones (flipped when negative).
-  const clearingSide =
-    CREDIT_NORMAL_TYPES.has(account.account_type) === account.balance > 0 ? 'debit' : 'credit'
-  const label = side === 'debit' ? 'Debit all' : 'Credit all'
   return (
-    <div className="flex h-5 justify-end">
+    <div className={helperSlot}>
       <button
         type="button"
-        onClick={() => onFill(String(amount))}
-        title={`${label}: ${formatMoney(amount, currencySymbol)}${
-          side === clearingSide ? ` (brings ${account.name} to zero)` : ''
-        }`}
-        className="mt-1 rounded px-1 text-xs font-medium text-accent-700 opacity-40 transition-opacity hover:underline focus-visible:opacity-100 group-hover:opacity-100"
+        onClick={onClick}
+        title={title}
+        className={
+          strong
+            ? 'mt-1 rounded bg-accent-50 px-1.5 text-xs font-medium text-accent-700 hover:underline'
+            : 'mt-1 rounded px-1 text-xs font-medium text-accent-700 opacity-40 transition-opacity hover:underline focus-visible:opacity-100 group-hover:opacity-100'
+        }
       >
         {label}
       </button>
@@ -144,6 +156,125 @@ export function NewJournalEntryPage() {
 
   function updateLine(key: number, patch: Partial<DraftLine>) {
     setLines((current) => current.map((l) => (l.key === key ? { ...l, ...patch } : l)))
+  }
+
+  // A hand edit to a line's account or amounts: it's no longer a helper-filled
+  // line, and any line auto-filled to balance it stops being linked to it.
+  function editLine(key: number, patch: Partial<DraftLine>) {
+    setLines((current) =>
+      current.map((l) =>
+        l.key === key
+          ? { ...l, ...patch, full: false, autoFor: undefined }
+          : l.autoFor === key
+            ? { ...l, autoFor: undefined }
+            : l,
+      ),
+    )
+  }
+
+  // Choosing an account keeps a transfer's link (picking the destination after
+  // "Credit all" is the normal order); a full-balance amount no longer is one.
+  function pickAccount(key: number, accountId: string) {
+    updateLine(key, { account_id: accountId, full: false })
+  }
+
+  // "Credit all" on Cash: Cash is credited with its whole balance, and the
+  // destination line (the next line with an account and no amount, else an
+  // empty line, else a new one) is filled on the other side so the entry
+  // balances.
+  function transferAll(key: number, side: Side, amount: number) {
+    setLines((current) => {
+      let next = current.map((l) =>
+        l.key === key
+          ? {
+              ...l,
+              debit: side === 'debit' ? String(amount) : '',
+              credit: side === 'credit' ? String(amount) : '',
+              full: true,
+              autoFor: undefined,
+            }
+          : l,
+      )
+      const others = next.filter((l) => l.key !== key)
+      const empty = (l: DraftLine) => (!l.debit && !l.credit) || l.autoFor === key
+      let target =
+        others.find((l) => l.autoFor === key) ??
+        others.find((l) => l.account_id && empty(l)) ??
+        others.find((l) => !l.account_id && empty(l))
+      if (!target) {
+        target = blankLine()
+        next = [...next, target]
+      }
+      const targetKey = target.key
+      const out = roundMoney(next.filter((l) => l.key !== targetKey).reduce((sum, l) => sum + lineNet(l), 0))
+      return next.map((l) =>
+        l.key !== targetKey
+          ? l
+          : out === 0
+            ? { ...l, debit: '', credit: '', autoFor: undefined }
+            : {
+                ...l,
+                debit: out < 0 ? String(-out) : '',
+                credit: out > 0 ? String(out) : '',
+                full: false,
+                autoFor: key,
+              },
+      )
+    })
+  }
+
+  // What goes under a line's Debit or Credit box.
+  function helperFor(line: DraftLine, side: Side, account: LedgerAccountRow | undefined) {
+    const other: Side = side === 'debit' ? 'credit' : 'debit'
+    if (line[side]) {
+      if (line.autoFor != null) {
+        const source = lines.find((l) => l.key === line.autoFor)
+        const sourceName = accounts?.find((a) => a.id === source?.account_id)?.name
+        return (
+          <div className={helperSlot}>
+            <span className={`${helperText} font-medium text-accent-700`}>
+              Balances {sourceName ?? 'the transfer'}
+            </span>
+          </div>
+        )
+      }
+      if (line.full) {
+        return (
+          <div className={helperSlot}>
+            <span className={`${helperText} text-text-muted`}>Full balance</span>
+          </div>
+        )
+      }
+      return <div className="h-5" aria-hidden />
+    }
+    if (line[other] || !account) return <div className="h-5" aria-hidden />
+
+    // Out of balance: offer only the side that balances it, highlighted.
+    if (!balanced) {
+      const needed: Side = outBy > 0 ? 'credit' : 'debit'
+      if (side !== needed) return <div className="h-5" aria-hidden />
+      const amount = Math.abs(outBy)
+      return (
+        <HelperButton
+          strong
+          label={`${side === 'debit' ? 'Debit' : 'Credit'} ${formatMoney(amount, currencySymbol)}`}
+          title="Fill the amount that balances this entry"
+          onClick={() => editLine(line.key, { [side]: String(amount), [other]: '' })}
+        />
+      )
+    }
+
+    // Balanced (or empty): offer moving the account's whole balance out.
+    const amount = roundMoney(Math.abs(account.balance))
+    if (amount === 0 || side !== clearingSide(account)) return <div className="h-5" aria-hidden />
+    const label = side === 'debit' ? 'Debit all' : 'Credit all'
+    return (
+      <HelperButton
+        label={label}
+        title={`${label}: ${formatMoney(amount, currencySymbol)}. Brings ${account.name} to zero, and fills the other line to match.`}
+        onClick={() => transferAll(line.key, side, amount)}
+      />
+    )
   }
 
   function addLine() {
@@ -254,7 +385,7 @@ export function NewJournalEntryPage() {
                       <Td>
                         <Select
                           value={line.account_id}
-                          onChange={(e) => updateLine(line.key, { account_id: e.target.value })}
+                          onChange={(e) => pickAccount(line.key, e.target.value)}
                         >
                           <option value="">Select an account…</option>
                           {postableAccounts?.map((a) => (
@@ -274,15 +405,10 @@ export function NewJournalEntryPage() {
                           min="0"
                           value={line.debit}
                           onChange={(e) =>
-                            updateLine(line.key, { debit: e.target.value, credit: e.target.value ? '' : line.credit })
+                            editLine(line.key, { debit: e.target.value, credit: e.target.value ? '' : line.credit })
                           }
                         />
-                        <FillBalanceButton
-                          side="debit"
-                          account={selectedAccount}
-                          currencySymbol={currencySymbol}
-                          onFill={(amount) => updateLine(line.key, { debit: amount, credit: '' })}
-                        />
+                        {helperFor(line, 'debit', selectedAccount)}
                       </Td>
                       <Td>
                         <Input
@@ -291,15 +417,10 @@ export function NewJournalEntryPage() {
                           min="0"
                           value={line.credit}
                           onChange={(e) =>
-                            updateLine(line.key, { credit: e.target.value, debit: e.target.value ? '' : line.debit })
+                            editLine(line.key, { credit: e.target.value, debit: e.target.value ? '' : line.debit })
                           }
                         />
-                        <FillBalanceButton
-                          side="credit"
-                          account={selectedAccount}
-                          currencySymbol={currencySymbol}
-                          onFill={(amount) => updateLine(line.key, { credit: amount, debit: '' })}
-                        />
+                        {helperFor(line, 'credit', selectedAccount)}
                       </Td>
                       <Td>
                         <Input value={line.name} onChange={(e) => updateLine(line.key, { name: e.target.value })} />
