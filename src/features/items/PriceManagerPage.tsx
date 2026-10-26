@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ArrowRight } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody } from '../../components/ui/Card'
@@ -12,6 +13,7 @@ import { useCategories, useBrands } from '../settings/api'
 import { useSuppliers } from '../suppliers/api'
 import { useItems, useUpdateItem } from './api'
 import { formatMoney } from '../../lib/currency'
+import { costFloor } from './pricing'
 
 interface Edit {
   unit_price: string
@@ -79,7 +81,7 @@ export function PriceManagerPage() {
     <div>
       <PageHeader
         title="Price manager"
-        subtitle="Bulk-update prices and reorder points"
+        subtitle="Bulk-update prices and reorder points. Use cost sets a price to the item's moving average cost."
         action={
           <Button onClick={handleSave} disabled={editCount === 0 || saving}>
             {saving ? 'Saving…' : editCount ? `Save ${editCount} change(s)` : 'Save changes'}
@@ -130,6 +132,7 @@ export function PriceManagerPage() {
               <Th>Brand</Th>
               <Th className="text-right">On hand</Th>
               <Th className="text-right">Avg. cost</Th>
+              <Th />
               <Th className="text-right">Price</Th>
               <Th className="text-right">Reorder at</Th>
             </THead>
@@ -141,6 +144,10 @@ export function PriceManagerPage() {
                   reorder_threshold: item.reorder_threshold != null ? String(item.reorder_threshold) : '',
                 }
                 const edit = edits[item.id] ?? defaults
+                // The average cost as a price (rounded up to the cent); offered when it differs.
+                const cost = costFloor(item.avg_cost)
+                const price = Number(edit.unit_price)
+                const differs = cost != null && edit.unit_price !== '' && price !== cost
                 return (
                   <Tr key={item.id}>
                     <Td>{item.sku}</Td>
@@ -148,7 +155,29 @@ export function PriceManagerPage() {
                     <Td>{item.category_name || '—'}</Td>
                     <Td>{item.brand_name || '—'}</Td>
                     <Td className="text-right">{item.on_hand}</Td>
-                    <Td className="text-right text-text-muted">{formatMoney(item.avg_cost, currencySymbol)}</Td>
+                    <Td className="text-right tabular-nums">
+                      {cost != null && price < cost ? (
+                        <span className="font-medium text-danger-600" title="The price is below what this item now costs">
+                          {formatMoney(item.avg_cost, currencySymbol)}
+                        </span>
+                      ) : (
+                        <span className="text-text-muted">{formatMoney(item.avg_cost, currencySymbol)}</span>
+                      )}
+                    </Td>
+                    <Td className="w-px whitespace-nowrap text-center">
+                      {differs && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          title={`Set the price to the average cost, ${formatMoney(cost, currencySymbol)}`}
+                          onClick={() => markEdit(item.id, { unit_price: String(cost) }, defaults)}
+                        >
+                          Use cost
+                          <ArrowRight size={14} />
+                        </Button>
+                      )}
+                    </Td>
                     <Td className="text-right">
                       <Input
                         type="number"
