@@ -4,6 +4,7 @@ import { ScanLine, Search } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { useLocations } from '../../lib/useLocations'
 import { useItems, type Item } from '../items/api'
+import { sellingPrice } from '../items/pricing'
 import { useStockLevels } from '../stock/api'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
@@ -90,7 +91,7 @@ export function NewSalesReceiptPage() {
           item_sku: item.sku,
           location_id: activeLocationId,
           quantity: 1,
-          unit_price: item.unit_price,
+          unit_price: sellingPrice(item),
           discount: '',
         },
       ]
@@ -241,7 +242,7 @@ export function NewSalesReceiptPage() {
                           <span className="font-medium text-text">{item.name}</span>
                           <span className="ml-2 text-text-muted">{item.sku}</span>
                         </span>
-                        <span className="text-text-muted">{formatMoney(item.unit_price, currencySymbol)}</span>
+                        <span className="text-text-muted">{formatMoney(sellingPrice(item), currencySymbol)}</span>
                       </button>
                     ))}
                   </div>
@@ -270,6 +271,7 @@ export function NewSalesReceiptPage() {
                         currencySymbol={currencySymbol}
                         onHand={stockByKey.get(`${line.item_id}:${line.location_id}`) ?? 0}
                         avgCost={avgCostByItem.get(line.item_id)}
+                        setPrice={items?.find((i) => i.id === line.item_id)?.unit_price}
                       />
                     ))}
                   </div>

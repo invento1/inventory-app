@@ -6,6 +6,7 @@ import { formatMoney } from '../../lib/currency'
 import type { Location } from '../../lib/useLocations'
 import type { CartLine } from './types'
 import { lineDiscountAmount, lineDiscountError } from './discounts'
+import { costFloor, isBelowCost } from '../items/pricing'
 
 export function SalesReceiptCartLine({
   line,
@@ -15,6 +16,7 @@ export function SalesReceiptCartLine({
   currencySymbol,
   onHand,
   avgCost,
+  setPrice,
 }: {
   line: CartLine
   locations: Location[]
@@ -22,7 +24,8 @@ export function SalesReceiptCartLine({
   onRemove: () => void
   currencySymbol: string
   onHand: number
-  avgCost?: number
+  avgCost?: number | null
+  setPrice?: number
 }) {
   const gross = line.quantity * line.unit_price
   const discount = lineDiscountAmount(line.discount, gross)
@@ -59,6 +62,13 @@ export function SalesReceiptCartLine({
           value={line.unit_price}
           onChange={(e) => onChange({ unit_price: Number(e.target.value) })}
         />
+        {line.item_id && isBelowCost(line.unit_price, avgCost) ? (
+          <p className="mt-1 text-xs text-danger-600">Below cost ({formatMoney(costFloor(avgCost) ?? 0, currencySymbol)})</p>
+        ) : line.item_id && setPrice != null && isBelowCost(setPrice, avgCost) ? (
+          <p className="mt-1 text-xs text-text-muted" title="The item's set price is below what it now costs, so the line starts at cost. Update the item's price to sell above cost.">
+            At cost; set price {formatMoney(setPrice, currencySymbol)}
+          </p>
+        ) : null}
       </div>
       <div className="col-span-2">
         <Input

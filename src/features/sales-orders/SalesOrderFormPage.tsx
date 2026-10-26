@@ -13,6 +13,7 @@ import { formatMoney } from '../../lib/currency'
 import { useCustomers } from '../customers/api'
 import { CustomerForm } from '../customers/CustomerForm'
 import { useItems, type Item } from '../items/api'
+import { sellingPrice } from '../items/pricing'
 import { SalesRepSelect } from '../sales-reps/SalesRepSelect'
 import {
   DocumentDiscountField,
@@ -107,7 +108,7 @@ export function SalesOrderFormPage() {
     setLines((current) =>
       current.map((l) =>
         l.key === key
-          ? { ...l, item_id: itemId, unit_price: item ? String(item.unit_price) : '', quantity: l.quantity || (item ? '1' : '') }
+          ? { ...l, item_id: itemId, unit_price: item ? String(sellingPrice(item)) : '', quantity: l.quantity || (item ? '1' : '') }
           : l,
       ),
     )

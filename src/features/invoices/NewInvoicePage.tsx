@@ -13,6 +13,7 @@ import { useToast } from '../../components/ui/Toast'
 import { useCustomers } from '../customers/api'
 import { CustomerForm } from '../customers/CustomerForm'
 import { useItems, type Item } from '../items/api'
+import { costFloor, isBelowCost, sellingPrice } from '../items/pricing'
 import { useStockLevels } from '../stock/api'
 import { useLocations } from '../../lib/useLocations'
 import { formatMoney } from '../../lib/currency'
@@ -76,6 +77,7 @@ export function NewInvoicePage() {
 
   const stockByKey = new Map((stockLevels ?? []).map((s) => [`${s.item_id}:${s.location_id}`, s.quantity]))
   const avgCostByItem = new Map((items ?? []).map((i) => [i.id, i.avg_cost]))
+  const setPriceByItem = new Map((items ?? []).map((i) => [i.id, i.unit_price]))
   const [addingCustomer, setAddingCustomer] = useState(false)
 
   const [customerId, setCustomerId] = useState('')
@@ -170,7 +172,7 @@ export function NewInvoicePage() {
           ? {
               ...l,
               item_id: itemId,
-              unit_price: item ? String(item.unit_price) : '',
+              unit_price: item ? String(sellingPrice(item)) : '',
               // Picking an item on a fresh line also gives it the default location.
               location_id: l.location_id || (item ? defaultLocationId : ''),
               quantity: l.quantity || (item ? '1' : ''),
@@ -205,7 +207,7 @@ export function NewInvoicePage() {
       const filled = {
         item_id: item.id,
         quantity: '1',
-        unit_price: String(item.unit_price),
+        unit_price: String(sellingPrice(item)),
         discount: '',
       }
       setLines((current) => {
@@ -393,7 +395,7 @@ export function NewInvoicePage() {
                   getKey={itemKey}
                   getLabel={itemLabel}
                   getDescription={(i) =>
-                    [i.barcode, formatMoney(i.unit_price, currencySymbol)].filter(Boolean).join(' · ')
+                    [i.barcode, formatMoney(sellingPrice(i), currencySymbol)].filter(Boolean).join(' · ')
                   }
                   getSearchText={itemSearchText}
                   clearOnPick
@@ -449,6 +451,7 @@ export function NewInvoicePage() {
                   ? (stockByKey.get(`${line.item_id}:${line.location_id}`) ?? 0)
                   : null
                 const avgCost = line.item_id ? avgCostByItem.get(line.item_id) : undefined
+                const setPrice = line.item_id ? setPriceByItem.get(line.item_id) : undefined
                 const priceTitle = avgCost != null
                   ? `Moving average cost: ${formatMoney(avgCost, currencySymbol)}`
                   : 'No cost data for this item'
@@ -508,6 +511,13 @@ export function NewInvoicePage() {
                         value={line.unit_price}
                         onChange={(e) => updateLine(line.key, { unit_price: e.target.value })}
                       />
+                      {line.item_id && isBelowCost(Number(line.unit_price), avgCost) ? (
+                        <p className="mt-1 text-xs text-danger-600">Below cost ({formatMoney(costFloor(avgCost) ?? 0, currencySymbol)})</p>
+                      ) : line.item_id && setPrice != null && isBelowCost(setPrice, avgCost) ? (
+                        <p className="mt-1 text-xs text-text-muted" title="The item's set price is below what it now costs, so the line starts at cost. Update the item's price to sell above cost.">
+                          At cost; set price {formatMoney(setPrice, currencySymbol)}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="col-span-2">
                       <Input

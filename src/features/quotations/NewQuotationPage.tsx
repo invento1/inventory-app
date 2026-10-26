@@ -10,6 +10,7 @@ import { Select } from '../../components/ui/Select'
 import { useToast } from '../../components/ui/Toast'
 import { useCustomers } from '../customers/api'
 import { useItems } from '../items/api'
+import { sellingPrice } from '../items/pricing'
 import { useCreateQuotation, type QuotationLinePayload } from './api'
 import { ymd } from '../../lib/dates'
 
@@ -56,7 +57,7 @@ export function NewQuotationPage() {
 
   function selectItem(key: number, itemId: string) {
     const item = items?.find((i) => i.id === itemId)
-    updateLine(key, { item_id: itemId, unit_price: item ? String(item.unit_price) : '' })
+    updateLine(key, { item_id: itemId, unit_price: item ? String(sellingPrice(item)) : '' })
   }
 
   async function handleSubmit(e: FormEvent) {
