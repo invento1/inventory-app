@@ -82,6 +82,53 @@ function AccountBalanceHint({ account, currencySymbol }: { account: LedgerAccoun
   )
 }
 
+// Balances are shown credit-positive for these types (ledger_account_balances
+// flips the sign), so a debit of the full balance brings them to zero.
+const CREDIT_NORMAL_TYPES = new Set([
+  'income',
+  'other_income',
+  'equity',
+  'accounts_payable',
+  'other_current_liability',
+  'long_term_liability',
+])
+
+// "Debit all" / "Credit all": fills the line with the account's whole balance.
+// Faint until the row is hovered or the button focused.
+function FillBalanceButton({
+  side,
+  account,
+  currencySymbol,
+  onFill,
+}: {
+  side: 'debit' | 'credit'
+  account: LedgerAccountRow | undefined
+  currencySymbol: string
+  onFill: (amount: string) => void
+}) {
+  const amount = account ? Math.round(Math.abs(account.balance) * 100) / 100 : 0
+  if (!account || amount === 0) return <div className="h-5" aria-hidden />
+  // The side that empties the account: credit for debit-normal accounts with a
+  // positive balance, debit for credit-normal ones (flipped when negative).
+  const clearingSide =
+    CREDIT_NORMAL_TYPES.has(account.account_type) === account.balance > 0 ? 'debit' : 'credit'
+  const label = side === 'debit' ? 'Debit all' : 'Credit all'
+  return (
+    <div className="flex h-5 justify-end">
+      <button
+        type="button"
+        onClick={() => onFill(String(amount))}
+        title={`${label}: ${formatMoney(amount, currencySymbol)}${
+          side === clearingSide ? ` (brings ${account.name} to zero)` : ''
+        }`}
+        className="mt-1 rounded px-1 text-xs font-medium text-accent-700 opacity-40 transition-opacity hover:underline focus-visible:opacity-100 group-hover:opacity-100"
+      >
+        {label}
+      </button>
+    </div>
+  )
+}
+
 export function NewJournalEntryPage() {
   const { orgId, currencySymbol } = useOrg()
   const navigate = useNavigate()
@@ -203,7 +250,7 @@ export function NewJournalEntryPage() {
                 {lines.map((line) => {
                   const selectedAccount = postableAccounts?.find((a) => a.id === line.account_id)
                   return (
-                    <tr key={line.key} className="border-b border-border last:border-0">
+                    <tr key={line.key} className="group border-b border-border last:border-0">
                       <Td>
                         <Select
                           value={line.account_id}
@@ -230,6 +277,12 @@ export function NewJournalEntryPage() {
                             updateLine(line.key, { debit: e.target.value, credit: e.target.value ? '' : line.credit })
                           }
                         />
+                        <FillBalanceButton
+                          side="debit"
+                          account={selectedAccount}
+                          currencySymbol={currencySymbol}
+                          onFill={(amount) => updateLine(line.key, { debit: amount, credit: '' })}
+                        />
                       </Td>
                       <Td>
                         <Input
@@ -240,6 +293,12 @@ export function NewJournalEntryPage() {
                           onChange={(e) =>
                             updateLine(line.key, { credit: e.target.value, debit: e.target.value ? '' : line.debit })
                           }
+                        />
+                        <FillBalanceButton
+                          side="credit"
+                          account={selectedAccount}
+                          currencySymbol={currencySymbol}
+                          onFill={(amount) => updateLine(line.key, { credit: amount, debit: '' })}
                         />
                       </Td>
                       <Td>
