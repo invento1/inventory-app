@@ -14,6 +14,7 @@ import { CategoryForm } from '../settings/CategoryForm'
 import { BrandForm } from '../settings/BrandForm'
 import { UnitForm } from '../settings/UnitForm'
 import { BarcodeField } from './BarcodeField'
+import { ItemAccountsFields } from './ItemAccountsFields'
 import { SupplierForm } from '../suppliers/SupplierForm'
 import { useCreateItem, type ItemInput } from './api'
 
@@ -29,6 +30,9 @@ const emptyForm: Omit<ItemInput, 'sku'> = {
   category_id: null,
   brand_id: null,
   supplier_id: null,
+  income_account_id: null,
+  cogs_account_id: null,
+  inventory_account_id: null,
 }
 
 export function NewItemPage() {
@@ -229,6 +233,15 @@ export function NewItemPage() {
                 onChange={(e) => setForm({ ...form, expiry_date: e.target.value || null })}
               />
             </div>
+            <ItemAccountsFields
+              orgId={orgId}
+              value={{
+                income_account_id: form.income_account_id ?? null,
+                cogs_account_id: form.cogs_account_id ?? null,
+                inventory_account_id: form.inventory_account_id ?? null,
+              }}
+              onChange={(accounts) => setForm({ ...form, ...accounts })}
+            />
           </CardBody>
         </Card>
 

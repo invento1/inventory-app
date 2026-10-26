@@ -25,6 +25,8 @@ const LABELS: Record<string, string> = {
   expense_void: 'Expense void',
   inventory_adjustment: 'Inventory adjustment',
   inventory_cutover: 'Inventory cutover',
+  posting_account_change: 'Posting Settings change',
+  item_account_change: 'Item account change',
 }
 
 export function referenceLabel(referenceType: string | null | undefined) {

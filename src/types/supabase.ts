@@ -977,11 +977,14 @@ export type Database = {
           barcode: string | null
           brand_id: string | null
           category_id: string | null
+          cogs_account_id: string | null
           commission_rate: number
           created_at: string
           description: string | null
           expiry_date: string | null
           id: string
+          income_account_id: string | null
+          inventory_account_id: string | null
           is_active: boolean
           name: string
           org_id: string
@@ -997,11 +1000,14 @@ export type Database = {
           barcode?: string | null
           brand_id?: string | null
           category_id?: string | null
+          cogs_account_id?: string | null
           commission_rate?: number
           created_at?: string
           description?: string | null
           expiry_date?: string | null
           id?: string
+          income_account_id?: string | null
+          inventory_account_id?: string | null
           is_active?: boolean
           name: string
           org_id: string
@@ -1017,11 +1023,14 @@ export type Database = {
           barcode?: string | null
           brand_id?: string | null
           category_id?: string | null
+          cogs_account_id?: string | null
           commission_rate?: number
           created_at?: string
           description?: string | null
           expiry_date?: string | null
           id?: string
+          income_account_id?: string | null
+          inventory_account_id?: string | null
           is_active?: boolean
           name?: string
           org_id?: string
@@ -1045,6 +1054,48 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_cogs_account_id_fkey"
+            columns: ["cogs_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "items_cogs_account_id_fkey"
+            columns: ["cogs_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_income_account_id_fkey"
+            columns: ["income_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "items_income_account_id_fkey"
+            columns: ["income_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_inventory_account_id_fkey"
+            columns: ["inventory_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "items_inventory_account_id_fkey"
+            columns: ["inventory_account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
             referencedColumns: ["id"]
           },
           {
@@ -3318,6 +3369,15 @@ export type Database = {
           total: number
         }[]
       }
+      document_account_groups: {
+        Args: {
+          p_doc_id: string
+          p_doc_type: string
+          p_kind: string
+          p_org_id: string
+        }
+        Returns: Json
+      }
       expired_stock: {
         Args: { p_as_of: string; p_org_id: string; p_within_days?: number }
         Returns: {
@@ -3509,6 +3569,10 @@ export type Database = {
       journal_entry_is_system_dated: {
         Args: { p_reference_type: string }
         Returns: boolean
+      }
+      journal_lines_for: {
+        Args: { p_groups: Json; p_side: string; p_total?: number }
+        Returns: Json
       }
       journal_party_name: {
         Args: { p_reference_id: string; p_reference_type: string }

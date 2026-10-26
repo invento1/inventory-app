@@ -13,6 +13,7 @@ import { UnitForm } from '../settings/UnitForm'
 import { SupplierForm } from '../suppliers/SupplierForm'
 import { useUpdateItem, type Item, type ItemInput } from './api'
 import { BarcodeField } from './BarcodeField'
+import { ItemAccountsFields } from './ItemAccountsFields'
 import { useOrg } from '../../auth/OrgProvider'
 
 export function ItemForm({
@@ -21,7 +22,7 @@ export function ItemForm({
   onClose,
 }: {
   orgId: string
-  item: Item
+  item: Item & { on_hand?: number }
   onClose: () => void
 }) {
   const { can } = useOrg()
@@ -38,6 +39,9 @@ export function ItemForm({
     category_id: item.category_id,
     brand_id: item.brand_id,
     supplier_id: item.supplier_id,
+    income_account_id: item.income_account_id,
+    cogs_account_id: item.cogs_account_id,
+    inventory_account_id: item.inventory_account_id,
   })
   const [error, setError] = useState<string | null>(null)
   const updateItem = useUpdateItem(orgId)
@@ -226,6 +230,17 @@ export function ItemForm({
             onChange={(e) => setForm({ ...form, expiry_date: e.target.value || null })}
           />
         </div>
+        <ItemAccountsFields
+          orgId={orgId}
+          value={{
+            income_account_id: form.income_account_id ?? null,
+            cogs_account_id: form.cogs_account_id ?? null,
+            inventory_account_id: form.inventory_account_id ?? null,
+          }}
+          onChange={(accounts) => setForm({ ...form, ...accounts })}
+          saved={item}
+          stockValue={(item.on_hand ?? 0) * (item.avg_cost ?? 0)}
+        />
         {error && <p className="text-sm text-danger-600">{error}</p>}
         <div className="mt-2 flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>

@@ -41,9 +41,9 @@ export const POSTING_ROLES: PostingRole[] = [
   { key: 'accounts_payable', label: 'Accounts Payable', defaultName: 'Accounts Payable', types: ['accounts_payable'], controlled: true,
     usedFor: 'What you owe suppliers on bills' },
   { key: 'sales_income', label: 'Sales Income', defaultName: 'Sales Income', types: ['income', 'other_income'], controlled: false,
-    usedFor: 'Revenue from invoices and sales receipts, and its reversal on credit memos and refunds' },
+    usedFor: 'Revenue from invoices and sales receipts (items without their own income account), and its reversal on credit memos and refunds' },
   { key: 'cost_of_goods_sold', label: 'Cost of Goods Sold', defaultName: 'Cost of Goods Sold', types: ['cost_of_goods_sold'], controlled: false,
-    usedFor: 'Cost of the stock you sell' },
+    usedFor: 'Cost of the stock you sell (items without their own cost account)' },
   { key: 'purchases', label: 'Purchases', defaultName: 'Purchases', types: ['expense', 'cost_of_goods_sold', 'other_expense'], controlled: false,
     usedFor: 'Not posted to automatically any more; kept for manual entries' },
 ]

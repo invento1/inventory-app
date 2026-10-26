@@ -17,6 +17,9 @@ export type ItemInput = Pick<
   | 'category_id'
   | 'brand_id'
   | 'supplier_id'
+  | 'income_account_id'
+  | 'cogs_account_id'
+  | 'inventory_account_id'
 >
 
 export interface ItemListRow extends Item {
