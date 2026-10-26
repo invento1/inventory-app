@@ -105,6 +105,7 @@ import { CustomerDiscountsReport, ItemDiscountsReport } from './features/reports
 import { OpenOrdersReport, SalesOrdersSummaryReport } from './features/reports/SalesOrderReports'
 import { DeletedTransactionsReport, UpdatedTransactionsReport } from './features/reports/AuditReports'
 import { DamagedExpiredReport } from './features/reports/DamagedExpiredReport'
+import { PostingSettingsPage } from './features/settings/PostingSettingsPage'
 
 function App() {
   return (
@@ -224,6 +225,7 @@ function App() {
         <Route path="/settings" element={<Navigate to="/settings/appearance" replace />} />
         <Route path="/settings/appearance" element={<AppearancePage />} />
         <Route path="/settings/company-info" element={<CompanyInfoPage />} />
+        <Route path="/settings/posting-accounts" element={<PostingSettingsPage />} />
         <Route
           path="/settings/stores"
           element={

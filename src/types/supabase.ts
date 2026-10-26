@@ -1392,6 +1392,52 @@ export type Database = {
         }
         Relationships: []
       }
+      posting_accounts: {
+        Row: {
+          account_id: string
+          account_key: string
+          org_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          account_id: string
+          account_key: string
+          org_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          account_id?: string
+          account_key?: string
+          org_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posting_accounts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_account_balances"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "posting_accounts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posting_accounts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_lists: {
         Row: {
           created_at: string
@@ -3464,6 +3510,10 @@ export type Database = {
         Args: { p_reference_type: string }
         Returns: boolean
       }
+      journal_party_name: {
+        Args: { p_reference_id: string; p_reference_type: string }
+        Returns: string
+      }
       journal_report: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }
         Returns: {
@@ -3572,6 +3622,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      posting_account_default_name: { Args: { p_key: string }; Returns: string }
+      posting_account_for: {
+        Args: { p_key: string; p_org_id: string }
+        Returns: string
+      }
+      posting_account_is_controlled: {
+        Args: { p_key: string }
+        Returns: boolean
+      }
+      posting_account_types: { Args: { p_key: string }; Returns: string[] }
       profit_and_loss: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }
         Returns: {
@@ -3891,6 +3951,10 @@ export type Database = {
       set_login_password: {
         Args: { p_email: string; p_password: string }
         Returns: string
+      }
+      set_posting_account: {
+        Args: { p_account_id: string; p_key: string; p_org_id: string }
+        Returns: undefined
       }
       stock_write_offs: {
         Args: { p_end_date: string; p_org_id: string; p_start_date: string }

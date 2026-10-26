@@ -160,6 +160,7 @@ const ROUTE_RULES: [string, Requirement][] = [
 
   ['/settings/appearance', { open: true }],
   ['/settings/company-info', 'settings.company'],
+  ['/settings/posting-accounts', 'accounts.view'],
   ['/settings/users', 'users.manage'],
   ['/settings/security-groups', 'users.manage'],
   ['/settings/reset-data', { owner: true }],
