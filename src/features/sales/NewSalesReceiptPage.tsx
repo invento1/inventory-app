@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ScanLine, Search } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { useLocations } from '../../lib/useLocations'
@@ -20,6 +20,7 @@ import { useCreateSalesReceipt } from './api'
 import type { CartLine } from './types'
 import { useCustomers } from '../customers/api'
 import { SalesRepSelect } from '../sales-reps/SalesRepSelect'
+import { useQuotation } from '../quotations/api'
 import {
   DocumentDiscountField,
   NO_DOCUMENT_DISCOUNT,
@@ -58,6 +59,35 @@ export function NewSalesReceiptPage() {
   const [searchTerm, setSearchTerm] = useState('')
 
   const activeLocationId = defaultLocationId || locations?.[0]?.id || ''
+
+  // Opened from a quotation (?fromQuotation=<id>): its customer, items and
+  // prices go in the cart, and it's marked converted when the sale completes.
+  const [searchParams] = useSearchParams()
+  const fromQuotationId = searchParams.get('fromQuotation')
+  const { data: fromQuotation } = useQuotation(orgId, fromQuotationId)
+  const [quotationId, setQuotationId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!fromQuotation || quotationId === fromQuotation.quotation.id || !items || !activeLocationId) return
+    const q = fromQuotation.quotation
+    if (q.customer_id) {
+      setCustomerId(q.customer_id)
+      setSalesRepId(customers?.find((c) => c.id === q.customer_id)?.sales_rep_id ?? null)
+    }
+    setCart(
+      fromQuotation.lines.map((l) => ({
+        key: `${l.item_id}-${activeLocationId}-${l.id}`,
+        item_id: l.item_id,
+        item_name: l.item_name,
+        item_sku: l.item_sku,
+        location_id: activeLocationId,
+        quantity: l.quantity,
+        unit_price: l.unit_price,
+        discount: '',
+      })),
+    )
+    setQuotationId(q.id)
+  }, [fromQuotation, quotationId, items, activeLocationId, customers])
 
   const codeIndex = useMemo(() => {
     const map = new Map<string, Item>()
@@ -157,6 +187,7 @@ export function NewSalesReceiptPage() {
         })),
         salesRepId,
         discount: docDiscountAmount,
+        quotationId,
       })
       toast.success(`Sale ${receipt.receipt_number} completed`)
       setCart([])
@@ -169,6 +200,15 @@ export function NewSalesReceiptPage() {
   return (
     <div>
       <PageHeader title="New sale" subtitle="Scan or search to add items" />
+      {fromQuotation && quotationId && (
+        <div className="mb-4 rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-text">
+          Selling quotation{' '}
+          <Link to={`/quotations/${fromQuotation.quotation.id}`} className="font-medium text-accent-700 hover:underline">
+            {fromQuotation.quotation.quotation_number}
+          </Link>
+          . Prices are as quoted. Check the location, then complete the sale; the quotation will be marked converted.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">

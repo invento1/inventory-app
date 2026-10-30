@@ -12,6 +12,7 @@ import { useToast } from '../../components/ui/Toast'
 import { formatMoney } from '../../lib/currency'
 import { useInvoice, useVoidInvoice, invoiceStatusTone, historyOptionsOf } from './api'
 import { InvoiceHistoryCard } from './CustomerHistory'
+import { useSourceQuotation } from '../quotations/api'
 import { RecordPaymentModal } from './RecordPaymentModal'
 import {
   ApplyCreditModal,
@@ -34,6 +35,7 @@ export function InvoiceDetailPage() {
   const { data: credits } = useCreditApplications(orgId, { invoiceId: id })
   const { data: openCredits } = useOpenCredits(orgId, data?.invoice.customer_id)
   const removeCredit = useRemoveCreditApplication(orgId)
+  const { data: sourceQuotation } = useSourceQuotation(orgId, { invoiceId: id })
 
   if (isLoading || !data) return <PageSpinner />
 
@@ -101,6 +103,14 @@ export function InvoiceDetailPage() {
         <span className="text-sm text-text-muted">Issued {invoice.issue_date}</span>
         <span className="text-sm text-text-muted">Due {invoice.due_date}</span>
         {invoice.sales_reps && <span className="text-sm text-text-muted">Rep: {invoice.sales_reps.name}</span>}
+        {sourceQuotation && (
+          <span className="text-sm text-text-muted">
+            From quotation{' '}
+            <Link to={`/quotations/${sourceQuotation.id}`} className="font-medium text-accent-700 hover:underline">
+              {sourceQuotation.quotation_number}
+            </Link>
+          </span>
+        )}
         {salesOrder && (
           <span className="text-sm text-text-muted">
             From sales order{' '}

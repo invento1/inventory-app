@@ -125,6 +125,7 @@ export function useCreateInvoice(orgId: string) {
       salesRepId: string | null
       discount: number
       salesOrderId: string | null
+      quotationId?: string | null
     }) => {
       // The generated RPC arg types don't reflect that p_lines/p_notes
       // accept a plain object array / null at the SQL level (jsonb and
@@ -139,6 +140,7 @@ export function useCreateInvoice(orgId: string) {
         p_sales_rep_id: input.salesRepId as unknown as string,
         p_discount: input.discount,
         p_sales_order_id: input.salesOrderId as unknown as string,
+        p_quotation_id: (input.quotationId ?? null) as unknown as string,
       })
       if (error) throw error
       return data as Invoice
@@ -147,6 +149,8 @@ export function useCreateInvoice(orgId: string) {
       queryClient.invalidateQueries({ queryKey: ['invoices', orgId] })
       queryClient.invalidateQueries({ queryKey: ['sales_orders', orgId] })
       queryClient.invalidateQueries({ queryKey: ['sales_order'] })
+      queryClient.invalidateQueries({ queryKey: ['quotations', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['quotation'] })
       queryClient.invalidateQueries({ queryKey: ['stock_levels', orgId] })
       queryClient.invalidateQueries({ queryKey: ['stock_movements', orgId] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', orgId] })
@@ -200,6 +204,9 @@ export function useVoidInvoice(orgId: string, invoiceId: string) {
       // Voiding reopens the sales order it came from.
       queryClient.invalidateQueries({ queryKey: ['sales_orders', orgId] })
       queryClient.invalidateQueries({ queryKey: ['sales_order'] })
+      queryClient.invalidateQueries({ queryKey: ['quotations', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['quotation'] })
+      queryClient.invalidateQueries({ queryKey: ['source_quotation', orgId] })
     },
   })
 }

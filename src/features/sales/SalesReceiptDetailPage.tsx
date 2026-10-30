@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Printer } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useOrg } from '../../auth/OrgProvider'
@@ -9,12 +9,14 @@ import { Badge } from '../../components/ui/Badge'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { formatMoney } from '../../lib/currency'
 import { useSalesReceipt } from './api'
+import { useSourceQuotation } from '../quotations/api'
 
 export function SalesReceiptDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { orgId, currencySymbol } = useOrg()
   const navigate = useNavigate()
   const { data, isLoading } = useSalesReceipt(orgId, id!)
+  const { data: sourceQuotation } = useSourceQuotation(orgId, { salesReceiptId: id })
 
   if (isLoading || !data) return <PageSpinner />
 
@@ -44,7 +46,7 @@ export function SalesReceiptDetailPage() {
         }
       />
 
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
         <Badge tone={receipt.status === 'completed' ? 'success' : 'danger'}>
           {receipt.status}
         </Badge>
@@ -53,6 +55,14 @@ export function SalesReceiptDetailPage() {
         </span>
         <Badge tone="neutral">{receipt.payment_method.replace('_', ' ')}</Badge>
         {receipt.sales_reps && <span className="text-sm text-text-muted">Rep: {receipt.sales_reps.name}</span>}
+        {sourceQuotation && (
+          <span className="text-sm text-text-muted">
+            From quotation{' '}
+            <Link to={`/quotations/${sourceQuotation.id}`} className="font-medium text-accent-700 hover:underline">
+              {sourceQuotation.quotation_number}
+            </Link>
+          </span>
+        )}
       </div>
 
       <Card>

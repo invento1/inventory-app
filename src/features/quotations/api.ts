@@ -36,14 +36,17 @@ export interface QuotationLineRow {
   item_sku: string
 }
 
-export function useQuotation(orgId: string, id: string) {
+export function useQuotation(orgId: string, id: string | null) {
   return useQuery({
     queryKey: ['quotation', id],
+    enabled: !!id,
     queryFn: async () => {
       const { data: quotation, error: quotationError } = await supabase
         .from('quotations')
-        .select('*, customers(name)')
-        .eq('id', id)
+        .select(
+          '*, customers(name), invoices!quotations_invoice_id_fkey(invoice_number), sales_receipts!quotations_sales_receipt_id_fkey(receipt_number)',
+        )
+        .eq('id', id!)
         .eq('org_id', orgId)
         .single()
       if (quotationError) throw quotationError
@@ -51,11 +54,15 @@ export function useQuotation(orgId: string, id: string) {
       const { data: lines, error: linesError } = await supabase
         .from('quotation_items')
         .select('*, items(name, sku)')
-        .eq('quotation_id', id)
+        .eq('quotation_id', id!)
       if (linesError) throw linesError
 
       return {
-        quotation: quotation as Quotation & { customers: { name: string } | null },
+        quotation: quotation as Quotation & {
+          customers: { name: string } | null
+          invoices: { invoice_number: string } | null
+          sales_receipts: { receipt_number: string } | null
+        },
         lines: (lines ?? []).map((l) => ({
           ...l,
           item_name: l.items?.name ?? '',
@@ -105,6 +112,27 @@ export function useVoidQuotation(orgId: string, quotationId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quotation', quotationId] })
       queryClient.invalidateQueries({ queryKey: ['quotations', orgId] })
+    },
+  })
+}
+
+export function quotationStatus(q: { status: string; expiry_date: string | null }, today: string) {
+  if (q.status === 'void') return { tone: 'neutral' as const, label: 'Void' }
+  if (q.status === 'converted') return { tone: 'success' as const, label: 'Converted' }
+  if (q.expiry_date && q.expiry_date < today) return { tone: 'warning' as const, label: 'Expired' }
+  return { tone: 'accent' as const, label: 'Open' }
+}
+
+// The quotation an invoice or sales receipt was made from, if any.
+export function useSourceQuotation(orgId: string, by: { invoiceId?: string; salesReceiptId?: string }) {
+  return useQuery({
+    queryKey: ['source_quotation', orgId, by],
+    queryFn: async () => {
+      let query = supabase.from('quotations').select('id, quotation_number').eq('org_id', orgId)
+      query = by.invoiceId ? query.eq('invoice_id', by.invoiceId) : query.eq('sales_receipt_id', by.salesReceiptId!)
+      const { data, error } = await query.maybeSingle()
+      if (error) throw error
+      return data as { id: string; quotation_number: string } | null
     },
   })
 }

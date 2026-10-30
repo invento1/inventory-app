@@ -32,6 +32,7 @@ import { useUserPreference } from '../../lib/userPreferences'
 import { ymd } from '../../lib/dates'
 import { SalesRepSelect } from '../sales-reps/SalesRepSelect'
 import { useSalesOrder } from '../sales-orders/api'
+import { useQuotation } from '../quotations/api'
 import {
   DocumentDiscountField,
   NO_DOCUMENT_DISCOUNT,
@@ -116,6 +117,34 @@ export function NewInvoicePage() {
     setDocDiscount(fromOrder.order.discount ? { mode: 'amount', value: String(fromOrder.order.discount) } : NO_DOCUMENT_DISCOUNT)
     setPrefilledFrom(fromOrder.order.id)
   }, [fromOrder, prefilledFrom, locations])
+
+  // Opened from a quotation (?fromQuotation=<id>): pre-fill its customer,
+  // items and prices, and mark it converted when the invoice is created.
+  const fromQuotationId = searchParams.get('fromQuotation')
+  const { data: fromQuotation } = useQuotation(orgId, fromQuotationId)
+  const [quotationId, setQuotationId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!fromQuotation || quotationId === fromQuotation.quotation.id || !locations) return
+    const location = locations[0]?.id ?? ''
+    const q = fromQuotation.quotation
+    if (q.customer_id) {
+      setCustomerId(q.customer_id)
+      setSalesRepId(customers?.find((c) => c.id === q.customer_id)?.sales_rep_id ?? null)
+    }
+    setNotes(q.notes ?? '')
+    setLines(
+      fromQuotation.lines.map((l) => ({
+        key: nextKey++,
+        item_id: l.item_id,
+        location_id: location,
+        quantity: String(l.quantity),
+        unit_price: String(l.unit_price),
+        discount: '',
+      })),
+    )
+    setQuotationId(q.id)
+  }, [fromQuotation, quotationId, locations, customers])
 
   // Picking a customer fills in their sales rep (still changeable).
   function chooseCustomer(id: string) {
@@ -293,6 +322,7 @@ export function NewInvoicePage() {
         salesRepId,
         discount: docDiscountAmount,
         salesOrderId: prefilledFrom,
+        quotationId,
       })
       if (hasHistory(historyOptions)) {
         // Display-only settings, saved right after the invoice. If this fails
@@ -329,6 +359,16 @@ export function NewInvoicePage() {
       />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {fromQuotation && quotationId && (
+          <div className="rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-text">
+            Invoicing quotation{' '}
+            <Link to={`/quotations/${fromQuotation.quotation.id}`} className="font-medium text-accent-700 hover:underline">
+              {fromQuotation.quotation.quotation_number}
+            </Link>
+            {fromQuotation.quotation.customer_id ? '' : ' (no customer on it: choose one below)'}. Prices are as quoted.
+            Check the locations and quantities, then create the invoice; the quotation will be marked converted.
+          </div>
+        )}
         {fromOrder && (
           <div className="rounded-lg border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-text">
             Invoicing sales order{' '}

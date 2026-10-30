@@ -8,12 +8,14 @@ import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { formatMoney } from '../../lib/currency'
-import { useQuotations } from './api'
+import { useQuotations, quotationStatus } from './api'
+import { todayYmd } from '../../lib/dates'
 
 export function QuotationsListPage() {
   const { orgId, currencySymbol, can } = useOrg()
   const { data: quotations, isLoading } = useQuotations(orgId)
   const navigate = useNavigate()
+  const today = todayYmd()
 
   return (
     <div>
@@ -55,9 +57,7 @@ export function QuotationsListPage() {
                   <Td>{q.expiry_date ?? '—'}</Td>
                   <Td className="text-right">{formatMoney(q.total, currencySymbol)}</Td>
                   <Td>
-                    <Badge tone={q.status === 'void' ? 'neutral' : 'accent'}>
-                      {q.status === 'void' ? 'Void' : 'Open'}
-                    </Badge>
+                    <Badge tone={quotationStatus(q, today).tone}>{quotationStatus(q, today).label}</Badge>
                   </Td>
                 </Tr>
               ))}

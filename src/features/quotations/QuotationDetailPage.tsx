@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { Link, useParams, useNavigate } from 'react-router-dom'
+import { ArrowLeft, FileText, ShoppingCart } from 'lucide-react'
 import { useOrg } from '../../auth/OrgProvider'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Card, CardHeader, CardBody } from '../../components/ui/Card'
@@ -10,7 +10,8 @@ import { Button } from '../../components/ui/Button'
 import { PageSpinner } from '../../components/ui/Spinner'
 import { useToast } from '../../components/ui/Toast'
 import { formatMoney } from '../../lib/currency'
-import { useQuotation, useVoidQuotation } from './api'
+import { useQuotation, useVoidQuotation, quotationStatus } from './api'
+import { todayYmd } from '../../lib/dates'
 
 export function QuotationDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -25,7 +26,9 @@ export function QuotationDetailPage() {
   if (isLoading || !data) return <PageSpinner />
 
   const { quotation, lines } = data
-  const canVoid = can('quotations.void') && quotation.status !== 'void'
+  const canVoid = can('quotations.void') && quotation.status === 'open'
+  const isOpen = quotation.status === 'open'
+  const status = quotationStatus(quotation, todayYmd())
 
   async function handleVoid() {
     try {
@@ -43,6 +46,19 @@ export function QuotationDetailPage() {
         title={quotation.quotation_number}
         subtitle={quotation.customers?.name ?? 'Walk-in / unspecified'}
         action={
+          <div className="flex flex-wrap items-center gap-3">
+            {isOpen && can('invoices.create') && (
+              <Button size="sm" onClick={() => navigate(`/invoices/new?fromQuotation=${quotation.id}`)}>
+                <FileText size={14} />
+                Convert to invoice
+              </Button>
+            )}
+            {isOpen && can('sales.create') && (
+              <Button size="sm" variant="secondary" onClick={() => navigate(`/sales/new?fromQuotation=${quotation.id}`)}>
+                <ShoppingCart size={14} />
+                Convert to sales receipt
+              </Button>
+            )}
           <button
             type="button"
             onClick={() => navigate('/quotations')}
@@ -51,15 +67,34 @@ export function QuotationDetailPage() {
             <ArrowLeft size={16} />
             Back
           </button>
+          </div>
         }
       />
 
-      <div className="mb-4 flex items-center gap-3">
-        <Badge tone={quotation.status === 'void' ? 'neutral' : 'accent'}>
-          {quotation.status === 'void' ? 'Void' : 'Open'}
-        </Badge>
+      <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <Badge tone={status.tone}>{status.label}</Badge>
         <span className="text-sm text-text-muted">Issued {quotation.issue_date}</span>
-        {quotation.expiry_date && <span className="text-sm text-text-muted">Expires {quotation.expiry_date}</span>}
+        {quotation.expiry_date && (
+          <span className="text-sm text-text-muted">
+            {status.label === 'Expired' ? 'Expired' : 'Expires'} {quotation.expiry_date}
+          </span>
+        )}
+        {quotation.invoice_id && (
+          <span className="text-sm text-text-muted">
+            Converted to{' '}
+            <Link to={`/invoices/${quotation.invoice_id}`} className="font-medium text-accent-700 hover:underline">
+              {quotation.invoices?.invoice_number ?? 'invoice'}
+            </Link>
+          </span>
+        )}
+        {quotation.sales_receipt_id && (
+          <span className="text-sm text-text-muted">
+            Converted to{' '}
+            <Link to={`/sales/${quotation.sales_receipt_id}`} className="font-medium text-accent-700 hover:underline">
+              {quotation.sales_receipts?.receipt_number ?? 'sales receipt'}
+            </Link>
+          </span>
+        )}
       </div>
 
       <Card>

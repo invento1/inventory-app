@@ -75,6 +75,7 @@ export function useCreateSalesReceipt(orgId: string) {
       lines: CartLinePayload[]
       salesRepId: string | null
       discount: number
+      quotationId?: string | null
     }) => {
       // The generated RPC arg types don't reflect that p_customer_id/p_lines
       // accept null/plain-object-array at the SQL level (uuid with no
@@ -87,12 +88,15 @@ export function useCreateSalesReceipt(orgId: string) {
         p_lines: input.lines as unknown as Json,
         p_sales_rep_id: input.salesRepId as unknown as string,
         p_discount: input.discount,
+        p_quotation_id: (input.quotationId ?? null) as unknown as string,
       })
       if (error) throw error
       return data as SalesReceipt
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales_receipts', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['quotations', orgId] })
+      queryClient.invalidateQueries({ queryKey: ['quotation'] })
       queryClient.invalidateQueries({ queryKey: ['stock_levels', orgId] })
       queryClient.invalidateQueries({ queryKey: ['stock_movements', orgId] })
       queryClient.invalidateQueries({ queryKey: ['dashboard', orgId] })

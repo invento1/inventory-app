@@ -1774,10 +1774,12 @@ export type Database = {
           customer_id: string | null
           expiry_date: string | null
           id: string
+          invoice_id: string | null
           issue_date: string
           notes: string | null
           org_id: string
           quotation_number: string
+          sales_receipt_id: string | null
           status: string
           subtotal: number
           total: number
@@ -1789,10 +1791,12 @@ export type Database = {
           customer_id?: string | null
           expiry_date?: string | null
           id?: string
+          invoice_id?: string | null
           issue_date: string
           notes?: string | null
           org_id: string
           quotation_number: string
+          sales_receipt_id?: string | null
           status?: string
           subtotal?: number
           total?: number
@@ -1804,10 +1808,12 @@ export type Database = {
           customer_id?: string | null
           expiry_date?: string | null
           id?: string
+          invoice_id?: string | null
           issue_date?: string
           notes?: string | null
           org_id?: string
           quotation_number?: string
+          sales_receipt_id?: string | null
           status?: string
           subtotal?: number
           total?: number
@@ -1822,10 +1828,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "quotations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "outstanding_invoices"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "quotations_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_sales_receipt_id_fkey"
+            columns: ["sales_receipt_id"]
+            isOneToOne: false
+            referencedRelation: "sales_receipts"
             referencedColumns: ["id"]
           },
         ]
@@ -2955,6 +2982,36 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      claim_quotation: {
+        Args: {
+          p_customer_id: string
+          p_org_id: string
+          p_quotation_id: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          expiry_date: string | null
+          id: string
+          invoice_id: string | null
+          issue_date: string
+          notes: string | null
+          org_id: string
+          quotation_number: string
+          sales_receipt_id: string | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "quotations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       convert_purchase_order_to_bill: {
         Args: {
           p_due_date: string
@@ -3125,6 +3182,7 @@ export type Database = {
           p_lines: Json
           p_notes?: string
           p_org_id: string
+          p_quotation_id?: string
           p_sales_order_id?: string
           p_sales_rep_id?: string
         }
@@ -3207,10 +3265,12 @@ export type Database = {
           customer_id: string | null
           expiry_date: string | null
           id: string
+          invoice_id: string | null
           issue_date: string
           notes: string | null
           org_id: string
           quotation_number: string
+          sales_receipt_id: string | null
           status: string
           subtotal: number
           total: number
@@ -3297,6 +3357,7 @@ export type Database = {
           p_lines: Json
           p_org_id: string
           p_payment_method: string
+          p_quotation_id?: string
           p_sales_rep_id?: string
         }
         Returns: {
@@ -4380,10 +4441,12 @@ export type Database = {
           customer_id: string | null
           expiry_date: string | null
           id: string
+          invoice_id: string | null
           issue_date: string
           notes: string | null
           org_id: string
           quotation_number: string
+          sales_receipt_id: string | null
           status: string
           subtotal: number
           total: number
